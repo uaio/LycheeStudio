@@ -1,162 +1,227 @@
 import React, { useState, useEffect } from 'react';
+import { ConfigProvider, Layout, Card, Row, Col, Typography, theme } from 'antd';
+import type { ThemeConfig } from 'antd';
+import ElectronTitleBar from './components/ElectronTitleBar';
 import {
-  Settings,
-  Package,
-  Code,
-  Cpu,
-  ChevronRight,
-  Home
+  Bot,
+  Terminal,
+  Cloud,
+  Database,
+  Shield,
+  FileText
 } from 'lucide-react';
 import './App.css';
-import { setupMacOSMenu } from './menu/menu';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 
-// 组件引入
-import Dashboard from './components/Dashboard';
-import AIConfig from './components/AIConfig';
-import NodeManager from './components/NodeManager';
-import NPMManager from './components/NPMManager';
-import SettingsPage from './components/Settings';
-import NativeTitleBar from './components/NativeTitleBar';
+const { Header, Content } = Layout;
+const { Title, Paragraph, Text } = Typography;
 
-// 简化的中文文案
-const cn = {
-  title: 'AI 工具管理器',
-  subtitle: '管理您的 AI 编程助手和开发环境',
-  back: '返回',
-  aiConfig: 'AI 工具配置',
-  nodeManager: 'Node.js 管理',
-  npmManager: 'NPM 包管理',
-  systemSettings: '系统设置'
-};
+// LycheeStudio - AI 工具列表
+const aiTools = [
+  {
+    name: 'Claude CLI',
+    description: 'Anthropic Claude 命令行工具',
+    icon: <Bot size={24} />,
+    category: 'AI Assistant',
+    color: '#d97706'
+  },
+  {
+    name: 'OpenAI CLI',
+    description: 'OpenAI GPT 命令行工具',
+    icon: <Cloud size={24} />,
+    category: 'AI Assistant',
+    color: '#3b82f6'
+  },
+  {
+    name: 'Gemini CLI',
+    description: 'Google Gemini 命令行工具',
+    icon: <Terminal size={24} />,
+    category: 'AI Assistant',
+    color: '#059669'
+  },
+  {
+    name: 'Node.js Manager',
+    description: 'Node.js 版本管理工具',
+    icon: <Database size={24} />,
+    category: 'Development',
+    color: '#10b981'
+  },
+  {
+    name: 'NPM Manager',
+    description: 'NPM 包管理工具',
+    icon: <FileText size={24} />,
+    category: 'Development',
+    color: '#dc2626'
+  },
+  {
+    name: 'Security Tools',
+    description: '安全配置管理工具',
+    icon: <Shield size={24} />,
+    category: 'Security',
+    color: '#7c3aed'
+  }
+];
+
+type ThemeType = 'light' | 'dark' | 'system';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'config'>('home');
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('dark');
+  const [currentTheme, setCurrentTheme] = useState<ThemeType>('system');
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const handleThemeSet = (newTheme: 'light' | 'dark' | 'system') => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+  // 主题切换处理
+  const handleThemeChange = (theme: ThemeType) => {
+    setCurrentTheme(theme);
 
-    if (newTheme === 'system') {
-      // 检测系统主题
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.body.className = prefersDark ? '' : 'light-theme';
+    // 应用主题到文档
+    const root = document.documentElement;
+    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.style.setProperty('--theme-bg', '#141414');
+      root.style.setProperty('--theme-color', '#ffffff');
+      setIsDarkMode(true);
     } else {
-      document.body.className = newTheme === 'light' ? 'light-theme' : '';
+      root.style.setProperty('--theme-bg', '#ffffff');
+      root.style.setProperty('--theme-color', '#000000');
+      setIsDarkMode(false);
     }
   };
 
+  // 初始化主题
   useEffect(() => {
-    // 初始化菜单
-    setupMacOSMenu();
+    handleThemeChange(currentTheme);
 
-    // 设置初始窗口标题
-    updateWindowTitle('首页');
-
-    // 读取保存的主题设置
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.body.className = savedTheme === 'light' ? 'light-theme' : '';
-    }
-
-    // 监听菜单事件
-    const handleThemeChange = (event: any) => {
-      const { theme } = event.detail;
-      handleThemeSet(theme);
+    // 监听系统主题变化
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = () => {
+      if (currentTheme === 'system') {
+        handleThemeChange('system');
+      }
     };
 
-    const handleOpenSettings = () => {
-      setSelectedTool('settings');
-      setCurrentView('config');
-      updateWindowTitle('系统设置');
-    };
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, [currentTheme]);
 
-    window.addEventListener('theme-change', handleThemeChange);
-    window.addEventListener('open-settings', handleOpenSettings);
+  // 渲染首页
+  const renderHome = () => (
+    <div style={{ padding: '24px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+          <img
+            src="/assets/lychee.svg"
+            alt="LycheeStudio Logo"
+            style={{ width: '48px', height: '48px', marginRight: '16px' }}
+          />
+          <Title level={2} style={{ margin: 0 }}>
+            LycheeStudio
+          </Title>
+        </div>
+        <Paragraph type="secondary" style={{ fontSize: '16px' }}>
+          统一管理您的 AI 开发工具和配置
+        </Paragraph>
+      </div>
 
-    return () => {
-      window.removeEventListener('theme-change', handleThemeChange);
-      window.removeEventListener('open-settings', handleOpenSettings);
-    };
-  }, []);
+      <Row gutter={[24, 24]}>
+        {aiTools.map((tool, index) => (
+          <Col xs={24} sm={12} md={8} lg={6} key={index}>
+            <Card
+              hoverable
+              style={{
+                height: '100%',
+                transition: 'all 0.3s ease',
+                border: isDarkMode ? '1px solid #424242' : undefined
+              }}
+              styles={{
+                body: {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  padding: '24px'
+                }
+              }}
+              onClick={() => setSelectedTool(tool.name)}
+            >
+              <div
+                style={{
+                  color: tool.color,
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: `${tool.color}20`,
+                }}
+              >
+                {tool.icon}
+              </div>
+              <Title level={5} style={{ marginBottom: '8px', margin: 0 }}>
+                {tool.name}
+              </Title>
+              <Text type="secondary" style={{ fontSize: '14px', marginBottom: '12px' }}>
+                {tool.description}
+              </Text>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                {tool.category}
+              </Text>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </div>
+  );
 
-  const handleThemeToggle = () => {
-    // 在标题栏中不再使用这个函数，使用新的handleThemeSet
-    const themes: ('light' | 'dark' | 'system')[] = ['light', 'dark', 'system'];
-    const currentIndex = themes.indexOf(theme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    handleThemeSet(themes[nextIndex]);
-  };
-
-  const handleToolClick = (toolId: string) => {
-    setSelectedTool(toolId);
-    setCurrentView('config');
-
-    // 更新窗口标题
-    const titles = {
-      'ai-config': 'AI 工具配置',
-      'node-manager': 'Node.js 管理',
-      'npm-manager': 'NPM 包管理',
-      'settings': '系统设置'
-    };
-    updateWindowTitle(titles[toolId as keyof typeof titles] || '配置');
-  };
-
-  const handleBackToHome = () => {
-    if (currentView !== 'home') {
-      setCurrentView('home');
-      setSelectedTool(null);
-      updateWindowTitle('首页');
-    }
-  };
-
-  const handleSettingsClick = () => {
-    setSelectedTool('settings');
-    setCurrentView('config');
-    updateWindowTitle('系统设置');
-  };
-
-  const updateWindowTitle = async (title: string) => {
-    try {
-      const window = getCurrentWindow();
-      await window.setTitle(`AI Tools Manager - ${title}`);
-    } catch (error) {
-      console.error('更新窗口标题失败:', error);
-      // 静默失败，不影响主要功能
-    }
+  
+  const themeConfig: ThemeConfig = {
+    algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+    token: {
+      colorPrimary: '#1890ff',
+    },
   };
 
   return (
-    <div className="app">
-      {/* 原生标题栏按钮 */}
-      <NativeTitleBar
-        currentView={currentView}
-        selectedTool={selectedTool}
-        onNavigateHome={handleBackToHome}
-        onNavigateSettings={handleSettingsClick}
-        onThemeChange={handleThemeSet}
-        currentTheme={theme}
-      />
+    <ConfigProvider theme={themeConfig}>
+      <Layout
+        style={{
+          minHeight: '100vh',
+          background: isDarkMode ? '#141414' : '#ffffff',
+          color: isDarkMode ? '#ffffff' : '#000000',
+        }}
+      >
+        {/* 自定义标题栏 */}
+        <Header
+          style={{
+            padding: 0,
+            height: 'auto',
+            background: 'transparent',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+          }}
+        >
+          <ElectronTitleBar
+            selectedTool={selectedTool}
+            onNavigateSettings={() => {}}
+            onThemeChange={handleThemeChange}
+            currentTheme={currentTheme}
+          />
+        </Header>
 
-      {/* 主内容区 */}
-      <div className={`main-content ${currentView === 'home' ? 'home' : ''}`}>
-        {currentView === 'home' ? (
-          <Dashboard onToolClick={handleToolClick} />
-        ) : (
-          <div className="config-page">
-            <div className="config-content">
-              {selectedTool === 'ai-config' && <AIConfig />}
-              {selectedTool === 'node-manager' && <NodeManager />}
-              {selectedTool === 'npm-manager' && <NPMManager />}
-              {selectedTool === 'settings' && <SettingsPage />}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        {/* 主内容区域 */}
+        <Content
+          style={{
+            marginTop: '32px', // 为标题栏留出空间
+            background: isDarkMode ? '#141414' : '#ffffff',
+            color: isDarkMode ? '#ffffff' : '#000000',
+          }}
+        >
+          {renderHome()}
+        </Content>
+      </Layout>
+    </ConfigProvider>
   );
 }
 

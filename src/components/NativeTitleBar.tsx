@@ -1,4 +1,5 @@
 import React from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
   Home,
   Sun,
@@ -24,6 +25,29 @@ const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
   onThemeChange,
   currentTheme
 }) => {
+  const handleWindowControl = async (action: 'close' | 'minimize' | 'maximize') => {
+    try {
+      const window = getCurrentWindow();
+      switch (action) {
+        case 'close':
+          await window.close();
+          break;
+        case 'minimize':
+          await window.minimize();
+          break;
+        case 'maximize':
+          if (await window.isMaximized()) {
+            await window.unmaximize();
+          } else {
+            await window.maximize();
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Window control error:', error);
+    }
+  };
+
   const cycleTheme = () => {
     const themes: ('light' | 'dark' | 'system')[] = ['light', 'dark', 'system'];
     const currentIndex = themes.indexOf(currentTheme);
@@ -34,86 +58,273 @@ const NativeTitleBar: React.FC<NativeTitleBarProps> = ({
   const getThemeIcon = () => {
     switch (currentTheme) {
       case 'light':
-        return <Sun size={14} />;
+        return <Sun size={12} />;
       case 'dark':
-        return <Moon size={14} />;
+        return <Moon size={12} />;
       case 'system':
-        return <Monitor size={14} />;
+        return <Monitor size={12} />;
       default:
-        return <Sun size={14} />;
+        return <Sun size={12} />;
     }
-  };
-
-  const getThemeTitle = () => {
-    switch (currentTheme) {
-      case 'light':
-        return '浅色主题';
-      case 'dark':
-        return '深色主题';
-      case 'system':
-        return '跟随系统';
-      default:
-        return '浅色主题';
-    }
-  };
-
-  const getCurrentPageTitle = () => {
-    if (currentView === 'home') {
-      return 'AI Tools Manager';
-    }
-
-    const titles = {
-      'ai-config': 'AI 工具配置',
-      'node-manager': 'Node.js 管理',
-      'npm-manager': 'NPM 包管理',
-      'settings': '系统设置'
-    };
-
-    return titles[selectedTool as keyof typeof titles] || '配置';
   };
 
   return (
-    <div className="custom-titlebar" style={{ WebkitAppRegion: 'drag' as any }}>
-      {/* 红绿灯按钮预留空间 */}
-      <div className="traffic-lights-spacer"></div>
-
-      {/* 工具栏内容 */}
-      <div className="titlebar-content">
-        <button
-          className="titlebar-button"
-          onClick={onNavigateHome}
-          style={{ WebkitAppRegion: 'no-drag' as any }}
+    <div
+      className="native-titlebar"
+      style={{
+        height: '40px',
+        background: 'rgba(0, 0, 0, 0)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000
+      }}
+    >
+      {/* 左侧：拖拽区域和导航按钮 */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          height: '100%',
+          flex: 1,
+          padding: '0 16px'
+        }}
+        data-tauri-drag-region
+      >
+        {/* macOS 窗口控制按钮 */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginRight: '12px'
+          }}
         >
-          <Home size={14} />
+          <button
+            onClick={() => handleWindowControl('close')}
+            style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: '#ff5f57',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              WebkitAppRegion: 'no-drag' as any
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.opacity = '0.8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.opacity = '1';
+            }}
+            title="关闭"
+          />
+          <button
+            onClick={() => handleWindowControl('minimize')}
+            style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: '#ffbd2e',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              WebkitAppRegion: 'no-drag' as any
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.opacity = '0.8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.opacity = '1';
+            }}
+            title="最小化"
+          />
+          <button
+            onClick={() => handleWindowControl('maximize')}
+            style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: '#28ca42',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              WebkitAppRegion: 'no-drag' as any
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.opacity = '0.8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.opacity = '1';
+            }}
+            title="最大化"
+          />
+        </div>
+
+        {/* 拖拽区域 */}
+        <div
+          style={{
+            flex: 1,
+            height: '100%',
+            cursor: 'move'
+          }}
+          data-tauri-drag-region
+        />
+
+        {/* 首页按钮 */}
+        <button
+          onClick={onNavigateHome}
+          className="titlebar-nav-button"
+          style={{
+            background: currentView === 'home'
+              ? 'rgba(59, 130, 246, 0.1)'
+              : 'rgba(0, 0, 0, 0)',
+            border: currentView === 'home'
+              ? '1px solid rgba(59, 130, 246, 0.2)'
+              : '1px solid rgba(0, 0, 0, 0.1)',
+            borderRadius: '8px',
+            padding: '6px 12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            fontWeight: '500',
+            color: currentView === 'home' ? '#3b82f6' : '#666',
+            transition: 'all 0.15s ease',
+            WebkitAppRegion: 'no-drag' as any,
+            minHeight: '24px'
+          }}
+          onMouseEnter={(e) => {
+            if (currentView !== 'home') {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentView !== 'home') {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0)';
+              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+            }
+          }}
+          title="首页"
+        >
+          <Home size={12} />
           <span>首页</span>
         </button>
 
-        <div className="titlebar-separator"></div>
+        {/* 工具名称显示 */}
+        {selectedTool && (
+          <span style={{
+            fontSize: '13px',
+            color: '#333',
+            fontWeight: '500',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            maxWidth: '200px'
+          }}>
+            {selectedTool}
+          </span>
+        )}
+      </div>
 
-        <span className="titlebar-label">
-          {getCurrentPageTitle()}
-        </span>
+      {/* 右侧工具按钮 */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          height: '100%',
+          padding: '0 16px'
+        }}
+      >
+        {/* 主题切换按钮 */}
+        <button
+          onClick={cycleTheme}
+          className="titlebar-tool-button"
+          style={{
+            background: 'rgba(0, 0, 0, 0)',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
+            borderRadius: '8px',
+            padding: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            color: '#666',
+            transition: 'all 0.15s ease',
+            WebkitAppRegion: 'no-drag' as any,
+            minHeight: '24px',
+            width: '24px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0)';
+            e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+          }}
+          title={`当前主题: ${currentTheme}`}
+        >
+          {getThemeIcon()}
+        </button>
 
-        {/* 右侧工具 */}
-        <div className="titlebar-right">
-          <button
-            className="icon-button"
-            onClick={cycleTheme}
-            title={`${getThemeTitle()} (点击切换)`}
-            style={{ WebkitAppRegion: 'no-drag' as any }}
-          >
-            {getThemeIcon()}
-          </button>
-
-          <button
-            className="icon-button"
-            onClick={onNavigateSettings}
-            title="系统设置"
-            style={{ WebkitAppRegion: 'no-drag' as any }}
-          >
-            <Settings size={14} />
-          </button>
-        </div>
+        {/* 设置按钮 */}
+        <button
+          onClick={onNavigateSettings}
+          className="titlebar-tool-button"
+          style={{
+            background: currentView === 'config'
+              ? 'rgba(59, 130, 246, 0.1)'
+              : 'rgba(0, 0, 0, 0)',
+            border: currentView === 'config'
+              ? '1px solid rgba(59, 130, 246, 0.2)'
+              : '1px solid rgba(0, 0, 0, 0.1)',
+            borderRadius: '8px',
+            padding: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            color: currentView === 'config' ? '#3b82f6' : '#666',
+            transition: 'all 0.15s ease',
+            WebkitAppRegion: 'no-drag' as any,
+            minHeight: '24px',
+            width: '24px'
+          }}
+          onMouseEnter={(e) => {
+            if (currentView !== 'config') {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentView !== 'config') {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0)';
+              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+            }
+          }}
+          title="设置"
+        >
+          <Settings size={12} />
+        </button>
       </div>
     </div>
   );
