@@ -34,7 +34,7 @@
     "electron": "electron .",
     "electron-pack": "electron-builder",
     "preelectron-pack": "npm run build",
-    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && NODE_ENV=development electron .\"",
     "dist": "npm run build && electron-builder",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:win": "npm run build && electron-builder --win",

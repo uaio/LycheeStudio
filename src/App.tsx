@@ -64,10 +64,11 @@ const aiTools = [
 type ThemeType = 'light' | 'dark' | 'system';
 
 function App() {
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<'home' | string>('home');
   const [currentTheme, setCurrentTheme] = useState<ThemeType>('system');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  
   // 主题切换处理
   const handleThemeChange = (theme: ThemeType) => {
     setCurrentTheme(theme);
@@ -101,13 +102,95 @@ function App() {
     return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
   }, [currentTheme]);
 
+  // 渲染工具详情页面
+  const renderToolDetail = () => {
+    const tool = aiTools.find(t => t.name === currentView);
+    if (!tool) return null;
+
+    return (
+      <div style={{ padding: '24px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '32px',
+          cursor: 'pointer'
+        }} onClick={() => setCurrentView('home')}>
+          <span style={{ fontSize: '16px', color: '#1890ff' }}>← 返回首页</span>
+        </div>
+
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '16px'
+          }}>
+            <div
+              style={{
+                color: tool.color,
+                marginRight: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
+                background: `${tool.color}20`,
+                fontSize: '32px'
+              }}
+            >
+              {tool.icon}
+            </div>
+            <Title level={2} style={{ margin: 0 }}>
+              {tool.name}
+            </Title>
+          </div>
+          <Paragraph type="secondary" style={{ fontSize: '16px' }}>
+            {tool.description}
+          </Paragraph>
+        </div>
+
+        <Card style={{ marginBottom: '24px' }}>
+          <Title level={4}>功能特性</Title>
+          <ul>
+            <li>命令行界面</li>
+            <li>多平台支持</li>
+            <li>实时同步</li>
+            <li>配置管理</li>
+          </ul>
+        </Card>
+
+        <Card style={{ marginBottom: '24px' }}>
+          <Title level={4}>快速开始</Title>
+          <Paragraph>
+            1. 确保已安装必要的依赖<br/>
+            2. 配置您的API密钥<br/>
+            3. 开始使用命令行工具
+          </Paragraph>
+        </Card>
+
+        <Card>
+          <Title level={4}>使用示例</Title>
+          <pre style={{
+            background: isDarkMode ? '#1f1f1f' : '#f5f5f5',
+            padding: '16px',
+            borderRadius: '8px',
+            overflow: 'auto'
+          }}>
+            <code>{`${tool.name.toLowerCase().replace(' ', '-')} --help`}</code>
+          </pre>
+        </Card>
+      </div>
+    );
+  };
+
   // 渲染首页
   const renderHome = () => (
     <div style={{ padding: '24px' }}>
       <div style={{ textAlign: 'center', marginBottom: '48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
           <img
-            src="/assets/lychee.svg"
+            src="./assets/lychee.svg"
             alt="LycheeStudio Logo"
             style={{ width: '48px', height: '48px', marginRight: '16px' }}
           />
@@ -118,7 +201,8 @@ function App() {
         <Paragraph type="secondary" style={{ fontSize: '16px' }}>
           统一管理您的 AI 开发工具和配置
         </Paragraph>
-      </div>
+
+        </div>
 
       <Row gutter={[24, 24]}>
         {aiTools.map((tool, index) => (
@@ -139,7 +223,9 @@ function App() {
                   padding: '24px'
                 }
               }}
-              onClick={() => setSelectedTool(tool.name)}
+              onClick={() => {
+              setCurrentView(tool.name);
+            }}
             >
               <div
                 style={{
@@ -203,7 +289,7 @@ function App() {
           }}
         >
           <ElectronTitleBar
-            selectedTool={selectedTool}
+            selectedTool={null} // 不在标题栏显示选中的工具
             onNavigateSettings={() => {}}
             onThemeChange={handleThemeChange}
             currentTheme={currentTheme}
@@ -218,7 +304,7 @@ function App() {
             color: isDarkMode ? '#ffffff' : '#000000',
           }}
         >
-          {renderHome()}
+          {currentView === 'home' ? renderHome() : renderToolDetail()}
         </Content>
       </Layout>
     </ConfigProvider>
