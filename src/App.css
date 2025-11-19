@@ -88,6 +88,56 @@ body {
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* 侧边栏滚动条样式 - 覆盖式不占空间 */
+.sidebar-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* 深色模式下的侧边栏滚动条 */
+.sidebar-scroll-container.dark-mode::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-scroll-container.dark-mode::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Firefox 滚动条样式 */
+.sidebar-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.sidebar-scroll-container.dark-mode {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* 确保 Ant Design 菜单项不会被滚动条挤压 */
+.ant-menu-inline.ant-menu-root .ant-menu-item,
+.ant-menu-inline.ant-menu-root .ant-menu-submenu-title {
+  margin-right: 0 !important;
+  padding-right: 24px !important;
+}
+
+/* 侧边栏容器样式 */
+.ant-layout-sider-children {
+  overflow: hidden !important;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .electron-titlebar {

@@ -246,18 +246,26 @@ function App() {
         top: 38,
       }}
     >
-      <div style={{
-        padding: '16px',
-        height: '100%',
-        overflowY: 'auto',
-        overflowX: 'hidden'
-      }}>
+      <div
+        className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+        style={{
+          padding: '16px',
+          height: '100%',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          // 确保滚动条不占用额外空间
+          marginRight: 0,
+          paddingRight: 0,
+        }}
+      >
         <Menu
           mode="inline"
           selectedKeys={[currentView === 'home' ? 'home' : currentView]}
           style={{
             border: 'none',
-            background: 'transparent'
+            background: 'transparent',
+            // 确保菜单不被挤压
+            width: '100%',
           }}
           items={[
             {
