@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu } from 'antd';
+import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button } from 'antd';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
 import {
@@ -18,19 +18,45 @@ import {
 } from 'lucide-react';
 import './App.css';
 
+// 全局类型声明
+declare global {
+  interface Window {
+    electronAPI?: {
+      checkToolInstalled: (toolName: string) => Promise<{ installed: boolean; path: string | null }>;
+      installTool: (toolName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+      getToolVersion: (toolName: string) => Promise<{ version: string | null; error: string | null }>;
+      getLatestNodeVersion: () => Promise<{ success: boolean; version?: string; error?: string }>;
+      showMessageBox: (options: any) => Promise<any>;
+    };
+  }
+}
+
 const { Header, Content, Sider } = Layout;
 const { Title, Paragraph } = Typography;
 
 // LycheeStudio - 系统状态卡片
-const statusCards = [
+const initialStatusCards = [
   {
     name: 'Node.js',
-    version: 'v18.19.0',
-    status: 'active' as 'active' | 'warning' | 'error',
+    version: '检测中...',
+    status: 'warning' as 'active' | 'warning' | 'error',
     description: 'JavaScript 运行环境',
     icon: <Code size={18} />,
     color: '#68a063',
-    detail: 'LTS 版本运行中'
+    detail: '正在检测版本',
+    installable: true,
+    installCommand: 'node'
+  },
+  {
+    name: 'FNM',
+    version: '检测中...',
+    status: 'warning' as 'active' | 'warning' | 'error',
+    description: 'Fast Node Manager',
+    icon: <Package size={18} />,
+    color: '#f59e0b',
+    detail: '正在检测安装状态',
+    installable: true,
+    installCommand: 'fnm'
   },
   {
     name: 'NPM 源',
@@ -89,7 +115,175 @@ function App() {
     return savedTheme || 'system';
   });
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [statusCards, setStatusCards] = useState(initialStatusCards);
+  const [installingTool, setInstallingTool] = useState<string | null>(null);
 
+  // 检查工具安装状态
+  const checkToolStatus = async (toolName: string) => {
+    console.log(`开始检查 ${toolName} 状态...`);
+    console.log('window.electronAPI:', window.electronAPI);
+
+    if (!window.electronAPI) {
+      console.error('electronAPI 不存在');
+      return;
+    }
+
+    try {
+      console.log(`检查 ${toolName} 是否已安装...`);
+      // 检查是否已安装
+      const checkResult = await window.electronAPI.checkToolInstalled(toolName);
+      console.log(`${toolName} 检查结果:`, checkResult);
+
+      // 获取版本信息
+      let version = '未知版本';
+      let status: 'active' | 'warning' | 'error' = 'warning';
+      let detail = '';
+
+      if (checkResult.installed) {
+        console.log(`${toolName} 已安装，获取版本信息...`);
+        const versionResult = await window.electronAPI.getToolVersion(toolName);
+        console.log(`${toolName} 版本结果:`, versionResult);
+
+        if (versionResult.version) {
+          version = versionResult.version;
+          status = 'active';
+          detail = `${toolName} 已安装`;
+        } else {
+          version = '已安装';
+          status = 'active';
+          detail = `${toolName} 运行正常`;
+        }
+      } else {
+        version = '未安装';
+        status = 'error';
+        detail = `点击安装 ${toolName}`;
+      }
+
+      console.log(`更新 ${toolName} 状态:`, { version, status, detail });
+
+      // 更新状态卡片
+      setStatusCards(prevCards => {
+        console.log('当前状态卡片:', prevCards);
+        const updatedCards = prevCards.map(card =>
+          card.name.toUpperCase() === toolName.toUpperCase()
+            ? { ...card, version, status, detail }
+            : card
+        );
+        console.log('更新后状态卡片:', updatedCards);
+        return updatedCards;
+      });
+    } catch (error) {
+      console.error(`检查 ${toolName} 状态失败:`, error);
+      setStatusCards(prevCards =>
+        prevCards.map(card =>
+          card.name.toUpperCase() === toolName.toUpperCase()
+            ? {
+                ...card,
+                version: '检测失败',
+                status: 'error',
+                detail: '检测工具状态时出错'
+              }
+            : card
+        )
+      );
+    }
+  };
+
+  // 安装工具
+  const installTool = async (toolName: string) => {
+    if (!window.electronAPI || installingTool) return;
+
+    setInstallingTool(toolName);
+
+    try {
+      const result = await window.electronAPI.installTool(toolName);
+
+      if (result.success) {
+        // 显示成功消息
+        await window.electronAPI.showMessageBox({
+          type: 'info',
+          title: '安装成功',
+          message: result.message,
+          buttons: ['确定']
+        });
+
+        // 重新检测工具状态
+        setTimeout(() => {
+          checkToolStatus(toolName);
+        }, 2000);
+      } else {
+        // 显示错误消息
+        await window.electronAPI.showMessageBox({
+          type: 'error',
+          title: '安装失败',
+          message: result.error,
+          buttons: ['确定']
+        });
+      }
+    } catch (error) {
+      console.error('安装工具失败:', error);
+      await window.electronAPI.showMessageBox({
+        type: 'error',
+        title: '安装失败',
+        message: `安装 ${toolName} 时发生错误`,
+        buttons: ['确定']
+      });
+    } finally {
+      setInstallingTool(null);
+    }
+  };
+
+  // 初始化时检测工具状态
+  useEffect(() => {
+    console.log('=== App 组件加载 ===');
+    console.log('当前环境:', process.env.NODE_ENV);
+
+    // 立即检查 electronAPI
+    console.log('立即检查 electronAPI:', window.electronAPI);
+
+  
+    // 延迟执行以确保 electron API 完全初始化
+    const timer = setTimeout(() => {
+      console.log('1秒后检查 electronAPI:', window.electronAPI);
+
+      if (window.electronAPI) {
+        console.log('开始检测工具状态...');
+        // 检测 Node.js
+        checkToolStatus('node');
+        // 检测 fnm
+        checkToolStatus('fnm');
+      } else {
+        console.error('electronAPI 未找到');
+        // 如果 electronAPI 不存在，设置为错误状态
+        setStatusCards(prevCards =>
+          prevCards.map(card => {
+            if (card.name === 'Node.js' || card.name === 'FNM') {
+              return {
+                ...card,
+                version: 'API不可用',
+                status: 'error' as 'active' | 'warning' | 'error',
+                detail: 'Electron API 初始化失败'
+              };
+            }
+            return card;
+          })
+        );
+      }
+    }, 1000); // 延迟1秒执行
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 处理卡片点击事件
+  const handleCardClick = (card: any) => {
+    if (card.installable && card.status === 'error') {
+      installTool(card.installCommand);
+    } else if (card.name === 'Node.js' || card.name === 'NPM 源') {
+      setCurrentView('nodejs');
+    } else if (card.name.includes('API')) {
+      setCurrentView('ai-tools');
+    }
+  };
 
   // 主题切换处理
   const handleThemeChange = (theme: ThemeType) => {
@@ -230,8 +424,23 @@ function App() {
     );
   }
 
-  return null;
-  };
+  // 默认返回空内容而不是 null，避免整个组件消失
+  return (
+    <div style={{
+      padding: '32px',
+      marginLeft: '240px',
+      minHeight: 'calc(100vh - 38px)',
+      background: isDarkMode ? '#141414' : '#ffffff'
+    }}>
+      <div style={{ textAlign: 'center', marginTop: '100px' }}>
+        <p style={{ color: isDarkMode ? '#a0a0a0' : '#666' }}>页面未找到</p>
+        <Button type="primary" onClick={() => setCurrentView('home')}>
+          返回首页
+        </Button>
+      </div>
+    </div>
+  );
+};
 
   // 渲染侧边栏菜单
   const renderSidebar = () => (
@@ -361,14 +570,7 @@ function App() {
                     height: '100%',
                   }
                 }}
-                onClick={() => {
-                  // 快速跳转到相关配置页面
-                  if (card.name === 'Node.js' || card.name === 'NPM 源') {
-                    setCurrentView('nodejs');
-                  } else if (card.name.includes('API')) {
-                    setCurrentView('ai-tools');
-                  }
-                }}
+                onClick={() => handleCardClick(card)}
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -390,8 +592,32 @@ function App() {
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                       {card.status === 'active' && <CheckCircle size={16} color="#52c41a" />}
                       {card.status === 'warning' && <AlertCircle size={16} color="#faad14" />}
-                      {card.status === 'error' && <XCircle size={16} color="#f5222d" />}
-                      <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
+                      {card.status === 'error' && (
+                        card.installable ? (
+                          <Button
+                            size="small"
+                            type="primary"
+                            loading={installingTool === card.installCommand}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCardClick(card);
+                            }}
+                            style={{
+                              fontSize: '10px',
+                              height: '24px',
+                              padding: '0 8px',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            {installingTool === card.installCommand ? '安装中...' : '安装'}
+                          </Button>
+                        ) : (
+                          <XCircle size={16} color="#f5222d" />
+                        )
+                      )}
+                      {!card.installable && card.status !== 'error' && (
+                        <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
+                      )}
                     </div>
                   </div>
 
@@ -411,6 +637,15 @@ function App() {
                     }}>
                       {card.version}
                     </div>
+                    {card.detail && (
+                      <div style={{
+                        fontSize: '10px',
+                        color: isDarkMode ? '#a0a0a0' : '#666',
+                        marginTop: '4px'
+                      }}>
+                        {card.detail}
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -428,6 +663,10 @@ function App() {
       colorPrimary: '#1890ff',
     },
   };
+
+  // 调试：在渲染前打印状态卡片状态
+  console.log('🎯 渲染时的状态卡片:', statusCards);
+  console.log('🎯 渲染时的状态卡片数量:', statusCards.length);
 
   return (
     <ConfigProvider theme={themeConfig}>
