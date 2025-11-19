@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Sun,
   Moon,
@@ -24,45 +24,10 @@ const ElectronTitleBar: React.FC<ElectronTitleBarProps> = ({
   currentTheme
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // 检测系统主题
-  useEffect(() => {
-    // 检测系统主题偏好
-    const checkSystemTheme = () => {
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setIsDarkMode(true);
-      } else {
-        setIsDarkMode(false);
-      }
-    };
-
-    checkSystemTheme();
-
-    // 监听系统主题变化
-    if (window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = (e: MediaQueryListEvent) => {
-        setIsDarkMode(e.matches);
-      };
-
-      // 添加事件监听器
-      if (mediaQuery.addEventListener) {
-        mediaQuery.addEventListener('change', handleChange);
-      } else {
-        // 兼容旧版本浏览器
-        mediaQuery.addListener(handleChange);
-      }
-
-      return () => {
-        if (mediaQuery.removeEventListener) {
-          mediaQuery.removeEventListener('change', handleChange);
-        } else {
-          mediaQuery.removeListener(handleChange);
-        }
-      };
-    }
-  }, []);
+  // 根据currentTheme计算isDarkMode状态
+  const isDarkMode = currentTheme === 'dark' ||
+    (currentTheme === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   // 窗口控制处理
   const handleWindowControl = async (action: 'minimize' | 'maximize' | 'close') => {
@@ -119,13 +84,13 @@ const ElectronTitleBar: React.FC<ElectronTitleBarProps> = ({
      window.electronAPI?.getPlatform?.() === 'darwin');
 
   const baseStyle: React.CSSProperties = {
-    height: '32px',
+    height: '38px',
     background: isDarkMode
-      ? 'rgba(0, 0, 0, 0.8)'
-      : 'rgba(255, 255, 255, 0.8)',
+      ? '#1f1f1f'
+      : 'rgba(255, 255, 255, 0.95)',
     borderBottom: isDarkMode
-      ? '1px solid rgba(255, 255, 255, 0.1)'
-      : '1px solid rgba(0, 0, 0, 0.1)',
+      ? '1px solid rgba(255, 255, 255, 0.06)'
+      : '1px solid rgba(0, 0, 0, 0.08)',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
     WebkitUserSelect: 'none' as any,

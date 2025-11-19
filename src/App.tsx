@@ -1,63 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { ConfigProvider, Layout, Card, Row, Col, Typography, theme } from 'antd';
+import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu } from 'antd';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
 import {
   Bot,
   Terminal,
   Cloud,
-  Database,
-  Shield,
-  FileText
+  Home,
+  HelpCircle,
+  ChevronRight,
+  Package,
+  Code,
+  Zap,
+  CheckCircle,
+  AlertCircle,
+  XCircle
 } from 'lucide-react';
 import './App.css';
 
-const { Header, Content } = Layout;
-const { Title, Paragraph, Text } = Typography;
+const { Header, Content, Sider } = Layout;
+const { Title, Paragraph } = Typography;
 
-// LycheeStudio - AI 工具列表
-const aiTools = [
+// LycheeStudio - 系统状态卡片
+const statusCards = [
   {
-    name: 'Claude CLI',
-    description: 'Anthropic Claude 命令行工具',
-    icon: <Bot size={24} />,
-    category: 'AI Assistant',
-    color: '#d97706'
+    name: 'Node.js',
+    version: 'v18.19.0',
+    status: 'active' as 'active' | 'warning' | 'error',
+    description: 'JavaScript 运行环境',
+    icon: <Code size={18} />,
+    color: '#68a063',
+    detail: 'LTS 版本运行中'
   },
   {
-    name: 'OpenAI CLI',
-    description: 'OpenAI GPT 命令行工具',
-    icon: <Cloud size={24} />,
-    category: 'AI Assistant',
-    color: '#3b82f6'
+    name: 'NPM 源',
+    version: '淘宝镜像',
+    status: 'active' as 'active' | 'warning' | 'error',
+    description: '包管理器源配置',
+    icon: <Package size={18} />,
+    color: '#cb3837',
+    detail: 'https://registry.npmmirror.com'
   },
   {
-    name: 'Gemini CLI',
-    description: 'Google Gemini 命令行工具',
-    icon: <Terminal size={24} />,
-    category: 'AI Assistant',
-    color: '#059669'
+    name: 'Claude API',
+    version: 'Claude-3.5-Sonnet',
+    status: 'active' as 'active' | 'warning' | 'error',
+    description: 'Anthropic AI 助手',
+    icon: <Bot size={18} />,
+    color: '#d97706',
+    detail: 'API 连接正常'
   },
   {
-    name: 'Node.js Manager',
-    description: 'Node.js 版本管理工具',
-    icon: <Database size={24} />,
-    category: 'Development',
-    color: '#10b981'
+    name: 'OpenAI API',
+    version: 'GPT-4o',
+    status: 'warning' as 'active' | 'warning' | 'error',
+    description: 'OpenAI GPT 模型',
+    icon: <Cloud size={18} />,
+    color: '#3b82f6',
+    detail: '需要更新密钥'
   },
   {
-    name: 'NPM Manager',
-    description: 'NPM 包管理工具',
-    icon: <FileText size={24} />,
-    category: 'Development',
-    color: '#dc2626'
+    name: 'Gemini API',
+    version: 'Gemini-1.5-Pro',
+    status: 'active' as 'active' | 'warning' | 'error',
+    description: 'Google AI 模型',
+    icon: <Zap size={18} />,
+    color: '#059669',
+    detail: '服务可用'
   },
   {
-    name: 'Security Tools',
-    description: '安全配置管理工具',
-    icon: <Shield size={24} />,
-    category: 'Security',
-    color: '#7c3aed'
+    name: '开发环境',
+    version: '就绪',
+    status: 'active' as 'active' | 'warning' | 'error',
+    description: '整体开发状态',
+    icon: <Terminal size={18} />,
+    color: '#10b981',
+    detail: '所有工具已配置'
   }
 ];
 
@@ -65,13 +83,22 @@ type ThemeType = 'light' | 'dark' | 'system';
 
 function App() {
   const [currentView, setCurrentView] = useState<'home' | string>('home');
-  const [currentTheme, setCurrentTheme] = useState<ThemeType>('system');
+  const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
+    // 从 localStorage 读取保存的主题设置
+    const savedTheme = localStorage.getItem('app-theme') as ThemeType;
+    return savedTheme || 'system';
+  });
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  
+
   // 主题切换处理
   const handleThemeChange = (theme: ThemeType) => {
     setCurrentTheme(theme);
+
+    // 保存主题设置到 localStorage
+    localStorage.setItem('app-theme', theme);
+
+    console.log(`主题切换到: ${theme === 'light' ? '浅色' : theme === 'dark' ? '深色' : '跟随系统'}`);
 
     // 应用主题到文档
     const root = document.documentElement;
@@ -104,157 +131,285 @@ function App() {
 
   // 渲染工具详情页面
   const renderToolDetail = () => {
-    const tool = aiTools.find(t => t.name === currentView);
-    if (!tool) return null;
+    // 处理不同的视图类型
+    if (currentView === 'nodejs' || currentView === 'ai-tools' ||
+        currentView === 'dev-recommend' || currentView === 'help') {
+      // 显示占位页面
+      const viewTitles = {
+        'nodejs': 'Node.js 管理',
+        'ai-tools': 'AI 工具配置',
+        'dev-recommend': '开发推荐',
+        'help': '帮助中心'
+      };
 
-    return (
-      <div style={{ padding: '24px' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '32px',
-          cursor: 'pointer'
-        }} onClick={() => setCurrentView('home')}>
-          <span style={{ fontSize: '16px', color: '#1890ff' }}>← 返回首页</span>
-        </div>
+      const viewDescriptions = {
+        'nodejs': 'Node.js 版本切换、NPM 源管理、包管理工具配置',
+        'ai-tools': 'Claude Code、OpenAI CLI、Gemini CLI 等 AI 工具配置',
+        'dev-recommend': 'VS Code 扩展、开发工具、学习资源推荐',
+        'help': '文档、教程、关于信息'
+      };
 
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+      return (
+        <>
+          {renderSidebar()}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '16px'
+            padding: '32px',
+            marginLeft: '240px',
+            minHeight: 'calc(100vh - 38px)',
+            background: isDarkMode ? '#141414' : '#ffffff'
           }}>
-            <div
-              style={{
-                color: tool.color,
-                marginRight: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '64px',
-                height: '64px',
-                borderRadius: '16px',
-                background: `${tool.color}20`,
-                fontSize: '32px'
-              }}
-            >
-              {tool.icon}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '32px',
+              cursor: 'pointer'
+            }} onClick={() => setCurrentView('home')}>
+              <ChevronRight size={16} style={{
+                transform: 'rotate(180deg)',
+                marginRight: '8px',
+                color: '#1890ff'
+              }} />
+              <span style={{ fontSize: '14px', color: '#1890ff' }}>返回首页</span>
             </div>
-            <Title level={2} style={{ margin: 0 }}>
-              {tool.name}
-            </Title>
-          </div>
-          <Paragraph type="secondary" style={{ fontSize: '16px' }}>
-            {tool.description}
-          </Paragraph>
+
+            <div style={{ maxWidth: '800px' }}>
+              <Title level={2} style={{ margin: 0, marginBottom: '8px', color: isDarkMode ? '#ffffff' : '#000000' }}>
+                {viewTitles[currentView]}
+              </Title>
+              <p style={{ color: isDarkMode ? '#a0a0a0' : '#666', marginBottom: '32px' }}>
+                {viewDescriptions[currentView]}
+              </p>
+
+              <Row gutter={[24, 24]}>
+                <Col xs={24} md={12}>
+                  <Card
+                    style={{
+                      background: isDarkMode ? '#1f1f1f' : '#ffffff',
+                      border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+                      height: '100%'
+                    }}
+                  >
+                    <Title level={4} style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                      功能概述
+                    </Title>
+                    <div style={{
+                      color: isDarkMode ? '#e0e0e0' : '#333',
+                      lineHeight: '1.8'
+                    }}>
+                      <p>该页面正在开发中，即将为您提供完整的配置管理功能。</p>
+                      <p>敬请期待更多功能的到来！</p>
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <Card
+                    style={{
+                      background: isDarkMode ? '#1f1f1f' : '#ffffff',
+                      border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+                      height: '100%'
+                    }}
+                  >
+                    <Title level={4} style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                      快速导航
+                    </Title>
+                    <div style={{
+                      color: isDarkMode ? '#e0e0e0' : '#333',
+                      lineHeight: '1.8'
+                    }}>
+                      <p>• 返回首页查看系统状态</p>
+                      <p>• 通过左侧菜单访问其他功能</p>
+                      <p>• 使用右上角按钮切换主题</p>
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+            </div>
         </div>
-
-        <Card style={{ marginBottom: '24px' }}>
-          <Title level={4}>功能特性</Title>
-          <ul>
-            <li>命令行界面</li>
-            <li>多平台支持</li>
-            <li>实时同步</li>
-            <li>配置管理</li>
-          </ul>
-        </Card>
-
-        <Card style={{ marginBottom: '24px' }}>
-          <Title level={4}>快速开始</Title>
-          <Paragraph>
-            1. 确保已安装必要的依赖<br/>
-            2. 配置您的API密钥<br/>
-            3. 开始使用命令行工具
-          </Paragraph>
-        </Card>
-
-        <Card>
-          <Title level={4}>使用示例</Title>
-          <pre style={{
-            background: isDarkMode ? '#1f1f1f' : '#f5f5f5',
-            padding: '16px',
-            borderRadius: '8px',
-            overflow: 'auto'
-          }}>
-            <code>{`${tool.name.toLowerCase().replace(' ', '-')} --help`}</code>
-          </pre>
-        </Card>
-      </div>
+      </>
     );
+  }
+
+  return null;
   };
+
+  // 渲染侧边栏菜单
+  const renderSidebar = () => (
+    <Sider
+      width={240}
+      style={{
+        background: isDarkMode ? '#1f1f1f' : '#f8f9fa',
+        borderRight: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
+        height: 'calc(100vh - 38px)',
+        position: 'fixed',
+        left: 0,
+        top: 38,
+      }}
+    >
+      <div style={{
+        padding: '16px',
+        height: '100%',
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}>
+        <Menu
+          mode="inline"
+          selectedKeys={[currentView === 'home' ? 'home' : currentView]}
+          style={{
+            border: 'none',
+            background: 'transparent'
+          }}
+          items={[
+            {
+              key: 'home',
+              icon: <Home size={16} />,
+              label: '首页',
+              onClick: () => setCurrentView('home'),
+            },
+            {
+              key: 'nodejs',
+              icon: <Code size={16} />,
+              label: 'Node.js',
+              children: [
+                { key: 'node-version', label: '版本切换' },
+                { key: 'npm-source', label: 'NPM 源管理' },
+                { key: 'package-managers', label: '包管理工具' },
+              ],
+            },
+            {
+              key: 'ai-tools',
+              icon: <Bot size={16} />,
+              label: 'AI 工具',
+              children: [
+                { key: 'claude-code', label: 'Claude Code' },
+                { key: 'openai-cli', label: 'OpenAI CLI' },
+                { key: 'gemini-cli', label: 'Gemini CLI' },
+                { key: 'github-copilot', label: 'GitHub Copilot' },
+              ],
+            },
+            {
+              key: 'dev-recommend',
+              icon: <Terminal size={16} />,
+              label: '开发推荐',
+              children: [
+                { key: 'vscode-extensions', label: 'VS Code 扩展' },
+                { key: 'dev-tools', label: '开发工具' },
+                { key: 'learning-resources', label: '学习资源' },
+              ],
+            },
+            {
+              key: 'help',
+              icon: <HelpCircle size={16} />,
+              label: '帮助',
+              children: [
+                { key: 'documentation', label: '文档' },
+                { key: 'tutorials', label: '教程' },
+                { key: 'about', label: '关于' },
+              ],
+            },
+          ]}
+        />
+      </div>
+    </Sider>
+  );
 
   // 渲染首页
   const renderHome = () => (
-    <div style={{ padding: '24px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-          <img
-            src="./assets/lychee.svg"
-            alt="LycheeStudio Logo"
-            style={{ width: '48px', height: '48px', marginRight: '16px' }}
-          />
-          <Title level={2} style={{ margin: 0 }}>
-            LycheeStudio
-          </Title>
-        </div>
-        <Paragraph type="secondary" style={{ fontSize: '16px' }}>
-          统一管理您的 AI 开发工具和配置
+    <div style={{
+      padding: '32px',
+      marginLeft: '240px', // 为侧边栏留出空间
+      minHeight: 'calc(100vh - 44px)'
+    }}>
+      <div style={{ marginBottom: '32px' }}>
+        <Title level={3} style={{ marginBottom: '8px', color: isDarkMode ? '#ffffff' : '#000000' }}>
+          AI 工具管理
+        </Title>
+        <Paragraph type="secondary" style={{ fontSize: '14px', marginBottom: 0 }}>
+          选择并管理您的 AI 开发工具，提升开发效率
         </Paragraph>
+      </div>
 
-        </div>
-
-      <Row gutter={[24, 24]}>
-        {aiTools.map((tool, index) => (
-          <Col xs={24} sm={12} md={8} lg={6} key={index}>
-            <Card
-              hoverable
-              style={{
-                height: '100%',
-                transition: 'all 0.3s ease',
-                border: isDarkMode ? '1px solid #424242' : undefined
-              }}
-              styles={{
-                body: {
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  padding: '24px'
-                }
-              }}
-              onClick={() => {
-              setCurrentView(tool.name);
-            }}
-            >
-              <div
+      <div style={{ marginBottom: '32px' }}>
+        <Row gutter={[20, 20]}>
+          {statusCards.map((card, index) => (
+            <Col xs={24} sm={12} md={8} lg={8} xl={8} key={index}>
+              <Card
+                hoverable
                 style={{
-                  color: tool.color,
-                  marginBottom: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '48px',
-                  height: '48px',
+                  height: '160px',
+                  transition: 'all 0.3s ease',
+                  border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
                   borderRadius: '12px',
-                  background: `${tool.color}20`,
+                  cursor: 'pointer',
+                  background: isDarkMode ? '#2a2a2a' : '#ffffff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
+                styles={{
+                  body: {
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    height: '100%',
+                  }
+                }}
+                onClick={() => {
+                  // 快速跳转到相关配置页面
+                  if (card.name === 'Node.js' || card.name === 'NPM 源') {
+                    setCurrentView('nodejs');
+                  } else if (card.name.includes('API')) {
+                    setCurrentView('ai-tools');
+                  }
                 }}
               >
-                {tool.icon}
-              </div>
-              <Title level={5} style={{ marginBottom: '8px', margin: 0 }}>
-                {tool.name}
-              </Title>
-              <Text type="secondary" style={{ fontSize: '14px', marginBottom: '12px' }}>
-                {tool.description}
-              </Text>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                {tool.category}
-              </Text>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div
+                      style={{
+                        color: card.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '10px',
+                        background: `${card.color}15`,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {React.cloneElement(card.icon, { size: 20 })}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {card.status === 'active' && <CheckCircle size={16} color="#52c41a" />}
+                      {card.status === 'warning' && <AlertCircle size={16} color="#faad14" />}
+                      {card.status === 'error' && <XCircle size={16} color="#f5222d" />}
+                      <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      marginBottom: '6px',
+                      color: isDarkMode ? '#ffffff' : '#000000'
+                    }}>
+                      {card.name}
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: card.color,
+                      fontWeight: 500
+                    }}>
+                      {card.version}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </div>
     </div>
   );
 
@@ -299,12 +454,17 @@ function App() {
         {/* 主内容区域 */}
         <Content
           style={{
-            marginTop: '32px', // 为标题栏留出空间
+            marginTop: '38px', // 为标题栏留出空间
             background: isDarkMode ? '#141414' : '#ffffff',
             color: isDarkMode ? '#ffffff' : '#000000',
           }}
         >
-          {currentView === 'home' ? renderHome() : renderToolDetail()}
+          {currentView === 'home' ? (
+            <>
+              {renderSidebar()}
+              {renderHome()}
+            </>
+          ) : renderToolDetail()}
         </Content>
       </Layout>
     </ConfigProvider>
