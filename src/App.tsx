@@ -223,7 +223,41 @@ const initialStatusCards = [
 type ThemeType = 'light' | 'dark' | 'system';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | string>('home');
+  const [currentView, setCurrentView] = useState<'home' | string>(() => {
+    // 从URL参数读取当前页面状态
+    const urlParams = new URLSearchParams(window.location.search);
+    const view = urlParams.get('view');
+    return view || 'home';
+  });
+
+  // 子页面到父菜单的映射关系
+  const subPageToParentMap: Record<string, string> = {
+    'node-version': 'nodejs',
+    'npm-source': 'nodejs',
+    'package-managers': 'nodejs',
+    'claude-code': 'ai-tools',
+    'openai-cli': 'ai-tools',
+    'gemini-cli': 'ai-tools',
+    'github-copilot': 'ai-tools',
+    'platform-promotions': 'activities',
+    'my-invitations': 'activities',
+    'vscode-extensions': 'dev-recommend',
+    'dev-tools': 'dev-recommend',
+    'learning-resources': 'dev-recommend',
+    'documentation': 'help',
+    'tutorials': 'help',
+    'about': 'help',
+  };
+
+  // 计算当前应该展开的父菜单
+  const getOpenKeys = (view: string): string[] => {
+    const parentKey = subPageToParentMap[view];
+    return parentKey ? [parentKey] : [];
+  };
+
+  const [openKeys, setOpenKeys] = useState<string[]>(() => {
+    return getOpenKeys(currentView);
+  });
   const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
     // 从 localStorage 读取保存的主题设置
     const savedTheme = localStorage.getItem('app-theme') as ThemeType;
@@ -238,12 +272,9 @@ function App() {
   // 安全打开链接的函数
   const openLinkSafely = (url: string) => {
     try {
-      if (window.electronAPI && window.electronAPI.openFile) {
+      if (window.electronAPI && window.electronAPI.openExternal) {
         // 在 Electron 环境中，使用默认浏览器打开链接
-        window.electronAPI.openFile().catch(() => {
-          // 如果 Electron API 失败，降级到普通打开
-          window.open(url, '_blank');
-        });
+        window.electronAPI.openExternal(url);
       } else {
         // 在普通浏览器环境中打开链接
         window.open(url, '_blank');
@@ -254,6 +285,27 @@ function App() {
       window.open(url, '_blank');
     }
   };
+
+  // 监听 currentView 变化并同步到 URL 和菜单展开状态
+  useEffect(() => {
+    const url = new URL(window.location);
+    if (currentView === 'home') {
+      // 在首页时移除 view 参数
+      url.searchParams.delete('view');
+    } else {
+      // 在其他页面时设置 view 参数
+      url.searchParams.set('view', currentView);
+    }
+
+    // 只有当 URL 发生变化时才更新
+    if (window.location.search !== url.search) {
+      window.history.replaceState({}, '', url);
+    }
+
+    // 更新菜单展开状态
+    const newOpenKeys = getOpenKeys(currentView);
+    setOpenKeys(newOpenKeys);
+  }, [currentView]);
 
   // 组件加载时自动检测NPM源
   useEffect(() => {
@@ -722,106 +774,66 @@ function App() {
                   border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
                 }}
                 styles={{ body: { padding: '20px' } }}
+                actions={[
+                  <Button
+                    type="primary"
+                    icon={<ExternalLink size={16} />}
+                    onClick={() => {
+                      openLinkSafely(activity.link);
+                    }}
+                    disabled={activity.status === 'expired'}
+                  >
+                    {activity.status === 'expired' ? '活动已结束' : '立即参与'}
+                  </Button>
+                ]}
               >
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-                  <div style={{
-                    fontSize: '32px',
-                    marginRight: '12px',
-                    filter: isDarkMode ? 'brightness(1.2)' : 'none'
-                  }}>
-                    {activity.image}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '4px'
-                    }}>
-                      <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
-                        {activity.title}
-                      </Title>
-                      <Tag color={getStatusColor(activity.status)} style={{ margin: 0 }}>
-                        {getStatusText(activity.status)}
-                      </Tag>
-                    </div>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                      {activity.platform}
-                    </Text>
-                  </div>
-                </div>
-
-                <Paragraph
-                  style={{
-                    marginBottom: '16px',
-                    color: isDarkMode ? '#e0e0e0' : '#333',
-                    lineHeight: '1.6'
-                  }}
-                >
-                  {activity.description}
-                </Paragraph>
-
-                {activity.discount && (
-                  <div style={{
-                    background: isDarkMode ? '#2a2a2a' : '#f5f5f5',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    marginBottom: '16px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff4d4f', marginBottom: '4px' }}>
-                      {activity.discount}
-                    </div>
-                    {activity.originalPrice && activity.currentPrice && (
-                      <div>
-                        <Text delete type="secondary" style={{ fontSize: '14px' }}>
-                          {activity.originalPrice}
-                        </Text>
-                        <span style={{ margin: '0 8px' }}>→</span>
-                        <Text strong style={{ fontSize: '16px', color: isDarkMode ? '#ffffff' : '#000000' }}>
-                          {activity.currentPrice}
-                        </Text>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div style={{ marginBottom: '16px' }}>
-                  <Space wrap>
-                    {activity.tags.map((tag, index) => (
-                      <Tag key={index} color="blue" style={{ fontSize: '12px' }}>
-                        {tag}
-                      </Tag>
-                    ))}
-                  </Space>
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '16px',
-                  fontSize: '12px',
-                  color: isDarkMode ? '#a0a0a0' : '#666'
-                }}>
-                  <span>有效期至: {activity.validUntil}</span>
-                </div>
-
-                <Button
-                  type="primary"
-                  block
-                  icon={<ExternalLink size={16} />}
+                <div
                   onClick={() => {
-                    if (window.electronAPI && window.electronAPI.openFile) {
-                      window.electronAPI.openFile();
-                    } else {
-                      window.open(activity.link, '_blank');
+                    if (activity.imageUrl) {
+                      setCurrentImageUrl(activity.imageUrl);
+                      setImageModalVisible(true);
                     }
                   }}
-                  disabled={activity.status === 'expired'}
+                  style={{ cursor: activity.imageUrl ? 'pointer' : 'default' }}
                 >
-                  {activity.status === 'expired' ? '活动已结束' : '立即参与'}
-                </Button>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{
+                      fontSize: '32px',
+                      marginRight: '12px',
+                      filter: isDarkMode ? 'brightness(1.2)' : 'none'
+                    }}>
+                      {activity.imageUrl ? '🖼️' : activity.image}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '4px'
+                      }}>
+                        <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
+                          {activity.title}
+                        </Title>
+                        <Tag color={getStatusColor(activity.status)} style={{ margin: 0 }}>
+                          {getStatusText(activity.status)}
+                        </Tag>
+                      </div>
+                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                        {activity.platform}
+                      </Text>
+                    </div>
+                  </div>
+
+                  <Paragraph
+                    style={{
+                      marginBottom: '0',
+                      color: isDarkMode ? '#e0e0e0' : '#333',
+                      lineHeight: '1.6'
+                    }}
+                  >
+                    {activity.description}
+                  </Paragraph>
+                </div>
               </Card>
             </Col>
           ))}
@@ -870,148 +882,55 @@ function App() {
                   border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
                 }}
                 styles={{ body: { padding: '20px' } }}
-                onClick={() => {
-                  if (invitation.clickAction === 'image' && invitation.imageUrl) {
-                    // 展示图片
-                    setCurrentImageUrl(invitation.imageUrl);
-                    setImageModalVisible(true);
-                  } else if (invitation.clickAction === 'link' && invitation.inviteLink) {
-                    // 跳转链接
-                    if (window.electronAPI && window.electronAPI.openFile) {
-                      window.electronAPI.openFile();
-                    } else {
-                      window.open(invitation.inviteLink, '_blank');
-                    }
-                  }
-                }}
+                actions={[
+                  <Button
+                    type="primary"
+                    icon={<ExternalLink size={16} />}
+                    onClick={() => {
+                      openLinkSafely(invitation.inviteLink);
+                    }}
+                  >
+                    分享邀请链接
+                  </Button>
+                ]}
               >
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-                  <div style={{
-                    fontSize: '32px',
-                    marginRight: '12px',
-                    filter: isDarkMode ? 'brightness(1.2)' : 'none'
-                  }}>
-                    {invitation.image}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
-                      {invitation.title}
-                    </Title>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                      {invitation.platform}
-                    </Text>
-                  </div>
-                </div>
-
-                <Paragraph
-                  style={{
-                    marginBottom: '16px',
-                    color: isDarkMode ? '#e0e0e0' : '#333',
-                    lineHeight: '1.6'
+                <div
+                  onClick={() => {
+                    if (invitation.imageUrl) {
+                      setCurrentImageUrl(invitation.imageUrl);
+                      setImageModalVisible(true);
+                    }
                   }}
+                  style={{ cursor: invitation.imageUrl ? 'pointer' : 'default' }}
                 >
-                  {invitation.description}
-                </Paragraph>
-
-                <div style={{
-                  background: isDarkMode ? '#2a2a2a' : '#f5f5f5',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  marginBottom: '16px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '14px', color: isDarkMode ? '#a0a0a0' : '#666', marginBottom: '4px' }}>
-                    每邀请奖励
-                  </div>
-                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#52c41a' }}>
-                    {invitation.reward}
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <Space wrap>
-                    {invitation.tags.map((tag, index) => (
-                      <Tag key={index} color="green" style={{ fontSize: '12px' }}>
-                        {tag}
-                      </Tag>
-                    ))}
-                  </Space>
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '8px',
-                    fontSize: '12px',
-                    color: isDarkMode ? '#a0a0a0' : '#666'
-                  }}>
-                    <span>邀请进度</span>
-                    <span>{invitation.invitedCount}/{invitation.maxInvites}</span>
-                  </div>
-                  <Progress
-                    percent={(invitation.invitedCount / invitation.maxInvites) * 100}
-                    showInfo={false}
-                    strokeColor="#52c41a"
-                    style={{ marginBottom: '12px' }}
-                  />
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: '16px',
-                  padding: '12px',
-                  background: isDarkMode ? '#2a2a2a' : '#fafafa',
-                  borderRadius: '8px',
-                  fontSize: '14px'
-                }}>
-                  <div>
-                    <div style={{ color: isDarkMode ? '#a0a0a0' : '#666', marginBottom: '4px' }}>已获奖励</div>
-                    <div style={{ fontWeight: 'bold', color: '#52c41a' }}>{invitation.earnedRewards}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ color: isDarkMode ? '#a0a0a0' : '#666', marginBottom: '4px' }}>预计奖励</div>
-                    <div style={{ fontWeight: 'bold', color: isDarkMode ? '#ffffff' : '#000000' }}>
-                      {invitation.potentialRewards}
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{
+                      fontSize: '32px',
+                      marginRight: '12px',
+                      filter: isDarkMode ? 'brightness(1.2)' : 'none'
+                    }}>
+                      {invitation.imageUrl ? '🖼️' : invitation.image}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
+                        {invitation.title}
+                      </Title>
+                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                        {invitation.platform}
+                      </Text>
                     </div>
                   </div>
-                </div>
 
-                <div style={{ marginBottom: '16px' }}>
-                  <Space.Compact style={{ width: '100%' }}>
-                    <Input
-                      value={invitation.inviteLink}
-                      readOnly
-                      style={{ fontSize: '12px' }}
-                    />
-                    <Button
-                      type="primary"
-                      size="small"
-                      onClick={() => {
-                        navigator.clipboard.writeText(invitation.inviteLink);
-                        // 这里可以添加复制成功提示
-                      }}
-                    >
-                      复制
-                    </Button>
-                  </Space.Compact>
+                  <Paragraph
+                    style={{
+                      marginBottom: '0',
+                      color: isDarkMode ? '#e0e0e0' : '#333',
+                      lineHeight: '1.6'
+                    }}
+                  >
+                    {invitation.description}
+                  </Paragraph>
                 </div>
-
-                <Button
-                  type="primary"
-                  block
-                  icon={<ExternalLink size={16} />}
-                  onClick={() => {
-                    if (window.electronAPI && window.electronAPI.openFile) {
-                      window.electronAPI.openFile();
-                    } else {
-                      window.open(invitation.inviteLink, '_blank');
-                    }
-                  }}
-                >
-                  分享邀请链接
-                </Button>
               </Card>
             </Col>
           ))}
@@ -1049,6 +968,8 @@ function App() {
         <Menu
           mode="inline"
           selectedKeys={[currentView === 'home' ? 'home' : currentView]}
+          openKeys={openKeys}
+          onOpenChange={setOpenKeys}
           style={{
             border: 'none',
             background: 'transparent',
