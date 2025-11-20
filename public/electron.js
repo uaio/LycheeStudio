@@ -386,3 +386,46 @@ ipcMain.handle('get-latest-node-version', async () => {
     return { success: false, error: error.message };
   }
 });
+
+// 获取当前NPM源
+ipcMain.handle('get-npm-registry', async () => {
+  return new Promise((resolve) => {
+    exec('npm config get registry', (error, stdout, stderr) => {
+      if (error) {
+        resolve({
+          success: false,
+          error: error.message,
+          registry: null,
+          name: '获取失败'
+        });
+        return;
+      }
+
+      const registry = stdout.trim();
+      let name = '未知源';
+
+      // 根据registry URL判断源名称
+      if (registry.includes('registry.npmmirror.com') || registry.includes('taobao.org')) {
+        name = '淘宝镜像';
+      } else if (registry.includes('registry.npmjs.org')) {
+        name = '官方源';
+      } else if (registry.includes('repo.huaweicloud.com')) {
+        name = '华为镜像';
+      } else if (registry.includes('mirrors.cloud.tencent.com')) {
+        name = '腾讯镜像';
+      } else if (registry.includes('mirrors.ustc.edu.cn')) {
+        name = '中科大镜像';
+      } else if (registry.includes('mirrors.aliyun.com')) {
+        name = '阿里镜像';
+      } else {
+        name = '自定义源';
+      }
+
+      resolve({
+        success: true,
+        registry,
+        name
+      });
+    });
+  });
+});

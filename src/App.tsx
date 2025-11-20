@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button } from 'antd';
+import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip } from 'antd';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
 import {
@@ -206,6 +206,68 @@ function App() {
     }
   };
 
+  // 检查NPM源
+  const checkNpmRegistry = async () => {
+    if (!window.electronAPI) {
+      console.error('electronAPI 不存在');
+      return;
+    }
+
+    try {
+      const result = await window.electronAPI.getNpmRegistry();
+
+      if (result.success) {
+        // 更新NPM源卡片
+        setStatusCards(prevCards => {
+          const updatedCards = prevCards.map(card => {
+            if (card.name === 'NPM 源') {
+              return {
+                ...card,
+                version: result.name,
+                status: 'active' as 'active' | 'warning' | 'error',
+                detail: result.registry
+              };
+            }
+            return card;
+          });
+          return updatedCards;
+        });
+      } else {
+        console.error('获取NPM源失败:', result.error);
+        setStatusCards(prevCards => {
+          const updatedCards = prevCards.map(card => {
+            if (card.name === 'NPM 源') {
+              return {
+                ...card,
+                version: '获取失败',
+                status: 'error' as 'active' | 'warning' | 'error',
+                detail: '无法获取NPM源信息'
+              };
+            }
+            return card;
+          });
+          return updatedCards;
+        });
+      }
+    } catch (error) {
+      console.error('检查NPM源状态失败:', error);
+      setStatusCards(prevCards => {
+        const updatedCards = prevCards.map(card => {
+          if (card.name === 'NPM 源') {
+            return {
+              ...card,
+              version: '检测失败',
+              status: 'error' as 'active' | 'warning' | 'error',
+              detail: '检测NPM源时出错'
+            };
+          }
+          return card;
+        });
+        return updatedCards;
+      });
+    }
+  };
+
   // 安装工具
   const installTool = async (toolName: string) => {
     if (!window.electronAPI || installingTool) return;
@@ -259,6 +321,8 @@ function App() {
         checkToolStatus('node');
         // 检测 fnm
         checkToolStatus('fnm');
+        // 检测 NPM 源
+        checkNpmRegistry();
       } else {
         console.error('electronAPI 未找到');
         // 如果 electronAPI 不存在，设置为错误状态
@@ -640,7 +704,15 @@ function App() {
                       color: card.color,
                       fontWeight: 500
                     }}>
-                      {card.version}
+                      {card.name === 'NPM 源' ? (
+                        <Tooltip title={card.detail} placement="top">
+                          <span style={{ cursor: 'help' }}>
+                            {card.version}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        card.version
+                      )}
                     </div>
                     {card.detail && (
                       <div style={{
