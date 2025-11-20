@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip } from 'antd';
+import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Input, Progress, Space, Tag } from 'antd';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
 import {
@@ -15,9 +15,13 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Gift,
+  ExternalLink
 } from 'lucide-react';
 import './App.css';
+
+const { Text } = Typography;
 
 // 全局类型声明
 declare global {
@@ -35,6 +39,115 @@ declare global {
 
 const { Header, Content, Sider } = Layout;
 const { Title, Paragraph } = Typography;
+
+// 活动数据
+const platformActivities = [
+  {
+    id: 1,
+    title: 'Claude Code Pro 新用户优惠',
+    platform: 'Anthropic',
+    description: '新用户注册 Claude Code Pro 即可获得 50% 折扣，首月仅需 $9.9',
+    discount: '50%',
+    originalPrice: '$19.9',
+    currentPrice: '$9.9',
+    validUntil: '2024-12-31',
+    tags: ['新用户', '限时优惠'],
+    link: 'https://claude.ai/code',
+    image: '🤖',
+    status: 'active' as 'active' | 'expired' | 'upcoming'
+  },
+  {
+    id: 2,
+    title: 'OpenAI GPT-4 Turbo 限时特价',
+    platform: 'OpenAI',
+    description: 'GPT-4 Turbo API 使用费率降低 30%，适合开发者批量采购',
+    discount: '30%',
+    originalPrice: '$0.03/1K tokens',
+    currentPrice: '$0.021/1K tokens',
+    validUntil: '2024-11-30',
+    tags: ['API', '开发者', '限时'],
+    link: 'https://openai.com/pricing',
+    image: '🚀',
+    status: 'active' as 'active' | 'expired' | 'upcoming'
+  },
+  {
+    id: 3,
+    title: 'Gemini Advanced 年度订阅优惠',
+    platform: 'Google',
+    description: '订阅 Gemini Advanced 年度套餐，可享 2 个月免费使用',
+    discount: '2个月免费',
+    originalPrice: '$19.99/月',
+    currentPrice: '$166.65/年',
+    validUntil: '2024-12-15',
+    tags: ['年度订阅', '免费试用'],
+    link: 'https://gemini.google.com',
+    image: '💎',
+    status: 'active' as 'active' | 'expired' | 'upcoming'
+  },
+  {
+    id: 4,
+    title: 'GitHub Copilot 学生计划',
+    platform: 'GitHub',
+    description: '学生和教师可免费使用 GitHub Copilot，验证身份即可获得',
+    discount: '免费',
+    originalPrice: '$10/月',
+    currentPrice: '$0',
+    validUntil: '长期有效',
+    tags: ['教育', '学生', '教师'],
+    link: 'https://github.com/education/students',
+    image: '👨‍💻',
+    status: 'active' as 'active' | 'expired' | 'upcoming'
+  }
+];
+
+const myInvitations = [
+  {
+    id: 1,
+    title: 'Claude Code 邀请计划',
+    platform: 'Anthropic',
+    description: '邀请朋友使用 Claude Code，双方各得 $10 积分奖励',
+    reward: '$10 积分',
+    inviteLink: 'https://claude.ai/invite?ref=yourcode',
+    invitedCount: 3,
+    maxInvites: 10,
+    earnedRewards: '$30',
+    potentialRewards: '$70',
+    tags: ['双奖励', '积分'],
+    image: '🎁',
+    clickAction: 'link' as 'image' | 'link' // 点击行为：展示图片或跳转链接
+  },
+  {
+    id: 2,
+    title: 'OpenAI API 推荐计划',
+    platform: 'OpenAI',
+    description: '推荐新用户使用 OpenAI API，可获得消费额 5% 返现',
+    reward: '5% 返现',
+    inviteLink: 'https://openai.com/join?ref=yourref',
+    invitedCount: 5,
+    maxInvites: 20,
+    earnedRewards: '$45.50',
+    potentialRewards: '$200',
+    tags: ['返现', 'API'],
+    image: '💰',
+    clickAction: 'link' as 'image' | 'link'
+  },
+  {
+    id: 3,
+    title: '智谱 GLM Coding 邀请',
+    platform: '智谱 AI',
+    description: '🚀 速来拼好模，智谱 GLM Coding 超值订阅，邀你一起薅羊毛！Claude Code、Cline 等 10+ 大编程工具无缝支持',
+    reward: '限时惊喜价',
+    inviteLink: 'https://www.bigmodel.cn/claude-code?ic=NH7UUC7QWY',
+    invitedCount: 8,
+    maxInvites: 50,
+    earnedRewards: '¥240',
+    potentialRewards: '¥1260',
+    tags: ['拼团', '限时优惠', '多工具支持'],
+    image: '🤖',
+    clickAction: 'image' as 'image' | 'link', // 点击展示图片
+    imageUrl: 'https://maas-log-prod.cn-wlcb.ufileos.com/anthropic/d32c9dd1-b2d2-40dd-87d2-345fd2910517/9818fbd4835ab479a5fe8ea4d5160974.png?UCloudPublicKey=TOKEN_e15ba47a-d098-4fbd-9afc-a0dcf0e4e621&Expires=1763618033&Signature=v+kGcnKgk820LHwoTanGKDy1FD8='
+  }
+];
 
 // LycheeStudio - 系统状态卡片
 const initialStatusCards = [
@@ -438,14 +551,22 @@ function App() {
       };
 
       return (
-        <>
-          {renderSidebar()}
-          <div style={{
-            padding: '32px',
-            marginLeft: '240px',
-            minHeight: 'calc(100vh - 38px)',
-            background: isDarkMode ? '#141414' : '#ffffff'
-          }}>
+        <div style={{
+          marginLeft: '240px',
+          height: 'calc(100vh - 38px)',
+          overflow: 'hidden',
+        }}>
+          <div
+            className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+            style={{
+              padding: '32px',
+              height: '100%',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              marginRight: 0,
+              paddingRight: '8px',
+            }}
+          >
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -513,28 +634,370 @@ function App() {
                 </Col>
               </Row>
             </div>
+          </div>
         </div>
-      </>
-    );
-  }
+      );
+    }
 
-  // 默认返回空内容而不是 null，避免整个组件消失
-  return (
-    <div style={{
-      padding: '32px',
-      marginLeft: '240px',
-      minHeight: 'calc(100vh - 38px)',
-      background: isDarkMode ? '#141414' : '#ffffff'
-    }}>
-      <div style={{ textAlign: 'center', marginTop: '100px' }}>
-        <p style={{ color: isDarkMode ? '#a0a0a0' : '#666' }}>页面未找到</p>
-        <Button type="primary" onClick={() => setCurrentView('home')}>
-          返回首页
-        </Button>
+    // 如果不是指定的视图，返回null或默认内容
+    return null;
+  };
+
+  // 渲染平台活动页面
+  const renderPlatformPromotions = () => {
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'active': return '#52c41a';
+        case 'expired': return '#ff4d4f';
+        case 'upcoming': return '#faad14';
+        default: return '#d9d9d9';
+      }
+    };
+
+    const getStatusText = (status: string) => {
+      switch (status) {
+        case 'active': return '进行中';
+        case 'expired': return '已结束';
+        case 'upcoming': return '即将开始';
+        default: return '未知';
+      }
+    };
+
+    return (
+      <div style={{
+        marginLeft: '240px',
+        height: 'calc(100vh - 38px)',
+        overflow: 'hidden',
+      }}>
+        <div
+          className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+          style={{
+            padding: '32px',
+            height: '100%',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            marginRight: 0,
+            paddingRight: '8px',
+          }}
+        >
+          <div style={{ marginBottom: '32px' }}>
+            <Title level={2} style={{ color: isDarkMode ? '#ffffff' : '#000000', margin: 0 }}>
+              平台活动
+          </Title>
+          <Text style={{ color: isDarkMode ? '#a0a0a0' : '#666' }}>
+            发现各大 AI 平台的最新优惠活动和促销信息
+          </Text>
+        </div>
+
+        <Row gutter={[24, 24]}>
+          {platformActivities.map((activity) => (
+            <Col xs={24} md={12} lg={8} key={activity.id}>
+              <Card
+                hoverable
+                style={{
+                  height: '100%',
+                  background: isDarkMode ? '#1f1f1f' : '#ffffff',
+                  border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+                }}
+                styles={{ body: { padding: '20px' } }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                  <div style={{
+                    fontSize: '32px',
+                    marginRight: '12px',
+                    filter: isDarkMode ? 'brightness(1.2)' : 'none'
+                  }}>
+                    {activity.image}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '4px'
+                    }}>
+                      <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
+                        {activity.title}
+                      </Title>
+                      <Tag color={getStatusColor(activity.status)} style={{ margin: 0 }}>
+                        {getStatusText(activity.status)}
+                      </Tag>
+                    </div>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {activity.platform}
+                    </Text>
+                  </div>
+                </div>
+
+                <Paragraph
+                  style={{
+                    marginBottom: '16px',
+                    color: isDarkMode ? '#e0e0e0' : '#333',
+                    lineHeight: '1.6'
+                  }}
+                >
+                  {activity.description}
+                </Paragraph>
+
+                {activity.discount && (
+                  <div style={{
+                    background: isDarkMode ? '#2a2a2a' : '#f5f5f5',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    marginBottom: '16px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff4d4f', marginBottom: '4px' }}>
+                      {activity.discount}
+                    </div>
+                    {activity.originalPrice && activity.currentPrice && (
+                      <div>
+                        <Text delete type="secondary" style={{ fontSize: '14px' }}>
+                          {activity.originalPrice}
+                        </Text>
+                        <span style={{ margin: '0 8px' }}>→</span>
+                        <Text strong style={{ fontSize: '16px', color: isDarkMode ? '#ffffff' : '#000000' }}>
+                          {activity.currentPrice}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Space wrap>
+                    {activity.tags.map((tag, index) => (
+                      <Tag key={index} color="blue" style={{ fontSize: '12px' }}>
+                        {tag}
+                      </Tag>
+                    ))}
+                  </Space>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '16px',
+                  fontSize: '12px',
+                  color: isDarkMode ? '#a0a0a0' : '#666'
+                }}>
+                  <span>有效期至: {activity.validUntil}</span>
+                </div>
+
+                <Button
+                  type="primary"
+                  block
+                  icon={<ExternalLink size={16} />}
+                  onClick={() => {
+                    if (window.electronAPI && window.electronAPI.openFile) {
+                      window.electronAPI.openFile();
+                    } else {
+                      window.open(activity.link, '_blank');
+                    }
+                  }}
+                  disabled={activity.status === 'expired'}
+                >
+                  {activity.status === 'expired' ? '活动已结束' : '立即参与'}
+                </Button>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
+
+  // 渲染我的邀请页面
+  const renderMyInvitations = () => {
+    return (
+      <div style={{
+        marginLeft: '240px',
+        height: 'calc(100vh - 38px)',
+        overflow: 'hidden',
+      }}>
+        <div
+          className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+          style={{
+            padding: '32px',
+            height: '100%',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            marginRight: 0,
+            paddingRight: '8px',
+          }}
+        >
+          <div style={{ marginBottom: '32px' }}>
+            <Title level={2} style={{ color: isDarkMode ? '#ffffff' : '#000000', margin: 0 }}>
+              我的邀请
+          </Title>
+          <Text style={{ color: isDarkMode ? '#a0a0a0' : '#666' }}>
+            管理您的邀请链接，跟踪邀请进度和奖励收益
+          </Text>
+        </div>
+
+        <Row gutter={[24, 24]}>
+          {myInvitations.map((invitation) => (
+            <Col xs={24} md={12} key={invitation.id}>
+              <Card
+                hoverable
+                style={{
+                  height: '100%',
+                  background: isDarkMode ? '#1f1f1f' : '#ffffff',
+                  border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+                }}
+                styles={{ body: { padding: '20px' } }}
+                onClick={() => {
+                  if (invitation.clickAction === 'image' && invitation.imageUrl) {
+                    // 展示图片
+                    setCurrentImageUrl(invitation.imageUrl);
+                    setImageModalVisible(true);
+                  } else if (invitation.clickAction === 'link' && invitation.inviteLink) {
+                    // 跳转链接
+                    if (window.electronAPI && window.electronAPI.openFile) {
+                      window.electronAPI.openFile();
+                    } else {
+                      window.open(invitation.inviteLink, '_blank');
+                    }
+                  }
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                  <div style={{
+                    fontSize: '32px',
+                    marginRight: '12px',
+                    filter: isDarkMode ? 'brightness(1.2)' : 'none'
+                  }}>
+                    {invitation.image}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
+                      {invitation.title}
+                    </Title>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {invitation.platform}
+                    </Text>
+                  </div>
+                </div>
+
+                <Paragraph
+                  style={{
+                    marginBottom: '16px',
+                    color: isDarkMode ? '#e0e0e0' : '#333',
+                    lineHeight: '1.6'
+                  }}
+                >
+                  {invitation.description}
+                </Paragraph>
+
+                <div style={{
+                  background: isDarkMode ? '#2a2a2a' : '#f5f5f5',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  marginBottom: '16px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '14px', color: isDarkMode ? '#a0a0a0' : '#666', marginBottom: '4px' }}>
+                    每邀请奖励
+                  </div>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#52c41a' }}>
+                    {invitation.reward}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Space wrap>
+                    {invitation.tags.map((tag, index) => (
+                      <Tag key={index} color="green" style={{ fontSize: '12px' }}>
+                        {tag}
+                      </Tag>
+                    ))}
+                  </Space>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: '8px',
+                    fontSize: '12px',
+                    color: isDarkMode ? '#a0a0a0' : '#666'
+                  }}>
+                    <span>邀请进度</span>
+                    <span>{invitation.invitedCount}/{invitation.maxInvites}</span>
+                  </div>
+                  <Progress
+                    percent={(invitation.invitedCount / invitation.maxInvites) * 100}
+                    showInfo={false}
+                    strokeColor="#52c41a"
+                    style={{ marginBottom: '12px' }}
+                  />
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '16px',
+                  padding: '12px',
+                  background: isDarkMode ? '#2a2a2a' : '#fafafa',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}>
+                  <div>
+                    <div style={{ color: isDarkMode ? '#a0a0a0' : '#666', marginBottom: '4px' }}>已获奖励</div>
+                    <div style={{ fontWeight: 'bold', color: '#52c41a' }}>{invitation.earnedRewards}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ color: isDarkMode ? '#a0a0a0' : '#666', marginBottom: '4px' }}>预计奖励</div>
+                    <div style={{ fontWeight: 'bold', color: isDarkMode ? '#ffffff' : '#000000' }}>
+                      {invitation.potentialRewards}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Space.Compact style={{ width: '100%' }}>
+                    <Input
+                      value={invitation.inviteLink}
+                      readOnly
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={() => {
+                        navigator.clipboard.writeText(invitation.inviteLink);
+                        // 这里可以添加复制成功提示
+                      }}
+                    >
+                      复制
+                    </Button>
+                  </Space.Compact>
+                </div>
+
+                <Button
+                  type="primary"
+                  block
+                  icon={<ExternalLink size={16} />}
+                  onClick={() => {
+                    if (window.electronAPI && window.electronAPI.openFile) {
+                      window.electronAPI.openFile();
+                    } else {
+                      window.open(invitation.inviteLink, '_blank');
+                    }
+                  }}
+                >
+                  分享邀请链接
+                </Button>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+        </div>
+      </div>
+    );
+  };
 
   // 渲染侧边栏菜单
   const renderSidebar = () => (
@@ -599,6 +1062,23 @@ function App() {
               ],
             },
             {
+              key: 'activities',
+              icon: <Gift size={16} />,
+              label: '活动',
+              children: [
+                {
+                  key: 'platform-promotions',
+                  label: '平台活动',
+                  onClick: () => setCurrentView('platform-promotions')
+                },
+                {
+                  key: 'my-invitations',
+                  label: '我的邀请',
+                  onClick: () => setCurrentView('my-invitations')
+                },
+              ],
+            },
+            {
               key: 'dev-recommend',
               icon: <Terminal size={16} />,
               label: '开发推荐',
@@ -627,10 +1107,22 @@ function App() {
   // 渲染首页
   const renderHome = () => (
     <div style={{
-      padding: '32px',
       marginLeft: '240px', // 为侧边栏留出空间
-      minHeight: 'calc(100vh - 44px)'
+      height: 'calc(100vh - 38px)', // 固定高度，减去标题栏高度
+      overflow: 'hidden', // 隐藏溢出
     }}>
+      <div
+        className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+        style={{
+          padding: '32px',
+          height: '100%',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          // 确保滚动条不占用额外空间
+          marginRight: 0,
+          paddingRight: '8px', // 为滚动条留出空间
+        }}
+      >
       <div style={{ marginBottom: '32px' }}>
         <Title level={3} style={{ marginBottom: '8px', color: isDarkMode ? '#ffffff' : '#000000' }}>
           AI 工具管理
@@ -797,6 +1289,7 @@ function App() {
           ))}
         </Row>
       </div>
+      </div>
     </div>
   );
 
@@ -851,7 +1344,22 @@ function App() {
               {renderSidebar()}
               {renderHome()}
             </>
-          ) : renderToolDetail()}
+          ) : currentView === 'platform-promotions' ? (
+            <>
+              {renderSidebar()}
+              {renderPlatformPromotions()}
+            </>
+          ) : currentView === 'my-invitations' ? (
+            <>
+              {renderSidebar()}
+              {renderMyInvitations()}
+            </>
+          ) : (
+            <>
+              {renderSidebar()}
+              {renderToolDetail()}
+            </>
+          )}
         </Content>
       </Layout>
     </ConfigProvider>
