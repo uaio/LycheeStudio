@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Input, Progress, Space, Tag } from 'antd';
+import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Input, Progress, Space, Tag, Modal } from 'antd';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
 import {
@@ -232,6 +232,28 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [statusCards, setStatusCards] = useState(initialStatusCards);
   const [installingTool, setInstallingTool] = useState<string | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+
+  // 安全打开链接的函数
+  const openLinkSafely = (url: string) => {
+    try {
+      if (window.electronAPI && window.electronAPI.openFile) {
+        // 在 Electron 环境中，使用默认浏览器打开链接
+        window.electronAPI.openFile().catch(() => {
+          // 如果 Electron API 失败，降级到普通打开
+          window.open(url, '_blank');
+        });
+      } else {
+        // 在普通浏览器环境中打开链接
+        window.open(url, '_blank');
+      }
+    } catch (error) {
+      console.warn('Failed to open link:', error);
+      // 最后的降级方案
+      window.open(url, '_blank');
+    }
+  };
 
   // 组件加载时自动检测NPM源
   useEffect(() => {
@@ -1362,6 +1384,31 @@ function App() {
           )}
         </Content>
       </Layout>
+
+      {/* 图片模态框 */}
+      <Modal
+        open={imageModalVisible}
+        title="活动图片"
+        footer={null}
+        onCancel={() => setImageModalVisible(false)}
+        width="80%"
+        centered
+        style={{
+          maxWidth: '800px'
+        }}
+      >
+        {currentImageUrl && (
+          <img
+            src={currentImageUrl}
+            alt="活动图片"
+            style={{
+              width: '100%',
+              maxHeight: '70vh',
+              objectFit: 'contain'
+            }}
+          />
+        )}
+      </Modal>
     </ConfigProvider>
   );
 }
