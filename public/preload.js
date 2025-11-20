@@ -20,6 +20,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // 主题相关 - 直接返回当前平台信息，避免 IPC 调用问题
   getPlatform: () => process.platform,
+
+  // 系统工具检测和安装
+  checkToolInstalled: (toolName) => ipcRenderer.invoke('check-tool-installed', toolName),
+  installTool: (toolName) => ipcRenderer.invoke('install-tool', toolName),
+  getToolVersion: (toolName) => ipcRenderer.invoke('get-tool-version', toolName),
+  getLatestNodeVersion: () => ipcRenderer.invoke('get-latest-node-version'),
 });
 
 // 监听主题变化

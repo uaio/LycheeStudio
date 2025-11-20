@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Menu, shell, ipcMain, nativeTheme } = require('electron');
+const { spawn, exec } = require('child_process');
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -157,10 +158,12 @@ Menu.setApplicationMenu(menu);
 
 // IPC 处理程序
 ipcMain.handle('get-app-version', () => {
+  console.log('IPC: get-app-version 被调用');
   return app.getVersion();
 });
 
 ipcMain.handle('show-message-box', async (event, options) => {
+  console.log('IPC: show-message-box 被调用', options);
   const { dialog } = require('electron');
   const result = await dialog.showMessageBox(mainWindow, options);
   return result;
@@ -203,6 +206,182 @@ ipcMain.handle('window-control', async (event, action) => {
         return { success: false, error: 'Unknown action' };
     }
     return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// 检查工具是否已安装
+ipcMain.handle('check-tool-installed', async (event, toolName) => {
+  return new Promise((resolve) => {
+    const command = process.platform === 'win32' ? 'where' : 'which';
+    exec(`${command} ${toolName}`, (error, stdout, stderr) => {
+      resolve({
+        installed: !error,
+        path: error ? null : stdout.trim().split('\n')[0]
+      });
+    });
+  });
+});
+
+// 获取工具版本
+ipcMain.handle('get-tool-version', async (event, toolName) => {
+  return new Promise((resolve) => {
+    const versionCommands = {
+      'fnm': 'fnm --version',
+      'node': 'node --version',
+      'npm': 'npm --version'
+    };
+
+    const command = versionCommands[toolName] || `${toolName} --version`;
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        resolve({ version: null, error: error.message });
+      } else {
+        const version = stdout.trim() || stderr.trim();
+        resolve({ version, error: null });
+      }
+    });
+  });
+});
+
+// 安装工具
+ipcMain.handle('install-tool', async (event, toolName) => {
+  const platform = process.platform;
+
+  const installCommands = {
+    'fnm': {
+      'darwin': 'curl -fsSL https://fnm.vercel.app/install | bash',
+      'linux': 'curl -fsSL https://fnm.vercel.app/install | bash',
+      'win32': 'winget install Schniz.fnm'
+    }
+  };
+
+  // 获取最新 Node.js 版本
+  const getLatestNodeVersion = async () => {
+    return new Promise((resolve, reject) => {
+      exec('curl -s https://nodejs.org/dist/index.json', (error, stdout, stderr) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        try {
+          const data = JSON.parse(stdout);
+          const latestVersion = data.version;
+          resolve(latestVersion);
+        } catch (parseError) {
+          reject(parseError);
+        }
+      });
+    });
+  };
+
+  if (!installCommands[toolName]) {
+    return { success: false, error: `不支持安装工具: ${toolName}` };
+  }
+
+  const command = installCommands[toolName][platform];
+  if (!command) {
+    return { success: false, error: `平台 ${platform} 不支持安装 ${toolName}` };
+  }
+
+  return new Promise(async (resolve) => {
+    try {
+      if (toolName === 'node') {
+        // 检查是否已安装 fnm
+        const fnmCheck = await new Promise((fnmResolve) => {
+          exec('which fnm', (error, stdout, stderr) => {
+            fnmResolve(!error);
+          });
+        });
+
+        if (!fnmCheck) {
+          resolve({ success: false, error: '需要先安装 fnm 才能安装 Node.js。请先安装 fnm 后再试。' });
+          return;
+        }
+
+        // 获取最新 Node.js 版本
+        let latestVersion;
+        try {
+          latestVersion = await getLatestNodeVersion();
+        } catch (versionError) {
+          console.log('获取最新版本失败，使用默认版本:', versionError.message);
+          latestVersion = 'lts'; // 使用 LTS 版本作为默认
+        }
+
+        // 使用 fnm 安装 Node.js
+        const nodeCommand = platform === 'win32'
+          ? `fnm install ${latestVersion}`
+          : `fnm install ${latestVersion} && fnm use ${latestVersion}`;
+
+        if (platform === 'darwin' || platform === 'linux') {
+          const shell = process.env.SHELL || '/bin/bash';
+          spawn(shell, ['-c', nodeCommand], {
+            stdio: 'inherit',
+            env: { ...process.env }
+          }).on('close', (code) => {
+            if (code === 0) {
+              resolve({
+                success: true,
+                message: `Node.js ${latestVersion} 安装成功！请重启终端或应用以生效。`
+              });
+            } else {
+              resolve({ success: false, error: `Node.js 安装失败，退出码: ${code}` });
+            }
+          }).on('error', (error) => {
+            resolve({ success: false, error: `Node.js 安装失败: ${error.message}` });
+          });
+        } else {
+          exec(nodeCommand, (error, stdout, stderr) => {
+            if (error) {
+              resolve({ success: false, error: error.message });
+            } else {
+              resolve({
+                success: true,
+                message: `Node.js ${latestVersion} 安装成功！请重启终端或应用以生效。`
+              });
+            }
+          });
+        }
+      } else {
+        // 处理其他工具的安装（如 fnm）
+        if (platform === 'darwin' || platform === 'linux') {
+          const shell = process.env.SHELL || '/bin/bash';
+          spawn(shell, ['-c', command], {
+            stdio: 'inherit',
+            env: { ...process.env }
+          }).on('close', (code) => {
+            if (code === 0) {
+              resolve({ success: true, message: `${toolName} 安装成功！请重启应用以生效。` });
+            } else {
+              resolve({ success: false, error: `${toolName} 安装失败，退出码: ${code}` });
+            }
+          }).on('error', (error) => {
+            resolve({ success: false, error: `安装失败: ${error.message}` });
+          });
+        } else {
+          // Windows 使用 winget
+          exec(command, (error, stdout, stderr) => {
+            if (error) {
+              resolve({ success: false, error: error.message });
+            } else {
+              resolve({ success: true, message: `${toolName} 安装成功！请重启应用以生效。` });
+            }
+          });
+        }
+      }
+    } catch (error) {
+      resolve({ success: false, error: `安装过程发生错误: ${error.message}` });
+    }
+  });
+});
+
+// 获取最新 Node.js 版本
+ipcMain.handle('get-latest-node-version', async () => {
+  try {
+    const version = await getLatestNodeVersion();
+    return { success: true, version };
   } catch (error) {
     return { success: false, error: error.message };
   }
