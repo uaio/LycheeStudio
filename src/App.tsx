@@ -765,7 +765,7 @@ function App() {
 
         <Row gutter={[24, 24]}>
           {platformActivities.map((activity) => (
-            <Col xs={24} md={12} lg={8} key={activity.id}>
+            <Col xs={24} sm={24} md={12} lg={8} xl={6} xxl={4} key={activity.id}>
               <Card
                 hoverable
                 style={{
@@ -873,7 +873,7 @@ function App() {
 
         <Row gutter={[24, 24]}>
           {myInvitations.map((invitation) => (
-            <Col xs={24} md={12} key={invitation.id}>
+            <Col xs={24} sm={24} md={12} lg={8} xl={6} xxl={4} key={invitation.id}>
               <Card
                 hoverable
                 style={{
@@ -1078,7 +1078,7 @@ function App() {
       <div style={{ marginBottom: '32px' }}>
         <Row gutter={[20, 20]}>
           {statusCards.map((card, index) => (
-            <Col xs={24} sm={12} md={8} lg={8} xl={8} key={index}>
+            <Col xs={24} sm={12} md={8} lg={6} xl={6} xxl={4} key={index}>
               <Card
                 hoverable
                 style={{
