@@ -396,13 +396,24 @@ ipcMain.handle('get-npm-registry', async () => {
           success: false,
           error: error.message,
           registry: null,
-          name: '获取失败'
+          name: '中科大镜像'
         });
         return;
       }
 
       const registry = stdout.trim();
-      let name = '未知源';
+
+      // 如果为空或无效，默认返回中科大镜像
+      if (!registry || registry.trim() === '') {
+        resolve({
+          success: true,
+          registry: 'https://mirrors.ustc.edu.cn/npm/',
+          name: '中科大镜像'
+        });
+        return;
+      }
+
+      let name = '中科大镜像'; // 默认值改为中科大镜像
 
       // 根据registry URL判断源名称
       if (registry.includes('registry.npmmirror.com') || registry.includes('taobao.org')) {
@@ -417,14 +428,84 @@ ipcMain.handle('get-npm-registry', async () => {
         name = '中科大镜像';
       } else if (registry.includes('mirrors.aliyun.com')) {
         name = '阿里镜像';
+      } else if (registry.includes('kwnpm.tmeoa.com')) {
+        name = '酷我镜像';
       } else {
-        name = '自定义源';
+        name = '中科大镜像'; // 未知源也默认显示为中科大镜像
       }
 
       resolve({
         success: true,
         registry,
         name
+      });
+    });
+  });
+});
+
+// 获取NPM源列表
+ipcMain.handle('get-npm-registries', async () => {
+  const registries = [
+    {
+      name: '官方源',
+      url: 'https://registry.npmjs.org',
+      description: 'NPM官方源，速度较慢但最稳定'
+    },
+    {
+      name: '酷我镜像',
+      url: 'https://kwnpm.tmeoa.com',
+      description: '酷我音乐NPM镜像'
+    },
+    {
+      name: '腾讯镜像',
+      url: 'https://mirrors.cloud.tencent.com/npm/',
+      description: '腾讯云NPM镜像'
+    },
+    {
+      name: '华为镜像',
+      url: 'https://repo.huaweicloud.com/repository/npm/',
+      description: '华为云NPM镜像'
+    },
+    {
+      name: '阿里镜像',
+      url: 'https://mirrors.aliyun.com/npm/',
+      description: '阿里云NPM镜像'
+    },
+    {
+      name: '中科大镜像',
+      url: 'https://mirrors.ustc.edu.cn/npm/',
+      description: '中科大NPM镜像'
+    },
+    {
+      name: '淘宝镜像',
+      url: 'https://registry.npmmirror.com',
+      description: '淘宝NPM镜像，国内常用'
+    }
+  ];
+
+  return {
+    success: true,
+    registries
+  };
+});
+
+// 切换NPM源
+ipcMain.handle('set-npm-registry', async (event, registryUrl) => {
+  return new Promise((resolve) => {
+    exec(`npm config set registry ${registryUrl}`, (error, stdout, stderr) => {
+      if (error) {
+        resolve({
+          success: false,
+          error: error.message,
+          message: '切换NPM源失败'
+        });
+        return;
+      }
+
+      resolve({
+        success: true,
+        message: 'NPM源切换成功',
+        registry: registryUrl
       });
     });
   });

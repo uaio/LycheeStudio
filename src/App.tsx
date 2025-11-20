@@ -14,7 +14,8 @@ import {
   Zap,
   CheckCircle,
   AlertCircle,
-  XCircle
+  XCircle,
+  RefreshCw
 } from 'lucide-react';
 import './App.css';
 
@@ -26,6 +27,7 @@ declare global {
       installTool: (toolName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
       getToolVersion: (toolName: string) => Promise<{ version: string | null; error: string | null }>;
       getLatestNodeVersion: () => Promise<{ success: boolean; version?: string; error?: string }>;
+      getNpmRegistry: () => Promise<{ success: boolean; name?: string; registry?: string; error?: string }>;
       showMessageBox: (options: any) => Promise<any>;
     };
   }
@@ -60,12 +62,12 @@ const initialStatusCards = [
   },
   {
     name: 'NPM 源',
-    version: '淘宝镜像',
+    version: '检测中',
     status: 'active' as 'active' | 'warning' | 'error',
     description: '包管理器源配置',
     icon: <Package size={18} />,
     color: '#cb3837',
-    detail: 'https://registry.npmmirror.com'
+    detail: '检测中...'
   },
   {
     name: 'Claude API',
@@ -117,6 +119,16 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [statusCards, setStatusCards] = useState(initialStatusCards);
   const [installingTool, setInstallingTool] = useState<string | null>(null);
+
+  // 组件加载时自动检测NPM源
+  useEffect(() => {
+    // 延迟一点时间让electronAPI初始化完成
+    const timer = setTimeout(() => {
+      checkNpmRegistry();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // 检查工具安装状态
   const checkToolStatus = async (toolName: string) => {
@@ -206,8 +218,21 @@ function App() {
     }
   };
 
+  // 刷新Node.js状态
+  const refreshNodeStatus = async () => {
+    console.log('刷新Node.js状态被调用');
+    await checkToolStatus('node');
+  };
+
+  // 刷新FNM状态
+  const refreshFnmStatus = async () => {
+    console.log('刷新FNM状态被调用');
+    await checkToolStatus('fnm');
+  };
+
   // 检查NPM源
   const checkNpmRegistry = async () => {
+    console.log('刷新NPM源状态被调用');
     if (!window.electronAPI) {
       console.error('electronAPI 不存在');
       return;
@@ -695,9 +720,51 @@ function App() {
                       fontSize: '14px',
                       fontWeight: 600,
                       marginBottom: '6px',
-                      color: isDarkMode ? '#ffffff' : '#000000'
+                      color: isDarkMode ? '#ffffff' : '#000000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
                     }}>
                       {card.name}
+                      {/* 刷新按钮 - 仅在Node.js、FNM、NPM源卡片中显示 */}
+                      {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源') && (
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<RefreshCw size={14} />}
+                          onClick={(e) => {
+                            e.stopPropagation(); // 阻止事件冒泡到卡片点击事件
+                            if (card.name === 'Node.js') {
+                              refreshNodeStatus();
+                            } else if (card.name === 'FNM') {
+                              refreshFnmStatus();
+                            } else if (card.name === 'NPM 源') {
+                              checkNpmRegistry();
+                            }
+                          }}
+                          style={{
+                            padding: '2px',
+                            height: '20px',
+                            minWidth: '20px',
+                            lineHeight: '20px',
+                            color: card.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          title={`刷新${card.name}状态`}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        />
+                      )}
                     </div>
                     <div style={{
                       fontSize: '11px',
@@ -714,7 +781,7 @@ function App() {
                         card.version
                       )}
                     </div>
-                    {card.detail && (
+                    {card.detail && card.name !== 'NPM 源' && (
                       <div style={{
                         fontSize: '10px',
                         color: isDarkMode ? '#a0a0a0' : '#666',

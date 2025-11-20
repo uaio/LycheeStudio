@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getToolVersion: (toolName) => ipcRenderer.invoke('get-tool-version', toolName),
   getLatestNodeVersion: () => ipcRenderer.invoke('get-latest-node-version'),
   getNpmRegistry: () => ipcRenderer.invoke('get-npm-registry'),
+  getNpmRegistries: () => ipcRenderer.invoke('get-npm-registries'),
+  setNpmRegistry: (registryUrl) => ipcRenderer.invoke('set-npm-registry', registryUrl),
 });
 
 // 监听主题变化
