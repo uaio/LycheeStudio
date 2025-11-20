@@ -43,7 +43,7 @@ const initialStatusCards = [
     description: 'JavaScript 运行环境',
     icon: <Code size={18} />,
     color: '#68a063',
-    detail: '正在检测版本',
+    detail: 'JavaScript 运行环境',
     installable: true,
     installCommand: 'node'
   },
@@ -54,7 +54,7 @@ const initialStatusCards = [
     description: 'Fast Node Manager',
     icon: <Package size={18} />,
     color: '#f59e0b',
-    detail: '正在检测安装状态',
+    detail: 'Fast Node Manager',
     installable: true,
     installCommand: 'fnm'
   },
@@ -140,11 +140,25 @@ function App() {
         if (versionResult.version) {
           version = versionResult.version;
           status = 'active';
-          detail = `${toolName} 已安装`;
+          // 根据工具类型设置不同的detail信息
+          if (toolName === 'node') {
+            detail = 'JavaScript 运行环境';
+          } else if (toolName === 'fnm') {
+            detail = 'Fast Node Manager';
+          } else {
+            detail = '运行正常';
+          }
         } else {
           version = '已安装';
           status = 'active';
-          detail = `${toolName} 运行正常`;
+          // 根据工具类型设置不同的detail信息
+          if (toolName === 'node') {
+            detail = 'JavaScript 运行环境';
+          } else if (toolName === 'fnm') {
+            detail = 'Fast Node Manager';
+          } else {
+            detail = '运行正常';
+          }
         }
       } else {
         version = '未安装';
