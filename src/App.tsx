@@ -120,19 +120,14 @@ function App() {
 
   // 检查工具安装状态
   const checkToolStatus = async (toolName: string) => {
-    console.log(`开始检查 ${toolName} 状态...`);
-    console.log('window.electronAPI:', window.electronAPI);
-
     if (!window.electronAPI) {
       console.error('electronAPI 不存在');
       return;
     }
 
     try {
-      console.log(`检查 ${toolName} 是否已安装...`);
       // 检查是否已安装
       const checkResult = await window.electronAPI.checkToolInstalled(toolName);
-      console.log(`${toolName} 检查结果:`, checkResult);
 
       // 获取版本信息
       let version = '未知版本';
@@ -140,9 +135,7 @@ function App() {
       let detail = '';
 
       if (checkResult.installed) {
-        console.log(`${toolName} 已安装，获取版本信息...`);
         const versionResult = await window.electronAPI.getToolVersion(toolName);
-        console.log(`${toolName} 版本结果:`, versionResult);
 
         if (versionResult.version) {
           version = versionResult.version;
@@ -159,32 +152,42 @@ function App() {
         detail = `点击安装 ${toolName}`;
       }
 
-      console.log(`更新 ${toolName} 状态:`, { version, status, detail });
-
       // 更新状态卡片
       setStatusCards(prevCards => {
-        console.log('当前状态卡片:', prevCards);
-        const updatedCards = prevCards.map(card =>
-          card.name.toUpperCase() === toolName.toUpperCase()
-            ? { ...card, version, status, detail }
-            : card
-        );
-        console.log('更新后状态卡片:', updatedCards);
+        const updatedCards = prevCards.map(card => {
+          // 特殊处理 Node.js 和 FNM 的匹配
+          const shouldUpdate =
+            (toolName === 'node' && card.name === 'Node.js') ||
+            (toolName === 'fnm' && card.name === 'FNM') ||
+            (card.name.toUpperCase() === toolName.toUpperCase());
+
+          if (shouldUpdate) {
+            return { ...card, version, status, detail };
+          }
+          return card;
+        });
         return updatedCards;
       });
     } catch (error) {
       console.error(`检查 ${toolName} 状态失败:`, error);
       setStatusCards(prevCards =>
-        prevCards.map(card =>
-          card.name.toUpperCase() === toolName.toUpperCase()
-            ? {
-                ...card,
-                version: '检测失败',
-                status: 'error',
-                detail: '检测工具状态时出错'
-              }
-            : card
-        )
+        prevCards.map(card => {
+          // 特殊处理 Node.js 和 FNM 的匹配
+          const shouldUpdate =
+            (toolName === 'node' && card.name === 'Node.js') ||
+            (toolName === 'fnm' && card.name === 'FNM') ||
+            (card.name.toUpperCase() === toolName.toUpperCase());
+
+          if (shouldUpdate) {
+            return {
+              ...card,
+              version: '检测失败',
+              status: 'error',
+              detail: '检测工具状态时出错'
+            };
+          }
+          return card;
+        })
       );
     }
   };
@@ -235,19 +238,9 @@ function App() {
 
   // 初始化时检测工具状态
   useEffect(() => {
-    console.log('=== App 组件加载 ===');
-    console.log('当前环境:', process.env.NODE_ENV);
-
-    // 立即检查 electronAPI
-    console.log('立即检查 electronAPI:', window.electronAPI);
-
-  
     // 延迟执行以确保 electron API 完全初始化
     const timer = setTimeout(() => {
-      console.log('1秒后检查 electronAPI:', window.electronAPI);
-
       if (window.electronAPI) {
-        console.log('开始检测工具状态...');
         // 检测 Node.js
         checkToolStatus('node');
         // 检测 fnm
@@ -291,8 +284,6 @@ function App() {
 
     // 保存主题设置到 localStorage
     localStorage.setItem('app-theme', theme);
-
-    console.log(`主题切换到: ${theme === 'light' ? '浅色' : theme === 'dark' ? '深色' : '跟随系统'}`);
 
     // 应用主题到文档
     const root = document.documentElement;
@@ -663,10 +654,6 @@ function App() {
       colorPrimary: '#1890ff',
     },
   };
-
-  // 调试：在渲染前打印状态卡片状态
-  console.log('🎯 渲染时的状态卡片:', statusCards);
-  console.log('🎯 渲染时的状态卡片数量:', statusCards.length);
 
   return (
     <ConfigProvider theme={themeConfig}>
