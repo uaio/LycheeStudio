@@ -15,7 +15,9 @@ import {
   Empty,
   Alert,
   Badge,
-  Descriptions
+  Descriptions,
+  Table,
+  Select
 } from 'antd';
 import {
   CodeOutlined,
@@ -70,6 +72,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   const [latestVersion, setLatestVersion] = useState<string>('');
   const [currentLTS, setCurrentLTS] = useState<string>('');
   const [saveMessage, setSaveMessage] = useState('');
+  const [versionFilter, setVersionFilter] = useState<string>('all');
 
   useEffect(() => {
     loadNodeData();
@@ -499,15 +502,148 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
   // 渲染可用版本列表
   const renderAvailableVersions = () => {
-    // 按主版本分组
-    const groupedVersions = availableVersions.reduce((acc, version) => {
-      const major = version.version.substring(1).split('.')[0];
-      if (!acc[major]) {
-        acc[major] = [];
+    // 过滤版本
+    const getFilteredVersions = () => {
+      switch (versionFilter) {
+        case 'lts':
+          return availableVersions.filter(v => v.lts);
+        case 'latest':
+          return availableVersions.filter((v, i, arr) => {
+            const major = v.version.substring(1).split('.')[0];
+            return !arr.find((item, index) =>
+              index < i && item.version.substring(1).split('.')[0] === major
+            );
+          });
+        case 'security':
+          return availableVersions.filter(v => v.security);
+        default:
+          return availableVersions;
       }
-      acc[major].push(version);
-      return acc;
-    }, {} as Record<string, NodeReleaseInfo[]>);
+    };
+
+    const filteredVersions = getFilteredVersions();
+
+    // 表格列定义
+    const columns = [
+      {
+        title: '版本',
+        dataIndex: 'version',
+        key: 'version',
+        width: 120,
+        render: (version: string, record: NodeReleaseInfo) => (
+          <Space>
+            <Text strong style={{
+              color: record.version === latestVersion ? '#1890ff' : undefined,
+              fontSize: record.version === latestVersion ? '14px' : '13px'
+            }}>
+              {version}
+            </Text>
+            {record.version === latestVersion && (
+              <Tag color="blue" size="small">最新</Tag>
+            )}
+          </Space>
+        ),
+      },
+      {
+        title: '类型',
+        dataIndex: 'lts',
+        key: 'type',
+        width: 100,
+        render: (lts: string, record: NodeReleaseInfo) => (
+          <Space wrap size="small">
+            {lts ? <Tag color="gold">LTS</Tag> : <Tag color="default">Current</Tag>}
+            {record.security && <Tag color="red">安全</Tag>}
+          </Space>
+        ),
+      },
+      {
+        title: '状态',
+        key: 'status',
+        width: 100,
+        render: (record: NodeReleaseInfo) => (
+          isVersionInstalled(record.version) ? (
+            <Space>
+              <Tag color="success">
+                <CheckCircleOutlined /> 已安装
+              </Tag>
+              {installedVersions.find(v => v.version === record.version)?.current && (
+                <Tag color="blue">当前</Tag>
+              )}
+              {installedVersions.find(v => v.version === record.version)?.default && (
+                <Tag color="green">默认</Tag>
+              )}
+            </Space>
+          ) : (
+            <Tag type="nounderline">未安装</Tag>
+          )
+        ),
+      },
+      {
+        title: '发布时间',
+        dataIndex: 'date',
+        key: 'date',
+        width: 120,
+        render: (date: string) => (
+          <Text style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
+            {date}
+          </Text>
+        ),
+      },
+      {
+        title: 'npm 版本',
+        dataIndex: 'npm',
+        key: 'npm',
+        width: 80,
+        render: (npm: string) => (
+          <Text style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
+            v{npm}
+          </Text>
+        ),
+      },
+      {
+        title: '模块',
+        dataIndex: 'modules',
+        key: 'modules',
+        width: 80,
+        render: (modules: number) => (
+          <Text style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
+            {modules}
+          </Text>
+        ),
+      },
+      {
+        title: '操作',
+        key: 'actions',
+        width: 100,
+        render: (record: NodeReleaseInfo) => (
+          <Space>
+            {isVersionInstalled(record.version) ? (
+              !installedVersions.find(v => v.version === record.version)?.default && (
+                <Button
+                  size="small"
+                  type="primary"
+                  ghost
+                  onClick={() => switchToVersion(record.version)}
+                  loading={isLoading}
+                >
+                  使用
+                </Button>
+              )
+            ) : (
+              <Button
+                size="small"
+                type="primary"
+                icon={<DownloadOutlined />}
+                onClick={() => installVersion(record.version)}
+                loading={isInstalling && installationMessage.includes(record.version)}
+              >
+                安装
+              </Button>
+            )}
+          </Space>
+        ),
+      },
+    ];
 
     return (
       <Card
@@ -515,73 +651,61 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
           <Space>
             <StarOutlined />
             <span>可用版本</span>
-            <Badge count={Object.keys(groupedVersions).length} />
+            <Badge count={filteredVersions.length} />
           </Space>
         }
         extra={
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={fetchLatestVersions}
-            loading={isLoading}
-          >
-            刷新列表
-          </Button>
+          <Space>
+            <Select
+              value={versionFilter}
+              onChange={setVersionFilter}
+              style={{ width: 120 }}
+              size="small"
+            >
+              <Select.Option value="all">全部版本</Select.Option>
+              <Select.Option value="lts">LTS 版本</Select.Option>
+              <Select.Option value="latest">各版本最新</Select.Option>
+              <Select.Option value="security">安全更新</Select.Option>
+            </Select>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchLatestVersions}
+              loading={isLoading}
+              size="small"
+            >
+              刷新
+            </Button>
+          </Space>
         }
       >
-        <Space direction="vertical" style={{ width: '100%' }}>
-          {Object.entries(groupedVersions)
-            .sort(([a], [b]) => Number(b) - Number(a)) // 按主版本号排序（25->24->23...）
-            .map(([majorVersion, versions]) => (
-              <div key={majorVersion}>
-                <Divider orientation="left">
-                  <Text strong>Node.js v{majorVersion}</Text>
-                  {currentLTS && currentLTS.startsWith(`v${majorVersion}`) && (
-                    <Tag color="gold" style={{ marginLeft: 8 }}>推荐LTS</Tag>
-                  )}
-                </Divider>
-                <Row gutter={[16, 16]}>
-                  {versions.slice(0, 6).map((version) => (
-                    <Col xs={24} sm={12} md={8} lg={6} xl={4} key={version.version}>
-                      <Card
-                        hoverable={!isVersionInstalled(version.version)}
-                        style={{
-                          border: isVersionInstalled(version.version) ? '2px solid #52c41a' : undefined,
-                          background: isVersionInstalled(version.version) ?
-                            (isDarkMode ? '#162312' : '#f6ffed') : undefined
-                        }}
-                        onClick={() => !isVersionInstalled(version.version) && installVersion(version.version)}
-                      >
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <Space>
-                              <Text strong>{version.version}</Text>
-                              <Space wrap size="small">
-                                {version.lts && <Tag color="gold">LTS</Tag>}
-                                {version.security && <Tag color="red">安全</Tag>}
-                                {isVersionInstalled(version.version) && <Tag color="success">已安装</Tag>}
-                              </Space>
-                            </Space>
-                            {isVersionInstalled(version.version) && (
-                              <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                            )}
-                          </div>
-                          <div style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
-                            发布: {version.date}
-                          </div>
-                          <div style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
-                            npm v{version.npm}
-                          </div>
-                          {version.version === latestVersion && (
-                            <Tag color="blue" size="small">最新</Tag>
-                          )}
-                        </Space>
-                      </Card>
-                    </Col>
-                  ))}
-                </Row>
-              </div>
-            ))}
-        </Space>
+        <Table
+          dataSource={filteredVersions.map(v => ({ ...v, key: v.version }))}
+          columns={columns}
+          size="small"
+          pagination={{
+            pageSize: 20,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) =>
+              `第 ${range[0]}-${range[1]} 条，共 ${total} 个版本`,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          scroll={{ x: 600 }}
+          rowClassName={(record) => {
+            if (isVersionInstalled(record.version)) {
+              return record.default ? 'table-row-default' : 'table-row-installed';
+            }
+            return '';
+          }}
+          style={{
+            '.table-row-installed': {
+              backgroundColor: isDarkMode ? '#162312' : '#f6ffed',
+            },
+            '.table-row-default': {
+              backgroundColor: isDarkMode ? '#0d2818' : '#d9f7be',
+            }
+          }}
+        />
       </Card>
     );
   };
