@@ -630,13 +630,17 @@ function App() {
             <div
               className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
               style={{
+                paddingTop: '32px',
+                paddingLeft: '32px',
+                paddingBottom: '32px',
+                paddingRight: '40px',
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 marginRight: 0,
               }}
             >
-              <NodeManager isDarkMode={isDarkMode} />
+              <NodeManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           </div>
         );
@@ -652,13 +656,17 @@ function App() {
             <div
               className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
               style={{
+                paddingTop: '32px',
+                paddingLeft: '32px',
+                paddingBottom: '32px',
+                paddingRight: '40px',
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 marginRight: 0,
               }}
             >
-              <NPMManager isDarkMode={isDarkMode} />
+              <NPMManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           </div>
         );
@@ -674,13 +682,17 @@ function App() {
             <div
               className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
               style={{
+                paddingTop: '32px',
+                paddingLeft: '32px',
+                paddingBottom: '32px',
+                paddingRight: '40px',
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 marginRight: 0,
               }}
             >
-              <PackageManager isDarkMode={isDarkMode} />
+              <PackageManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           </div>
         );
@@ -711,7 +723,7 @@ function App() {
             className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
             style={{
               paddingTop: '32px',
-              paddingLeft: '32px',
+              paddingLeft: '16px',
               paddingBottom: '32px',
               paddingRight: '8px',
               height: '100%',
@@ -818,7 +830,7 @@ function App() {
 
     return (
       <div style={{
-        marginLeft: '240px',
+        marginLeft: collapsed ? '80px' : '200px',
         height: 'calc(100vh - 38px)',
         overflow: 'hidden',
       }}>
@@ -828,7 +840,7 @@ function App() {
             paddingTop: '32px',
             paddingLeft: '32px',
             paddingBottom: '32px',
-            paddingRight: '8px',
+            paddingRight: '40px',
             height: '100%',
             overflowY: 'auto',
             overflowX: 'hidden',
@@ -836,13 +848,13 @@ function App() {
           }}
         >
           <div style={{ marginBottom: '32px' }}>
-            <Title level={2} style={{ color: isDarkMode ? '#ffffff' : '#000000', margin: 0 }}>
+            <Title level={3} style={{ marginBottom: '8px', color: isDarkMode ? '#ffffff' : '#000000' }}>
               平台活动
-          </Title>
-          <Text style={{ color: isDarkMode ? '#a0a0a0' : '#666' }}>
-            发现各大 AI 平台的最新优惠活动和促销信息
-          </Text>
-        </div>
+            </Title>
+            <Paragraph type="secondary" style={{ fontSize: '14px', marginBottom: 0 }}>
+              发现各大 AI 平台的最新优惠活动和促销信息
+            </Paragraph>
+          </div>
 
         <Row gutter={[16, 16]}>
           {platformActivities.map((activity) => (
@@ -920,7 +932,7 @@ function App() {
   const renderMyInvitations = () => {
     return (
       <div style={{
-        marginLeft: '240px',
+        marginLeft: collapsed ? '80px' : '200px',
         height: 'calc(100vh - 38px)',
         overflow: 'hidden',
       }}>
@@ -930,7 +942,7 @@ function App() {
             paddingTop: '32px',
             paddingLeft: '32px',
             paddingBottom: '32px',
-            paddingRight: '8px',
+            paddingRight: '40px',
             height: '100%',
             overflowY: 'auto',
             overflowX: 'hidden',
@@ -938,13 +950,13 @@ function App() {
           }}
         >
           <div style={{ marginBottom: '32px' }}>
-            <Title level={2} style={{ color: isDarkMode ? '#ffffff' : '#000000', margin: 0 }}>
+            <Title level={3} style={{ marginBottom: '8px', color: isDarkMode ? '#ffffff' : '#000000' }}>
               我的邀请
-          </Title>
-          <Text style={{ color: isDarkMode ? '#a0a0a0' : '#666' }}>
-            管理您的邀请链接，跟踪邀请进度和奖励收益
-          </Text>
-        </div>
+            </Title>
+            <Paragraph type="secondary" style={{ fontSize: '14px', marginBottom: 0 }}>
+              管理您的邀请链接，跟踪邀请进度和奖励收益
+            </Paragraph>
+          </div>
 
         <Row gutter={[16, 16]}>
           {myInvitations.map((invitation) => (

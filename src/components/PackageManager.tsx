@@ -145,20 +145,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
   }, [saveMessage]);
 
   return (
-    <div style={{
-      marginLeft: collapsed ? '80px' : '200px',
-      height: 'calc(100vh - 38px)',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        paddingTop: '32px',
-        paddingLeft: '32px',
-        paddingBottom: '32px',
-        paddingRight: '40px',
-        height: '100%',
-        overflowY: 'auto',
-      }}>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+    <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
           {/* 统计卡片 */}
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12}>
@@ -318,9 +305,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
               </Empty>
             )}
           </Card>
-        </Space>
-      </div>
-    </div>
+    </Space>
   );
 };
 

@@ -177,7 +177,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     }
   };
 
-  const useVersion = async (version: string) => {
+  const switchToVersion = async (version: string) => {
     setIsLoading(true);
     try {
       await window.electronAPI.executeCommand(`fnm use ${version}`);
@@ -244,7 +244,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
               version.installed && (
                 <Button
                   type={version.current ? "primary" : "default"}
-                  onClick={() => useVersion(version.version)}
+                  onClick={() => switchToVersion(version.version)}
                 >
                   {version.current ? '当前' : '使用'}
                 </Button>
@@ -407,24 +407,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   ];
 
   return (
-    <div style={{
-      marginLeft: collapsed ? '80px' : '200px',
-      height: 'calc(100vh - 38px)',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        paddingTop: '32px',
-        paddingLeft: '32px',
-        paddingBottom: '32px',
-        paddingRight: '40px',
-        height: '100%',
-        overflowY: 'auto',
-      }}>
-        <Card>
-          <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
-        </Card>
-      </div>
-    </div>
+    <Card style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
+    </Card>
   );
 };
 

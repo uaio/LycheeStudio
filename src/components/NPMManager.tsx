@@ -24,7 +24,8 @@ import {
   SettingOutlined,
   RiseOutlined,
   AppstoreOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  DatabaseOutlined
 } from '@ant-design/icons';
 
 const { Title, Paragraph, Text } = Typography;
@@ -172,187 +173,172 @@ const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ is
   }, [saveMessage]);
 
   return (
-    <div style={{
-      marginLeft: collapsed ? '80px' : '200px',
-      height: 'calc(100vh - 38px)',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        paddingTop: '32px',
-        paddingLeft: '32px',
-        paddingBottom: '32px',
-        paddingRight: '40px',
-        height: '100%',
-        overflowY: 'auto',
-      }}>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          {/* 统计概览 */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Card>
-                <Statistic
-                  title="可用源"
-                  value={registries.length}
-                  prefix={<GlobalOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card>
-                <Statistic
-                  title="当前源"
-                  value={currentRegistryName}
-                  prefix={<GlobalOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card>
-                <Statistic
-                  title="包管理器"
-                  value="NPM"
-                  prefix={<AppstoreOutlined />}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          {/* 当前源状态 */}
-          <Card
-            title={
-              <Space>
-                <ServerOutlined />
-                <span>当前源状态</span>
-              </Space>
-            }
-            extra={
-              <Button
-                icon={<ReloadOutlined />}
-                loading={isLoading}
-                onClick={loadCurrentRegistry}
-              >
-                检测当前源
-              </Button>
-            }
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Space size="large">
-                <Space>
-                  <GlobalOutlined style={{ fontSize: '28px' }} />
-                  <div>
-                    <Title level={4} style={{ margin: 0 }}>{currentRegistryName}</Title>
-                    <Text type="secondary" copyable={{ text: currentRegistry }}>
-                      {currentRegistry}
-                    </Text>
-                  </div>
-                </Space>
-              </Space>
-              <div>
-                {currentRegistry ? (
-                  <Badge status="success" text="已配置" />
-                ) : (
-                  <Badge status="error" text="未配置" />
-                )}
-              </div>
-            </div>
-          </Card>
-
-          {/* 快速切换源 */}
-          <Card
-            title={
-              <Space>
-                <ThunderboltOutlined />
-                <span>快速切换源</span>
-              </Space>
-            }
-          >
-            <Row gutter={[16, 16]}>
-              {registries.map((registry) => (
-                <Col xs={24} sm={12} lg={8} key={registry.url}>
-                  <Card
-                    hoverable
-                    className={`registry-card ${currentRegistry === registry.url ? 'selected' : ''}`}
-                    onClick={() => setRegistry(registry.url)}
-                    style={{
-                      border: currentRegistry === registry.url ? '2px solid #1890ff' : undefined,
-                    }}
-                  >
-                    <div style={{ marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Title level={5} style={{ margin: 0 }}>{registry.name}</Title>
-                        {currentRegistry === registry.url && (
-                          <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                        )}
-                      </div>
-                      <Space wrap size="small" style={{ marginTop: '8px' }}>
-                        <Tag color={getSpeedBadgeColor(registry.speed || 'medium')}>
-                          {getSpeedIcon(registry.speed || 'medium')}
-                          {registry.speed === 'fast' ? '快速' : registry.speed === 'medium' ? '中等' : '较慢'}
-                        </Tag>
-                        <Tag>{registry.region}</Tag>
-                        {registry.ping && (
-                          <Tag>{registry.ping}ms</Tag>
-                        )}
-                      </Space>
-                    </div>
-                    <Paragraph type="secondary" style={{ margin: '8px 0', fontSize: '12px' }}>
-                      {registry.description}
-                    </Paragraph>
-                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px', color: '#8c8c8c' }}>
-                      <GlobalOutlined style={{ marginRight: '4px' }} />
-                      <Text ellipsis style={{ maxWidth: '200px' }}>{registry.url}</Text>
-                    </div>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </Card>
-
-          {/* 自定义源 */}
-          <Card
-            title={
-              <Space>
-                <PlusOutlined />
-                <span>自定义源</span>
-              </Space>
-            }
-          >
-            <Space.Compact style={{ width: '100%', marginBottom: '16px' }}>
-              <Input
-                placeholder="输入自定义注册表地址，例如：https://registry.example.com/"
-                value={customRegistry}
-                onChange={(e) => setCustomRegistry(e.target.value)}
-                onPressEnter={() => {
-                  if (customRegistry) {
-                    setRegistry(customRegistry);
-                    setCustomRegistry('');
-                  }
-                }}
+    <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* 统计概览 */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="可用源"
+                value={registries.length}
+                prefix={<GlobalOutlined />}
               />
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                disabled={!customRegistry || isLoading}
-                onClick={() => {
-                  if (customRegistry) {
-                    setRegistry(customRegistry);
-                    setCustomRegistry('');
-                  }
-                }}
-              >
-                设置源
-              </Button>
-            </Space.Compact>
-            <Alert
-              message="请确保自定义源地址格式正确且可访问"
-              type="info"
-              showIcon
-              icon={<ExclamationCircleOutlined />}
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="当前源"
+                value={currentRegistryName}
+                prefix={<GlobalOutlined />}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="包管理器"
+                value="NPM"
+                prefix={<AppstoreOutlined />}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        {/* 当前源状态 */}
+        <Card
+          title={
+            <Space>
+              <DatabaseOutlined />
+              <span>当前源状态</span>
+            </Space>
+          }
+          extra={
+            <Button
+              icon={<ReloadOutlined />}
+              loading={isLoading}
+              onClick={loadCurrentRegistry}
+            >
+              检测当前源
+            </Button>
+          }
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Space size="large">
+              <Space>
+                <GlobalOutlined style={{ fontSize: '28px' }} />
+                <div>
+                  <Title level={4} style={{ margin: 0 }}>{currentRegistryName}</Title>
+                  <Text type="secondary" copyable={{ text: currentRegistry }}>
+                    {currentRegistry}
+                  </Text>
+                </div>
+              </Space>
+            </Space>
+            <div>
+              {currentRegistry ? (
+                <Badge status="success" text="已配置" />
+              ) : (
+                <Badge status="error" text="未配置" />
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {/* 快速切换源 */}
+        <Card
+          title={
+            <Space>
+              <ThunderboltOutlined />
+              <span>快速切换源</span>
+            </Space>
+          }
+        >
+          <Row gutter={[16, 16]}>
+            {registries.map((registry) => (
+              <Col xs={24} sm={12} lg={8} key={registry.url}>
+                <Card
+                  hoverable
+                  className={`registry-card ${currentRegistry === registry.url ? 'selected' : ''}`}
+                  onClick={() => setRegistry(registry.url)}
+                  style={{
+                    border: currentRegistry === registry.url ? '2px solid #1890ff' : undefined,
+                  }}
+                >
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Title level={5} style={{ margin: 0 }}>{registry.name}</Title>
+                      {currentRegistry === registry.url && (
+                        <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                      )}
+                    </div>
+                    <Space wrap size="small" style={{ marginTop: '8px' }}>
+                      <Tag color={getSpeedBadgeColor(registry.speed || 'medium')}>
+                        {getSpeedIcon(registry.speed || 'medium')}
+                        {registry.speed === 'fast' ? '快速' : registry.speed === 'medium' ? '中等' : '较慢'}
+                      </Tag>
+                      <Tag>{registry.region}</Tag>
+                      {registry.ping && (
+                        <Tag>{registry.ping}ms</Tag>
+                      )}
+                    </Space>
+                  </div>
+                  <Paragraph type="secondary" style={{ margin: '8px 0', fontSize: '12px' }}>
+                    {registry.description}
+                  </Paragraph>
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px', color: '#8c8c8c' }}>
+                    <GlobalOutlined style={{ marginRight: '4px' }} />
+                    <Text ellipsis style={{ maxWidth: '200px' }}>{registry.url}</Text>
+                  </div>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </Card>
+
+        {/* 自定义源 */}
+        <Card
+          title={
+            <Space>
+              <PlusOutlined />
+              <span>自定义源</span>
+            </Space>
+          }
+        >
+          <Space.Compact style={{ width: '100%', marginBottom: '16px' }}>
+            <Input
+              placeholder="输入自定义注册表地址，例如：https://registry.example.com/"
+              value={customRegistry}
+              onChange={(e) => setCustomRegistry(e.target.value)}
+              onPressEnter={() => {
+                if (customRegistry) {
+                  setRegistry(customRegistry);
+                  setCustomRegistry('');
+                }
+              }}
             />
-          </Card>
-        </Space>
-      </div>
-    </div>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              disabled={!customRegistry || isLoading}
+              onClick={() => {
+                if (customRegistry) {
+                  setRegistry(customRegistry);
+                  setCustomRegistry('');
+                }
+              }}
+            >
+              设置源
+            </Button>
+          </Space.Compact>
+          <Alert
+            message="请确保自定义源地址格式正确且可访问"
+            type="info"
+            showIcon
+            icon={<ExclamationCircleOutlined />}
+          />
+        </Card>
+    </Space>
   );
 };
 
