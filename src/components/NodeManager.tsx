@@ -12,12 +12,10 @@ import {
   Popconfirm,
   Row,
   Col,
-  Statistic,
   Empty,
   Alert,
   Badge,
   Descriptions,
-  Progress,
   Spin
 } from 'antd';
 import {
@@ -30,56 +28,51 @@ import {
   AppstoreOutlined,
   GlobalOutlined,
   ExclamationCircleOutlined,
-  ClockCircleOutlined,
   StarOutlined,
-  SettingOutlined,
   InfoCircleOutlined,
-  ThunderboltOutlined
+  ThunderboltOutlined,
+  EnvironmentOutlined
 } from '@ant-design/icons';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 // 声明 Electron API 类型
 declare global {
   interface Window {
     electronAPI: {
-      checkToolInstalled: (toolName: string) => Promise<{ installed: boolean; path: string | null }>;
-      installTool: (toolName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
-      getToolVersion: (toolName: string) => Promise<{ version: string | null; error: string | null }>;
-      getLatestNodeVersion: () => Promise<{ success: boolean; version?: string; error?: string }>;
       executeCommand: (command: string) => Promise<{ success: boolean; output?: string; error?: string }>;
     };
   }
 }
 
 interface NodeVersion {
-  version: string;
-  path?: string;
+  version: string;  // v20.18.0 格式
   current?: boolean;
-  lts?: boolean;
-  latest?: boolean;
+  default?: boolean;
   installed: boolean;
-  releaseDate?: string;
+  path?: string;
   installedAt?: string;
 }
 
-interface NodeVersionInfo {
+interface NodeReleaseInfo {
   version: string;
-  isLTS: boolean;
-  releaseDate: string;
-  npmVersion?: string;
-  security?: boolean;
+  date: string;
+  npm: string;
+  lts?: string;
+  security: boolean;
+  modules: number;
 }
 
 const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ isDarkMode, collapsed = false }) => {
-  const [currentVersion, setCurrentVersion] = useState<NodeVersion | null>(null);
+  const [currentVersion, setCurrentVersion] = useState<string>('');
   const [installedVersions, setInstalledVersions] = useState<NodeVersion[]>([]);
-  const [availableVersions, setAvailableVersions] = useState<NodeVersionInfo[]>([]);
+  const [availableVersions, setAvailableVersions] = useState<NodeReleaseInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [customVersionInput, setCustomVersionInput] = useState('');
   const [isInstalling, setIsInstalling] = useState(false);
   const [installationMessage, setInstallationMessage] = useState('');
   const [latestVersion, setLatestVersion] = useState<string>('');
+  const [currentLTS, setCurrentLTS] = useState<string>('');
   const [saveMessage, setSaveMessage] = useState('');
 
   useEffect(() => {
@@ -104,15 +97,10 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
       const currentResult = await window.electronAPI.executeCommand('fnm current');
       if (currentResult.success && currentResult.output) {
         const version = currentResult.output.trim();
-        setCurrentVersion({
-          version,
-          current: true,
-          installed: true,
-          lts: version.includes('v16') || version.includes('v18') || version.includes('v20')
-        });
+        setCurrentVersion(version);
       }
 
-      // 2. 获取已安装版本列表
+      // 2. 获取已安装版本列表 (使用 fnm list)
       const listResult = await window.electronAPI.executeCommand('fnm list');
       if (listResult.success && listResult.output) {
         const installed = parseFnmList(listResult.output);
@@ -120,14 +108,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
       }
 
       // 3. 获取最新版本信息
-      const latestResult = await window.electronAPI.getLatestNodeVersion();
-      if (latestResult.success && latestResult.version) {
-        setLatestVersion(latestResult.version);
-      }
-
-      // 4. 模拟获取可用版本信息（从v16开始）
-      const mockAvailableVersions = generateAvailableVersions();
-      setAvailableVersions(mockAvailableVersions);
+      await fetchLatestVersions();
 
     } catch (error) {
       console.error('加载Node数据失败:', error);
@@ -137,19 +118,55 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     }
   };
 
+  const fetchLatestVersions = async () => {
+    try {
+      // 获取官方发布信息
+      const response = await fetch('https://nodejs.org/dist/index.json');
+      const releases: NodeReleaseInfo[] = await response.json();
+
+      // 过滤出有用的版本信息（从v16开始，包含LTS和最新版本）
+      const filteredReleases = releases.filter(release => {
+        const majorVersion = parseInt(release.version.substring(1).split('.')[0]);
+        return majorVersion >= 16 && (release.lts || !release.lts);
+      }).slice(0, 50); // 取前50个版本
+
+      setAvailableVersions(filteredReleases);
+
+      // 设置最新版本和当前LTS
+      const latest = releases[0];
+      const currentLtsVersion = releases.find(r => r.lts && !r.version.includes('rc'));
+
+      setLatestVersion(latest.version);
+      if (currentLtsVersion) {
+        setCurrentLTS(currentLtsVersion.version);
+      }
+
+    } catch (error) {
+      console.error('获取版本信息失败:', error);
+      // 如果网络请求失败，使用模拟数据
+      setAvailableVersions(generateMockVersions());
+      setLatestVersion('v25.2.1');
+      setCurrentLTS('v24.11.1');
+    }
+  };
+
   const parseFnmList = (output: string): NodeVersion[] => {
-    const lines = output.split('\n');
+    const lines = output.split('\n').filter(line => line.trim());
     const versions: NodeVersion[] = [];
 
     lines.forEach(line => {
-      const match = line.match(/([a-fA-F0-9\-\.]+)\s+\(v([a-fA-F0-9\-\.]+)\s+\((.+?)\)/);
-      if (match) {
+      // 解析格式：* v24.8.0 default 或 v20.18.0
+      const isCurrent = line.includes('*');
+      const isDefault = line.includes('default');
+      const versionMatch = line.match(/v\d+\.\d+\.\d+/);
+
+      if (versionMatch) {
+        const version = versionMatch[0];
         versions.push({
-          version: match[2],
-          current: line.includes('*'),
+          version,
+          current: isCurrent,
+          default: isDefault,
           installed: true,
-          path: match[3],
-          lts: match[2].includes('v16') || match[2].includes('v18') || match[2].includes('v20'),
           installedAt: new Date().toISOString()
         });
       }
@@ -158,22 +175,19 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     return versions;
   };
 
-  const generateAvailableVersions = (): NodeVersionInfo[] => {
-    const versions: NodeVersionInfo[] = [];
-    const majorVersions = [20, 19, 18, 17, 16];
+  const generateMockVersions = (): NodeReleaseInfo[] => {
+    const versions: NodeReleaseInfo[] = [];
+    const majorVersions = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16];
 
     majorVersions.forEach(major => {
-      const latestPatch = major === 20 ? 10 : major === 19 ? 9 : major === 18 ? 20 : major === 17 ? 9 : 20;
-
-      // 为每个主版本添加几个补丁版本
-      for (let patch = 0; patch <= 2; patch++) {
-        const version = `${major}.${latestPatch - patch}`;
+      for (let minor = 0; minor <= 2; minor++) {
         versions.push({
-          version,
-          isLTS: major % 2 === 0, // 偶数版本号为LTS
-          releaseDate: new Date(Date.now() - (major * 100 + patch * 10) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          npmVersion: `9.${10 - patch}.2`,
-          security: patch === 0 // 第一个补丁版本可能有安全更新
+          version: `v${major}.${10 - minor}.0`,
+          date: new Date(Date.now() - (major * 100 + minor * 10) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          npm: `${10 - minor}.0.0`,
+          lts: major % 2 === 0 && minor === 0 ? `LTS${major}` : undefined,
+          security: minor === 0,
+          modules: 120 + major
         });
       }
     });
@@ -186,22 +200,18 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     try {
       const result = await window.electronAPI.executeCommand(`fnm use ${version}`);
       if (result.success) {
-        const newCurrentVersion = installedVersions.find(v => v.version === version) || {
-          version,
-          current: true,
-          installed: true,
-          lts: version.includes('v16') || version.includes('v18') || version.includes('v20')
-        };
-
-        setCurrentVersion(newCurrentVersion);
-        setInstalledVersions(prev => prev.map(v => ({ ...v, current: v.version === version })));
+        setCurrentVersion(version);
+        setInstalledVersions(prev => prev.map(v => ({
+          ...v,
+          current: v.version === version
+        })));
         setSaveMessage(`已切换到 ${version}`);
       } else {
-        setSaveMessage('切换版本失败');
+        setSaveMessage(`切换到 ${version} 失败: ${result.error || '未知错误'}`);
       }
     } catch (error) {
       console.error('切换版本失败:', error);
-      setSaveMessage('切换版本失败');
+      setSaveMessage(`切换到 ${version} 失败`);
     } finally {
       setIsLoading(false);
     }
@@ -211,22 +221,20 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     let versionToInstall = versionInput;
 
     // 处理版本输入
-    if (versionInput.startsWith('v')) {
-      if (versionInput === 'v20') {
-        // v20 表示安装v20的最新版本
-        const latestV20 = availableVersions
-          .filter(v => v.version.startsWith('20.'))
+    if (!versionInput.startsWith('v')) {
+      if (versionInput.match(/^\d+$/)) {
+        // 输入的是主版本号，找到该版本的最新版本
+        const latestOfMajor = availableVersions
+          .filter(v => v.version.startsWith(`v${versionInput}.`))
           .sort((a, b) => b.version.localeCompare(a.version))[0];
-        if (latestV20) {
-          versionToInstall = `v${latestV20.version}`;
+        if (latestOfMajor) {
+          versionToInstall = latestOfMajor.version;
+        } else {
+          versionToInstall = `v${versionInput}.0.0`;
         }
       } else {
-        // 已经是完整版本号
-        versionToInstall = versionInput;
+        versionToInstall = `v${versionInput}`;
       }
-    } else {
-      // 没有前缀，添加前缀
-      versionToInstall = `v${versionInput}`;
     }
 
     setIsInstalling(true);
@@ -262,18 +270,23 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     return installedVersions.some(v => v.version === version);
   };
 
-  const getTagColor = (isLatest: boolean, isLTS: boolean, isInstalled: boolean) => {
-    if (isInstalled) return 'success';
-    if (isLatest) return 'processing';
-    if (isLTS) return 'warning';
-    return 'default';
+  const getVersionType = (version: string): string => {
+    const releaseInfo = availableVersions.find(r => r.version === version);
+    if (releaseInfo?.lts) {
+      return `LTS ${releaseInfo.lts}`;
+    }
+    return 'Current';
   };
 
-  const getTagText = (isLatest: boolean, isLTS: boolean, isInstalled: boolean) => {
-    if (isInstalled) return '已安装';
-    if (isLatest) return '最新';
-    if (isLTS) return 'LTS';
-    return '';
+  const isNewerThan = (version1: string, version2: string): boolean => {
+    const v1 = version1.substring(1).split('.').map(Number);
+    const v2 = version2.substring(1).split('.').map(Number);
+
+    for (let i = 0; i < 3; i++) {
+      if ((v1[i] || 0) > (v2[i] || 0)) return true;
+      if ((v1[i] || 0) < (v2[i] || 0)) return false;
+    }
+    return false;
   };
 
   // 渲染当前版本状态
@@ -300,27 +313,34 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
           <Descriptions.Item label="当前版本">
             <Space>
               <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
-                v{currentVersion.version}
+                {currentVersion}
               </Title>
               <Tag color="success">正在使用</Tag>
             </Space>
           </Descriptions.Item>
           <Descriptions.Item label="版本类型">
             <Space>
-              {currentVersion.lts && <Tag color="blue">LTS</Tag>}
-              <Tag color="processing">JavaScript</Tag>
+              <Tag color="blue">{getVersionType(currentVersion)}</Tag>
             </Space>
           </Descriptions.Item>
           <Descriptions.Item label="安装路径">
-            <Text code>{currentVersion.path || 'N/A'}</Text>
+            <Space>
+              <EnvironmentOutlined />
+              <Text code style={{ fontSize: '12px' }}>~/.fnm/node-versions</Text>
+            </Space>
           </Descriptions.Item>
           <Descriptions.Item label="最新版本">
             <Space>
-              <Text>v{latestVersion || '检查中...'}</Text>
-              {latestVersion && currentVersion.version !== latestVersion.replace('v', '') && (
-                <Tag color="warning" style={{ cursor: 'pointer' }} onClick={() => installVersion(`v${latestVersion}`)}>
-                  可升级
-                </Tag>
+              <Text>{latestVersion || '检查中...'}</Text>
+              {latestVersion && isNewerThan(latestVersion, currentVersion) && (
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<DownloadOutlined />}
+                  onClick={() => installVersion(latestVersion)}
+                >
+                  升级到最新
+                </Button>
               )}
             </Space>
           </Descriptions.Item>
@@ -397,11 +417,12 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
                 }
                 title={
                   <Space>
-                  <Text strong>v{version.version}</Text>
-                  {version.current && <Tag color="success">当前</Tag>}
-                </Space>
+                    <Text strong>{version.version}</Text>
+                    {version.current && <Tag color="success">当前</Tag>}
+                    {version.default && <Tag color="warning">默认</Tag>}
+                  </Space>
                 }
-                description={`安装于 ${version.installedAt ? new Date(version.installedAt).toLocaleDateString() : '未知时间'}`}
+                description={`${getVersionType(version.version)} • 安装于 ${version.installedAt ? new Date(version.installedAt).toLocaleDateString() : '未知时间'}`}
               />
             </List.Item>
           )}
@@ -419,13 +440,13 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   const renderAvailableVersions = () => {
     // 按主版本分组
     const groupedVersions = availableVersions.reduce((acc, version) => {
-      const major = version.version.split('.')[0];
+      const major = version.version.substring(1).split('.')[0];
       if (!acc[major]) {
         acc[major] = [];
       }
       acc[major].push(version);
       return acc;
-    }, {} as Record<string, NodeVersionInfo[]>);
+    }, {} as Record<string, NodeReleaseInfo[]>);
 
     return (
       <Card
@@ -439,7 +460,8 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
         extra={
           <Button
             icon={<ReloadOutlined />}
-            onClick={loadNodeData}
+            onClick={fetchLatestVersions}
+            loading={isLoading}
           >
             刷新列表
           </Button>
@@ -447,14 +469,17 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
       >
         <Space direction="vertical" style={{ width: '100%' }}>
           {Object.entries(groupedVersions)
-            .sort(([a], [b]) => Number(b) - Number(a)) // 按主版本号排序（20->19->18...）
+            .sort(([a], [b]) => Number(b) - Number(a)) // 按主版本号排序（25->24->23...）
             .map(([majorVersion, versions]) => (
               <div key={majorVersion}>
                 <Divider orientation="left">
                   <Text strong>Node.js v{majorVersion}</Text>
+                  {currentLTS && currentLTS.startsWith(`v${majorVersion}`) && (
+                    <Tag color="gold" style={{ marginLeft: 8 }}>推荐LTS</Tag>
+                  )}
                 </Divider>
                 <Row gutter={[16, 16]}>
-                  {versions.map((version) => (
+                  {versions.slice(0, 6).map((version) => (
                     <Col xs={24} sm={12} md={8} lg={6} xl={4} key={version.version}>
                       <Card
                         hoverable={!isVersionInstalled(version.version)}
@@ -463,35 +488,30 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
                           background: isVersionInstalled(version.version) ?
                             (isDarkMode ? '#162312' : '#f6ffed') : undefined
                         }}
-                        onClick={() => !isVersionInstalled(version.version) && installVersion(`v${version.version}`)}
+                        onClick={() => !isVersionInstalled(version.version) && installVersion(version.version)}
                       >
                         <Space direction="vertical" style={{ width: '100%' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <Space>
-                              <Text strong>v{version.version}</Text>
-                              <Tag color={getTagColor(
-                                version.version === latestVersion.replace('v', ''),
-                                version.isLTS,
-                                isVersionInstalled(version.version)
-                              )}>
-                                {getTagText(
-                                  version.version === latestVersion.replace('v', ''),
-                                  version.isLTS,
-                                  isVersionInstalled(version.version)
-                                )}
-                              </Tag>
+                              <Text strong>{version.version}</Text>
+                              <Space wrap size="small">
+                                {version.lts && <Tag color="gold">LTS</Tag>}
+                                {version.security && <Tag color="red">安全</Tag>}
+                                {isVersionInstalled(version.version) && <Tag color="success">已安装</Tag>}
+                              </Space>
                             </Space>
                             {isVersionInstalled(version.version) && (
                               <CheckCircleOutlined style={{ color: '#52c41a' }} />
                             )}
                           </div>
                           <div style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
-                            发布日期: {version.releaseDate}
+                            发布: {version.date}
                           </div>
-                          {version.npmVersion && (
-                            <div style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
-                              npm v{version.npmVersion}
-                            </div>
+                          <div style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
+                            npm v{version.npm}
+                          </div>
+                          {version.version === latestVersion && (
+                            <Tag color="blue" size="small">最新</Tag>
                           )}
                         </Space>
                       </Card>
@@ -519,9 +539,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
         message="安装提示"
         description={
           <Space direction="vertical">
-            <Text>• 输入 "v20" 安装 v20 的最新版本</Text>
-            <Text>• 输入 "v20.0.4" 安装指定版本</Text>
-            <Text>• 输入 "20" 自动补全为 v20 的最新版本</Text>
+            <Text>• 输入 "20" 安装 v20 的最新版本</Text>
+            <Text>• 输入 "v20.18.0" 安装指定版本</Text>
+            <Text>• 输入 "18" 安装 v18 的最新版本</Text>
           </Space>
         }
         type="info"
@@ -530,7 +550,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
       <Space.Compact style={{ width: '100%', marginTop: 16 }}>
         <Input
-          placeholder="输入版本号，例如: v20, v20.0.4, 或 20"
+          placeholder="输入版本号，例如: 20, v20.18.0, 或 18"
           value={customVersionInput}
           onChange={(e) => setCustomVersionInput(e.target.value)}
           onPressEnter={handleInstallClick}
@@ -573,7 +593,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
         setSaveMessage(`${version} 卸载成功`);
         loadNodeData(); // 重新加载数据
       } else {
-        setSaveMessage(`${version} 卸载失败`);
+        setSaveMessage(`${version} 卸载失败: ${result.error || '未知错误'}`);
       }
     } catch (error) {
       console.error('卸载失败:', error);
