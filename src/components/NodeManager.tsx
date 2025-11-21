@@ -273,9 +273,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   const getVersionType = (version: string): string => {
     const releaseInfo = availableVersions.find(r => r.version === version);
     if (releaseInfo?.lts) {
-      return `LTS ${releaseInfo.lts}`;
+      return `稳定版 (LTS)`;
     }
-    return 'Current';
+    return '当前版 (Current)';
   };
 
   const isNewerThan = (version1: string, version2: string): boolean => {
@@ -311,12 +311,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
       {currentVersion ? (
         <Descriptions column={2} size="small" bordered>
           <Descriptions.Item label="当前版本">
-            <Space>
-              <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
-                {currentVersion}
-              </Title>
-              <Tag color="success">正在使用</Tag>
-            </Space>
+            <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
+              {currentVersion}
+            </Title>
           </Descriptions.Item>
           <Descriptions.Item label="版本类型">
             <Space>
