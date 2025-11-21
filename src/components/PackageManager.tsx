@@ -12,7 +12,8 @@ import {
   Alert,
   Popconfirm,
   Empty,
-  Tooltip
+  Tooltip,
+  App as AntdApp
 } from 'antd';
 import {
   AppstoreOutlined,
@@ -47,7 +48,9 @@ interface NpmPackage {
   size?: string;
 }
 
-const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageApi: any }> = ({ isDarkMode, collapsed = false, messageApi }) => {
+const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ isDarkMode, collapsed = false }) => {
+  // 直接在组件内使用 useApp 获取 message API
+  const { message } = AntdApp.useApp();
   const [packages, setPackages] = useState<NpmPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -136,9 +139,9 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messa
   React.useEffect(() => {
     if (saveMessage) {
       if (saveMessage.includes('成功')) {
-        messageApi.success(saveMessage);
+        message.success(saveMessage);
       } else {
-        messageApi.error(saveMessage);
+        message.error(saveMessage);
       }
     }
   }, [saveMessage]);

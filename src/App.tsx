@@ -268,8 +268,7 @@ const initialStatusCards = [
 type ThemeType = 'light' | 'dark' | 'system';
 
 function App() {
-  // 使用 Ant Design App 组件获取 message API
-  const { message } = AntdApp.useApp();
+  // 不需要在这里获取 message API，子组件会自己使用 useApp
 
   const [currentView, setCurrentView] = useState<'home' | string>(() => {
     // 从URL参数读取当前页面状态
@@ -717,7 +716,7 @@ function App() {
                 marginRight: 0,
               }}
             >
-              <NodeManager isDarkMode={isDarkMode} collapsed={collapsed} messageApi={message} />
+              <NodeManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           </div>
         );
@@ -743,7 +742,7 @@ function App() {
                 marginRight: 0,
               }}
             >
-              <NPMManager isDarkMode={isDarkMode} collapsed={collapsed} messageApi={message} />
+              <NPMManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           </div>
         );
@@ -769,7 +768,7 @@ function App() {
                 marginRight: 0,
               }}
             >
-              <PackageManager isDarkMode={isDarkMode} collapsed={collapsed} messageApi={message} />
+              <PackageManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           </div>
         );

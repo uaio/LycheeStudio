@@ -11,8 +11,8 @@ import {
   Col,
   Statistic,
   Tooltip,
-  message,
-  Alert
+  Alert,
+  App as AntdApp
 } from 'antd';
 import {
   GlobalOutlined,
@@ -50,7 +50,9 @@ interface NpmRegistry {
   ping?: number;
 }
 
-const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageApi: any }> = ({ isDarkMode, collapsed = false, messageApi }) => {
+const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ isDarkMode, collapsed = false }) => {
+  // 直接在组件内使用 useApp 获取 message API
+  const { message } = AntdApp.useApp();
   const [currentRegistry, setCurrentRegistry] = useState('');
   const [currentRegistryName, setCurrentRegistryName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -165,9 +167,9 @@ const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageAp
   React.useEffect(() => {
     if (saveMessage) {
       if (saveMessage.includes('成功')) {
-        messageApi.success(saveMessage);
+        message.success(saveMessage);
       } else {
-        messageApi.error(saveMessage);
+        message.error(saveMessage);
       }
     }
   }, [saveMessage]);

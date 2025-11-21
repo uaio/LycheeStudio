@@ -17,7 +17,8 @@ import {
   Descriptions,
   Table,
   Select,
-  Pagination
+  Pagination,
+  App as AntdApp
 } from 'antd';
 import {
   CodeOutlined,
@@ -63,7 +64,9 @@ interface NodeReleaseInfo {
   modules: number;
 }
 
-const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageApi: any }> = ({ isDarkMode, collapsed = false, messageApi }) => {
+const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ isDarkMode, collapsed = false }) => {
+  // 直接在组件内使用 useApp 获取 message API
+  const { message } = AntdApp.useApp();
   const [currentVersion, setCurrentVersion] = useState<string>('');
   const [installedVersions, setInstalledVersions] = useState<NodeVersion[]>([]);
   const [availableVersions, setAvailableVersions] = useState<NodeReleaseInfo[]>([]);
@@ -87,9 +90,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
   useEffect(() => {
     if (saveMessage) {
       if (saveMessage.includes('成功')) {
-        messageApi.success(saveMessage);
+        message.success(saveMessage);
       } else {
-        messageApi.error(saveMessage);
+        message.error(saveMessage);
       }
       setTimeout(() => setSaveMessage(''), 3000);
     }
@@ -114,7 +117,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
 
     } catch (error) {
       console.error('加载Node数据失败:', error);
-      messageApi.error('加载Node.js数据失败');
+      message.error('加载Node.js数据失败');
     } finally {
       setIsLoading(false);
     }
