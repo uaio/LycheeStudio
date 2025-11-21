@@ -763,61 +763,48 @@ function App() {
           </Text>
         </div>
 
-        <Row gutter={[24, 24]}>
+        <Row gutter={[16, 16]}>
           {platformActivities.map((activity) => (
             <Col xs={24} sm={24} md={12} lg={8} xl={6} xxl={4} key={activity.id}>
               <Card
                 hoverable
+                onClick={() => openLinkSafely(activity.link)}
                 style={{
                   height: '100%',
                   background: isDarkMode ? '#1f1f1f' : '#ffffff',
                   border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+                  cursor: 'pointer',
                 }}
-                styles={{ body: { padding: '20px' } }}
-                actions={[
-                  <Button
-                    type="primary"
-                    icon={<ExternalLink size={16} />}
-                    onClick={() => {
-                      openLinkSafely(activity.link);
-                    }}
-                    disabled={activity.status === 'expired'}
-                  >
-                    {activity.status === 'expired' ? '活动已结束' : '立即参与'}
-                  </Button>
-                ]}
+                styles={{ body: { padding: '16px' } }}
               >
-                <div
-                  onClick={() => {
-                    if (activity.imageUrl) {
-                      setCurrentImageUrl(activity.imageUrl);
-                      setImageModalVisible(true);
-                    }
-                  }}
-                  style={{ cursor: activity.imageUrl ? 'pointer' : 'default' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '12px' }}>
                     <div style={{
-                      fontSize: '32px',
+                      fontSize: '28px',
                       marginRight: '12px',
-                      filter: isDarkMode ? 'brightness(1.2)' : 'none'
+                      filter: isDarkMode ? 'brightness(1.2)' : 'none',
+                      flexShrink: 0,
+                      marginTop: '4px'
                     }}>
                       {activity.imageUrl ? '🖼️' : activity.image}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '4px'
-                      }}>
-                        <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
-                          {activity.title}
-                        </Title>
-                        <Tag color={getStatusColor(activity.status)} style={{ margin: 0 }}>
-                          {getStatusText(activity.status)}
-                        </Tag>
-                      </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Title
+                        level={4}
+                        style={{
+                          margin: '0 0 4px 0',
+                          color: isDarkMode ? '#ffffff' : '#000000',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          lineHeight: '1.4',
+                          fontSize: '16px',
+                          fontWeight: 600
+                        }}
+                      >
+                        {activity.title}
+                      </Title>
                       <Text type="secondary" style={{ fontSize: '12px' }}>
                         {activity.platform}
                       </Text>
@@ -826,9 +813,14 @@ function App() {
 
                   <Paragraph
                     style={{
-                      marginBottom: '0',
+                      margin: 0,
                       color: isDarkMode ? '#e0e0e0' : '#333',
-                      lineHeight: '1.6'
+                      lineHeight: '1.5',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 5,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      fontSize: '14px'
                     }}
                   >
                     {activity.description}
@@ -871,48 +863,46 @@ function App() {
           </Text>
         </div>
 
-        <Row gutter={[24, 24]}>
+        <Row gutter={[16, 16]}>
           {myInvitations.map((invitation) => (
             <Col xs={24} sm={24} md={12} lg={8} xl={6} xxl={4} key={invitation.id}>
               <Card
                 hoverable
+                onClick={() => openLinkSafely(invitation.inviteLink)}
                 style={{
                   height: '100%',
                   background: isDarkMode ? '#1f1f1f' : '#ffffff',
                   border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+                  cursor: 'pointer',
                 }}
-                styles={{ body: { padding: '20px' } }}
-                actions={[
-                  <Button
-                    type="primary"
-                    icon={<ExternalLink size={16} />}
-                    onClick={() => {
-                      openLinkSafely(invitation.inviteLink);
-                    }}
-                  >
-                    分享邀请链接
-                  </Button>
-                ]}
+                styles={{ body: { padding: '16px' } }}
               >
-                <div
-                  onClick={() => {
-                    if (invitation.imageUrl) {
-                      setCurrentImageUrl(invitation.imageUrl);
-                      setImageModalVisible(true);
-                    }
-                  }}
-                  style={{ cursor: invitation.imageUrl ? 'pointer' : 'default' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '12px' }}>
                     <div style={{
-                      fontSize: '32px',
+                      fontSize: '28px',
                       marginRight: '12px',
-                      filter: isDarkMode ? 'brightness(1.2)' : 'none'
+                      filter: isDarkMode ? 'brightness(1.2)' : 'none',
+                      flexShrink: 0,
+                      marginTop: '4px'
                     }}>
                       {invitation.imageUrl ? '🖼️' : invitation.image}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Title
+                        level={4}
+                        style={{
+                          margin: '0 0 4px 0',
+                          color: isDarkMode ? '#ffffff' : '#000000',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          lineHeight: '1.4',
+                          fontSize: '16px',
+                          fontWeight: 600
+                        }}
+                      >
                         {invitation.title}
                       </Title>
                       <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -923,9 +913,14 @@ function App() {
 
                   <Paragraph
                     style={{
-                      marginBottom: '0',
+                      margin: 0,
                       color: isDarkMode ? '#e0e0e0' : '#333',
-                      lineHeight: '1.6'
+                      lineHeight: '1.5',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 5,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      fontSize: '14px'
                     }}
                   >
                     {invitation.description}
