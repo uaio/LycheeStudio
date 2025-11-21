@@ -173,7 +173,7 @@ const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ is
   }, [saveMessage]);
 
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 统计概览 */}
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={8}>

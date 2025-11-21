@@ -407,7 +407,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   ];
 
   return (
-    <Card style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+    <Card style={{ width: '100%' }}>
       <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
     </Card>
   );
