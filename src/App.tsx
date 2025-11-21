@@ -42,10 +42,37 @@ declare global {
   }
 }
 
+// 统一版本号格式为 x.x.x
+const formatVersion = (version: string): string => {
+  if (!version) return version;
+
+  // 移除 v 前缀
+  version = version.replace(/^v/, '');
+
+  // 提取版本号格式 x.x.x
+  const versionMatch = version.match(/\d+\.\d+\.\d+/);
+  if (versionMatch) {
+    return versionMatch[0];
+  }
+
+  // 如果没有 x.x.x 格式，尝试提取主版本号和次版本号
+  const shortVersionMatch = version.match(/\d+\.\d+/);
+  if (shortVersionMatch) {
+    return shortVersionMatch[0] + '.0';
+  }
+
+  // 最后尝试提取主版本号
+  const mainVersionMatch = version.match(/\d+/);
+  if (mainVersionMatch) {
+    return mainVersionMatch[0] + '.0.0';
+  }
+
+  return version;
+};
+
 // 统一的 Node.js 默认版本获取函数
 export const getCurrentNodeVersion = async (): Promise<string> => {
   if (!window.electronAPI) {
-    console.error('electronAPI 不存在');
     return '';
   }
 
@@ -60,7 +87,7 @@ export const getCurrentNodeVersion = async (): Promise<string> => {
         const versionMatch = line.match(/v\d+\.\d+\.\d+/);
         if (versionMatch && line.includes('default')) {
           const version = versionMatch[0];
-          return version;
+          return formatVersion(version);
         }
       }
 
@@ -69,7 +96,7 @@ export const getCurrentNodeVersion = async (): Promise<string> => {
         const versionMatch = line.match(/v\d+\.\d+\.\d+/);
         if (versionMatch) {
           const version = versionMatch[0];
-          return version;
+          return formatVersion(version);
         }
       }
 
@@ -77,8 +104,7 @@ export const getCurrentNodeVersion = async (): Promise<string> => {
     }
     return '';
   } catch (error) {
-    console.error('获取当前Node.js版本失败:', error);
-    return '';
+        return '';
   }
 };
 
@@ -576,8 +602,7 @@ function App() {
         window.open(url, '_blank');
       }
     } catch (error) {
-      console.warn('Failed to open link:', error);
-      // 最后的降级方案
+            // 最后的降级方案
       window.open(url, '_blank');
     }
   };
@@ -649,8 +674,7 @@ function App() {
   // 检查工具安装状态
   const checkToolStatus = async (toolName: string) => {
     if (!window.electronAPI) {
-      console.error('electronAPI 不存在');
-      return;
+            return;
     }
 
     try {
@@ -674,7 +698,7 @@ function App() {
             // 如果没有获取到版本，尝试使用getToolVersion作为备用
             const versionResult = await window.electronAPI.getToolVersion(toolName);
             if (versionResult.version) {
-              version = versionResult.version + ' (系统)';
+              version = formatVersion(versionResult.version);
               status = 'active';
               detail = 'JavaScript 运行环境';
             } else {
@@ -687,7 +711,7 @@ function App() {
           // 其他工具使用原来的方法
           const versionResult = await window.electronAPI.getToolVersion(toolName);
           if (versionResult.version) {
-            version = versionResult.version;
+            version = formatVersion(versionResult.version);
             status = 'active';
             if (toolName === 'fnm') {
               detail = 'Fast Node Manager';
@@ -727,8 +751,7 @@ function App() {
         return updatedCards;
       });
     } catch (error) {
-      console.error(`检查 ${toolName} 状态失败:`, error);
-      setStatusCards(prevCards =>
+            setStatusCards(prevCards =>
         prevCards.map(card => {
           // 特殊处理 Node.js 和 FNM 的匹配
           const shouldUpdate =
@@ -763,8 +786,7 @@ function App() {
   // 检查NPM源
   const checkNpmRegistry = async () => {
         if (!window.electronAPI) {
-      console.error('electronAPI 不存在');
-      return;
+            return;
     }
 
     try {
@@ -803,8 +825,7 @@ function App() {
         });
       }
     } catch (error) {
-      console.error('检查NPM源状态失败:', error);
-      setStatusCards(prevCards => {
+            setStatusCards(prevCards => {
         const updatedCards = prevCards.map(card => {
           if (card.name === 'NPM 源') {
             return {
@@ -856,7 +877,7 @@ function App() {
             if (card.name === displayName) {
               return {
                 ...card,
-                version: toolStatus.version || (toolStatus.isInstalled ? '已安装' : '未安装'),
+                version: toolStatus.version ? formatVersion(toolStatus.version) : (toolStatus.isInstalled ? '已安装' : '未安装'),
                 status: toolStatus.isInstalled ? 'active' as const : 'error' as const
                 // 保持原有的 detail 字段不变
               };
@@ -867,13 +888,11 @@ function App() {
         });
 
               } else {
-        console.warn(`未找到工具 ${displayName} 的安装命令`);
-        // 如果找不到工具命令，执行全局刷新
+                // 如果找不到工具命令，执行全局刷新
         await refreshTools();
       }
     } catch (error) {
-      console.error(`${action}${displayName}状态失败:`, error);
-      // 显示错误状态
+            // 显示错误状态
       setStatusCards(prevCards => {
         const updatedCards = prevCards.map(card => {
           if (card.name === displayName) {
@@ -911,8 +930,7 @@ function App() {
           refreshToolStatus('Codex', true);
         }, 500); // 稍微延迟检测AI工具
       } else {
-        console.error('electronAPI 未找到');
-        // 如果 electronAPI 不存在，设置为错误状态
+                // 如果 electronAPI 不存在，设置为错误状态
         setStatusCards(prevCards =>
           prevCards.map(card => {
             if (card.name === 'Node.js' || card.name === 'FNM' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') {
@@ -1021,8 +1039,7 @@ function App() {
         refreshTools();
       }, 2000);
     } catch (error) {
-      console.error('安装失败:', error);
-    } finally {
+          } finally {
       setInstallingTool(null);
     }
   };
@@ -1633,7 +1650,7 @@ function App() {
           {collapsed ? (
             <MenuUnfoldOutlined
               style={{
-                fontSize: '14px',
+                fontSize: '11px',
                 color: isDarkMode ? '#b0b0b0' : '#666666',
                 transition: 'all 0.2s ease'
               }}
@@ -1641,7 +1658,7 @@ function App() {
           ) : (
             <MenuFoldOutlined
               style={{
-                fontSize: '14px',
+                fontSize: '11px',
                 color: isDarkMode ? '#b0b0b0' : '#666666',
                 transition: 'all 0.2s ease'
               }}
