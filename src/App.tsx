@@ -17,7 +17,9 @@ import {
   XCircle,
   RefreshCw,
   Gift,
-  ExternalLink
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 import './App.css';
 
@@ -258,6 +260,9 @@ function App() {
   const [openKeys, setOpenKeys] = useState<string[]>(() => {
     return getOpenKeys(currentView);
   });
+
+  // 侧边栏收起状态管理
+  const [collapsed, setCollapsed] = useState<boolean>(false);
   const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
     // 从 localStorage 读取保存的主题设置
     const savedTheme = localStorage.getItem('app-theme') as ThemeType;
@@ -633,12 +638,14 @@ function App() {
           <div
             className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
             style={{
-              padding: '32px',
+              paddingTop: '32px',
+              paddingLeft: '32px',
+              paddingBottom: '32px',
+              paddingRight: '8px',
               height: '100%',
               overflowY: 'auto',
               overflowX: 'hidden',
               marginRight: 0,
-              paddingRight: '8px',
             }}
           >
             <div style={{
@@ -746,12 +753,14 @@ function App() {
         <div
           className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
           style={{
-            padding: '32px',
+            paddingTop: '32px',
+            paddingLeft: '32px',
+            paddingBottom: '32px',
+            paddingRight: '8px',
             height: '100%',
             overflowY: 'auto',
             overflowX: 'hidden',
             marginRight: 0,
-            paddingRight: '8px',
           }}
         >
           <div style={{ marginBottom: '32px' }}>
@@ -846,12 +855,14 @@ function App() {
         <div
           className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
           style={{
-            padding: '32px',
+            paddingTop: '32px',
+            paddingLeft: '32px',
+            paddingBottom: '32px',
+            paddingRight: '8px',
             height: '100%',
             overflowY: 'auto',
             overflowX: 'hidden',
             marginRight: 0,
-            paddingRight: '8px',
           }}
         >
           <div style={{ marginBottom: '32px' }}>
@@ -937,128 +948,183 @@ function App() {
 
   // 渲染侧边栏菜单
   const renderSidebar = () => (
-    <Sider
-      width={240}
-      style={{
-        background: isDarkMode ? '#1f1f1f' : '#f8f9fa',
-        borderRight: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
-        height: 'calc(100vh - 38px)',
-        position: 'fixed',
-        left: 0,
-        top: 38,
-      }}
-    >
-      <div
-        className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+    <>
+      <Sider
+        width={collapsed ? 80 : 200}
+        collapsedWidth={80}
+        collapsed={collapsed}
         style={{
-          padding: '16px',
-          height: '100%',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          // 确保滚动条不占用额外空间
-          marginRight: 0,
-          paddingRight: 0,
+          background: isDarkMode ? '#1f1f1f' : '#f8f9fa',
+          borderRight: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
+          height: 'calc(100vh - 38px)',
+          position: 'fixed',
+          left: 0,
+          top: 38,
+          transition: collapsed
+          ? 'width 0.15s cubic-bezier(0.42, 0, 1, 1)'  // 收起：先慢后快
+          : 'width 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94)',  // 展开：先快后慢
         }}
       >
-        <Menu
-          mode="inline"
-          selectedKeys={[currentView === 'home' ? 'home' : currentView]}
-          openKeys={openKeys}
-          onOpenChange={setOpenKeys}
+        <div
+          className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
           style={{
-            border: 'none',
-            background: 'transparent',
-            // 确保菜单不被挤压
-            width: '100%',
+            paddingTop: collapsed ? '8px' : '16px',
+            paddingLeft: collapsed ? '8px' : '16px',
+            paddingBottom: collapsed ? '8px' : '16px',
+            paddingRight: 0,
+            height: '100%',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            // 确保滚动条不占用额外空间
+            marginRight: 0,
           }}
-          items={[
-            {
-              key: 'home',
-              icon: <Home size={16} />,
-              label: '首页',
-              onClick: () => setCurrentView('home'),
-            },
-            {
-              key: 'nodejs',
-              icon: <Code size={16} />,
-              label: 'Node.js',
-              children: [
-                { key: 'node-version', label: '版本切换' },
-                { key: 'npm-source', label: 'NPM 源管理' },
-                { key: 'package-managers', label: '包管理工具' },
-              ],
-            },
-            {
-              key: 'ai-tools',
-              icon: <Bot size={16} />,
-              label: 'AI 工具',
-              children: [
-                { key: 'claude-code', label: 'Claude Code' },
-                { key: 'openai-cli', label: 'OpenAI CLI' },
-                { key: 'gemini-cli', label: 'Gemini CLI' },
-                { key: 'github-copilot', label: 'GitHub Copilot' },
-              ],
-            },
-            {
-              key: 'activities',
-              icon: <Gift size={16} />,
-              label: '活动',
-              children: [
-                {
-                  key: 'platform-promotions',
-                  label: '平台活动',
-                  onClick: () => setCurrentView('platform-promotions')
-                },
-                {
-                  key: 'my-invitations',
-                  label: '我的邀请',
-                  onClick: () => setCurrentView('my-invitations')
-                },
-              ],
-            },
-            {
-              key: 'dev-recommend',
-              icon: <Terminal size={16} />,
-              label: '开发推荐',
-              children: [
-                { key: 'vscode-extensions', label: 'VS Code 扩展' },
-                { key: 'dev-tools', label: '开发工具' },
-                { key: 'learning-resources', label: '学习资源' },
-              ],
-            },
-            {
-              key: 'help',
-              icon: <HelpCircle size={16} />,
-              label: '帮助',
-              children: [
-                { key: 'documentation', label: '文档' },
-                { key: 'tutorials', label: '教程' },
-                { key: 'about', label: '关于' },
-              ],
-            },
-          ]}
-        />
+        >
+          <Menu
+            mode="inline"
+            selectedKeys={[currentView === 'home' ? 'home' : currentView]}
+            openKeys={collapsed ? [] : openKeys}
+            onOpenChange={setOpenKeys}
+            inlineCollapsed={collapsed}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              // 确保菜单不被挤压
+              width: '100%',
+            }}
+            items={[
+              {
+                key: 'home',
+                icon: <Home size={16} />,
+                label: '首页',
+                onClick: () => setCurrentView('home'),
+              },
+              {
+                key: 'nodejs',
+                icon: <Code size={16} />,
+                label: 'Node.js',
+                children: [
+                  { key: 'node-version', label: '版本切换' },
+                  { key: 'npm-source', label: 'NPM 源管理' },
+                  { key: 'package-managers', label: '包管理工具' },
+                ],
+              },
+              {
+                key: 'ai-tools',
+                icon: <Bot size={16} />,
+                label: 'AI 工具',
+                children: [
+                  { key: 'claude-code', label: 'Claude Code' },
+                  { key: 'openai-cli', label: 'OpenAI CLI' },
+                  { key: 'gemini-cli', label: 'Gemini CLI' },
+                  { key: 'github-copilot', label: 'GitHub Copilot' },
+                ],
+              },
+              {
+                key: 'activities',
+                icon: <Gift size={16} />,
+                label: '活动',
+                children: [
+                  {
+                    key: 'platform-promotions',
+                    label: '平台活动',
+                    onClick: () => setCurrentView('platform-promotions')
+                  },
+                  {
+                    key: 'my-invitations',
+                    label: '我的邀请',
+                    onClick: () => setCurrentView('my-invitations')
+                  },
+                ],
+              },
+              {
+                key: 'dev-recommend',
+                icon: <Terminal size={16} />,
+                label: '开发推荐',
+                children: [
+                  { key: 'vscode-extensions', label: 'VS Code 扩展' },
+                  { key: 'dev-tools', label: '开发工具' },
+                  { key: 'learning-resources', label: '学习资源' },
+                ],
+              },
+              {
+                key: 'help',
+                icon: <HelpCircle size={16} />,
+                label: '帮助',
+                children: [
+                  { key: 'documentation', label: '文档' },
+                  { key: 'tutorials', label: '教程' },
+                  { key: 'about', label: '关于' },
+                ],
+              },
+            ]}
+          />
+        </div>
+      </Sider>
+
+      {/* 边缘收起/展开按钮 - 顶部精致版本 */}
+      <div
+        style={{
+          position: 'fixed',
+          left: collapsed ? 80 : 200,
+          top: '50px',
+          zIndex: 1000,
+          transition: collapsed
+          ? 'left 0.15s cubic-bezier(0.42, 0, 1, 1)'  // 收起：先慢后快
+          : 'left 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94)',  // 展开：先快后慢
+          backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff',
+          border: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
+          borderRadius: '0 6px 6px 0',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '20px',
+          height: '20px',
+        }}
+        onClick={() => setCollapsed(!collapsed)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = isDarkMode ? '#404040' : '#f8f8f8';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = isDarkMode ? '#2a2a2a' : '#ffffff';
+          e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
+        }}
+      >
+        <Tooltip
+          title={collapsed ? '展开菜单' : '收起菜单'}
+          placement="right"
+        >
+          {collapsed ? (
+            <ChevronRightIcon size={12} style={{ color: isDarkMode ? '#b0b0b0' : '#666666' }} />
+          ) : (
+            <ChevronLeft size={12} style={{ color: isDarkMode ? '#b0b0b0' : '#666666' }} />
+          )}
+        </Tooltip>
       </div>
-    </Sider>
+    </>
   );
 
   // 渲染首页
   const renderHome = () => (
     <div style={{
-      marginLeft: '240px', // 为侧边栏留出空间
+      marginLeft: collapsed ? '80px' : '200px', // 为侧边栏留出空间，适配收起状态
       height: 'calc(100vh - 38px)', // 固定高度，减去标题栏高度
       overflow: 'hidden', // 隐藏溢出
     }}>
       <div
         className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
         style={{
-          padding: '32px',
+          paddingTop: '32px',
+          paddingLeft: '32px',
+          paddingBottom: '32px',
+          paddingRight: '40px', // 原本的32px + 8px for scrollbar space
           height: '100%',
           overflowY: 'auto',
           overflowX: 'hidden',
           // 确保滚动条不占用额外空间
           marginRight: 0,
-          paddingRight: '8px', // 为滚动条留出空间
         }}
       >
       <div style={{ marginBottom: '32px' }}>
