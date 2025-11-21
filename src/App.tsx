@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Input, Progress, Space, Tag, Modal, App as AntdApp } from 'antd';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Modal, App as AntdApp } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
 import NodeManager from './components/NodeManager';
 import NPMManager from './components/NPMManager';
 import PackageManager from './components/PackageManager';
+import { useInstallation } from './hooks/useInstallation';
 import {
   Bot,
   Terminal,
-  Cloud,
   Home,
   HelpCircle,
   ChevronRight,
@@ -19,8 +20,8 @@ import {
   AlertCircle,
   XCircle,
   RefreshCw,
+  Plus,
   Gift,
-  ExternalLink,
   ChevronLeft,
   ChevronRight as ChevronRightIcon
 } from 'lucide-react';
@@ -196,16 +197,17 @@ const myInvitations = [
 
 // LycheeStudio - 系统状态卡片
 const initialStatusCards = [
+  // 第一组：Homebrew 和 FNM
   {
-    name: 'Node.js',
+    name: 'Homebrew',
     version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
-    description: 'JavaScript 运行环境',
-    icon: <Code size={18} />,
-    color: '#68a063',
-    detail: 'JavaScript 运行环境',
-    installable: true,
-    installCommand: 'node'
+    description: 'macOS 包管理器',
+    icon: <Package size={18} />,
+    color: '#fb923c',
+    detail: 'macOS 包管理器，用于安装开发工具',
+    installable: false, // 检测中状态不可安装
+    installCommand: 'brew'
   },
   {
     name: 'FNM',
@@ -215,57 +217,247 @@ const initialStatusCards = [
     icon: <Package size={18} />,
     color: '#f59e0b',
     detail: 'Fast Node Manager',
-    installable: true,
+    installable: false, // 检测中状态不可安装
     installCommand: 'fnm'
+  },
+
+  // 第二组：Node.js 和 NPM 源
+  {
+    name: 'Node.js',
+    version: '检测中...',
+    status: 'warning' as 'active' | 'warning' | 'error',
+    description: 'JavaScript 运行环境',
+    icon: <Code size={18} />,
+    color: '#68a063',
+    detail: 'JavaScript 运行环境',
+    installable: false, // 检测中状态不可安装
+    installCommand: 'node'
   },
   {
     name: 'NPM 源',
-    version: '检测中',
-    status: 'active' as 'active' | 'warning' | 'error',
+    version: '检测中...',
+    status: 'warning' as 'active' | 'warning' | 'error',
     description: '包管理器源配置',
     icon: <Package size={18} />,
     color: '#cb3837',
-    detail: '检测中...'
+    detail: '包管理器源配置',
+    installable: false, // 检测中状态不可安装
+    installCommand: 'npm' // NPM 源检测和配置
   },
+
+  // 第三组：AI 工具
   {
-    name: 'Claude API',
-    version: 'Claude-3.5-Sonnet',
-    status: 'active' as 'active' | 'warning' | 'error',
-    description: 'Anthropic AI 助手',
+    name: 'Claude Code',
+    version: '检测中...',
+    status: 'warning' as 'active' | 'warning' | 'error',
+    description: 'Anthropic AI 编程助手',
     icon: <Bot size={18} />,
     color: '#d97706',
-    detail: 'API 连接正常'
+    detail: 'Anthropic AI 开发工具',
+    installable: false, // 检测中状态不可安装
+    installCommand: 'claude-code'
   },
   {
-    name: 'OpenAI API',
-    version: 'GPT-4o',
+    name: 'Gemini CLI',
+    version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
-    description: 'OpenAI GPT 模型',
-    icon: <Cloud size={18} />,
+    description: 'Google AI 代码助手',
+    icon: <CheckCircle size={18} />,
     color: '#3b82f6',
-    detail: '需要更新密钥'
+    detail: 'Google AI 编程助手',
+    installable: false, // 检测中状态不可安装
+    installCommand: 'gemini-cli'
   },
   {
-    name: 'Gemini API',
-    version: 'Gemini-1.5-Pro',
-    status: 'active' as 'active' | 'warning' | 'error',
-    description: 'Google AI 模型',
+    name: 'Codex',
+    version: '检测中...',
+    status: 'warning' as 'active' | 'warning' | 'error',
+    description: 'OpenAI代码助手',
     icon: <Zap size={18} />,
     color: '#059669',
-    detail: '服务可用'
-  },
-  {
-    name: '开发环境',
-    version: '就绪',
-    status: 'active' as 'active' | 'warning' | 'error',
-    description: '整体开发状态',
-    icon: <Terminal size={18} />,
-    color: '#10b981',
-    detail: '所有工具已配置'
+    detail: 'OpenAI Codex CLI',
+    installable: false, // 检测中状态不可安装
+    installCommand: 'codex'
   }
 ];
 
 type ThemeType = 'light' | 'dark' | 'system';
+
+// 将检测结果映射到界面状态卡片的函数
+const mapToolsToStatusCards = (tools: any[], currentStatusCards = null) => {
+  // 如果没有当前状态卡片，使用初始状态
+  const statusCards = currentStatusCards || [
+    // 第一行：Homebrew 和 FNM
+    {
+      name: 'Homebrew',
+      version: '检测中...',
+      status: 'warning' as 'active' | 'warning' | 'error',
+      description: 'macOS 包管理器',
+      icon: <Package size={18} />,
+      color: '#fb923c',
+      detail: 'macOS 包管理器，用于安装开发工具',
+      installable: false, // 检测中状态不可安装
+      installCommand: 'brew'
+    },
+    {
+      name: 'FNM',
+      version: '检测中...',
+      status: 'warning' as 'active' | 'warning' | 'error',
+      description: 'Fast Node Manager',
+      icon: <Package size={18} />,
+      color: '#f59e0b',
+      detail: 'Fast Node Manager',
+      installable: false, // 检测中状态不可安装
+      installCommand: 'fnm'
+    },
+
+    // 第二行：Node.js 和 NPM 源
+    {
+      name: 'Node.js',
+      version: '检测中...',
+      status: 'warning' as 'active' | 'warning' | 'error',
+      description: 'JavaScript 运行环境',
+      icon: <Code size={18} />,
+      color: '#68a063',
+      detail: 'JavaScript 运行环境',
+      installable: false, // 检测中状态不可安装
+      installCommand: 'node'
+    },
+    {
+      name: 'NPM 源',
+      version: '检测中...',
+      status: 'warning' as 'active' | 'warning' | 'error',
+      description: '包管理器源配置',
+      icon: <Package size={18} />,
+      color: '#cb3837',
+      detail: '包管理器源配置',
+      installable: false, // 检测中状态不可安装
+      installCommand: 'npm'
+    },
+
+    // 第三行：AI 工具
+    {
+      name: 'Claude Code',
+      version: '检测中...',
+      status: 'warning' as 'active' | 'warning' | 'error',
+      description: 'Anthropic AI 编程助手',
+      icon: <Bot size={18} />,
+      color: '#d97706',
+      detail: 'Anthropic AI 编程助手',
+      installable: false, // 检测中状态不可安装
+      installCommand: 'claude-code'
+    },
+    {
+      name: 'Gemini CLI',
+      version: '检测中...',
+      status: 'warning' as 'active' | 'warning' | 'error',
+      description: 'Google Gemini AI 助手',
+      icon: <Bot size={18} />,
+      color: '#8b5cf6',
+      detail: 'Google Gemini AI 助手',
+      installable: false, // 检测中状态不可安装
+      installCommand: 'gemini-cli'
+    },
+    {
+      name: 'Codex',
+      version: '检测中...',
+      status: 'warning' as 'active' | 'warning' | 'error',
+      description: 'OpenAI Codex AI 代码助手',
+      icon: <Bot size={18} />,
+      color: '#06b6d4',
+      detail: 'OpenAI Codex AI 代码助手',
+      installable: false, // 检测中状态不可安装
+      installCommand: 'codex'
+    }
+  ];
+
+  // 使用检测结果更新状态卡片（基于当前状态，保留已检测的结果）
+  return statusCards.map(card => {
+    const tool = tools.find(t => {
+      // 匹配逻辑 - 与 installationService.ts 中的工具名称保持一致
+      if (card.name === 'Homebrew') return t.name === 'brew';
+      if (card.name === 'FNM') return t.name === 'fnm';
+      if (card.name === 'Node.js') return t.name === 'node';
+      if (card.name === 'NPM 源') return t.name === 'npm';
+      if (card.name === 'Claude Code') return t.name === 'claude-code' || t.name === 'claudeCode';
+      if (card.name === 'Gemini CLI') return t.name === 'gemini-cli' || t.name === 'geminiCli';
+      if (card.name === 'Codex') return t.name === 'codex';
+      return false;
+    });
+
+    if (tool) {
+      let installable = false;
+      let status: 'active' | 'warning' | 'error' = 'warning';
+      let version = tool.version || card.version;
+
+      // 根据依赖关系判断是否可安装和状态
+      if (card.name === 'Homebrew') {
+        // Homebrew 无依赖，总是可安装
+        installable = !tool.isInstalled;
+        if (tool.isInstalled) status = 'active';
+        else if (tool.status === 'error') status = 'error';
+        else status = 'warning';
+      } else if (card.name === 'FNM') {
+        // FNM 依赖 Homebrew
+        const homebrew = tools.find(t => t.name === 'brew');
+        installable = !tool.isInstalled && homebrew?.isInstalled;
+        if (tool.isInstalled) status = 'active';
+        else if (tool.status === 'error' || !homebrew?.isInstalled) status = 'error';
+        else status = 'warning';
+      } else if (card.name === 'Node.js') {
+        // Node.js 依赖 FNM
+        const fnm = tools.find(t => t.name === 'fnm');
+        installable = !tool.isInstalled && fnm?.isInstalled;
+        if (tool.isInstalled) status = 'active';
+        else if (tool.status === 'error' || !fnm?.isInstalled) status = 'error';
+        else status = 'warning';
+      } else if (card.name === 'NPM 源') {
+        // NPM 源完全依赖 Node.js 状态
+        const nodejs = tools.find(t => t.name === 'node');
+
+        if (!nodejs) {
+          // 如果没有找到Node.js数据，设为错误状态
+          status = 'error';
+          version = 'API不可用';
+          installable = false;
+        } else if (!nodejs.isInstalled) {
+          // Node.js未安装时，NPM源也不可安装
+          status = 'warning';
+          version = '依赖Node.js';
+          installable = false;
+        } else if (nodejs.status === 'error') {
+          // Node.js API不可用时，NPM源也是API不可用
+          status = 'error';
+          version = 'API不可用';
+          installable = false;
+        } else {
+          // Node.js正常时，NPM源才能正常工作
+          installable = false; // NPM源不需要安装，是配置项
+          if (tool.isInstalled) status = 'active';
+          else if (tool.status === 'error') status = 'error';
+          else status = 'warning';
+        }
+      } else {
+        // AI工具依赖 Homebrew
+        const homebrew = tools.find(t => t.name === 'brew');
+        installable = !tool.isInstalled && homebrew?.isInstalled;
+        if (tool.isInstalled) status = 'active';
+        else if (tool.status === 'error' || !homebrew?.isInstalled) status = 'error';
+        else status = 'warning';
+      }
+
+      return {
+        ...card,
+        version,
+        status,
+        installable,
+        path: tool.path
+      };
+    }
+
+    return card;
+  });
+};
 
 function App() {
   // 不需要在这里获取 message API，子组件会自己使用 useApp
@@ -278,7 +470,7 @@ function App() {
   });
 
   // 子页面到父菜单的映射关系
-  const subPageToParentMap: Record<string, string> = {
+  const subPageToParentMap = useMemo(() => ({
     'node-version': 'nodejs',
     'npm-source': 'nodejs',
     'package-managers': 'nodejs',
@@ -294,13 +486,23 @@ function App() {
     'documentation': 'help',
     'tutorials': 'help',
     'about': 'help',
-  };
+  }), []);
+
+  // 使用安装Hook
+  const { tools, refreshTools, refreshSingleTool, installTool, partialResults, isLoading } = useInstallation();
+
+  // 开发环境状态
+  const [devEnvironmentStatus, setDevEnvironmentStatus] = useState({
+    ready: false,
+    message: '开发环境准备中 (0/4)',
+    description: '请安装所有核心开发工具以获得最佳体验'
+  });
 
   // 计算当前应该展开的父菜单
-  const getOpenKeys = (view: string): string[] => {
+  const getOpenKeys = useCallback((view: string): string[] => {
     const parentKey = subPageToParentMap[view];
     return parentKey ? [parentKey] : [];
-  };
+  }, [subPageToParentMap]);
 
   const [openKeys, setOpenKeys] = useState<string[]>(() => {
     return getOpenKeys(currentView);
@@ -315,9 +517,56 @@ function App() {
   });
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [statusCards, setStatusCards] = useState(initialStatusCards);
+
+  // 统一监听所有状态变化，更新状态卡片
+  useEffect(() => {
+    // 检测期间：使用部分结果进行渐进式更新，基于当前状态保留已检测结果
+    if (!isLoading && partialResults.length > 0) {
+      console.log('检测期间更新状态卡片，部分结果数量:', partialResults.length);
+      const updatedCards = mapToolsToStatusCards(partialResults, statusCards);
+      setStatusCards(updatedCards);
+    }
+
+    // 检测完成后：使用完整结果，基于当前状态保留已检测结果
+    if (!isLoading && tools.length > 0) {
+      console.log('检测完成后更新状态卡片，完整结果数量:', tools.length);
+      const updatedCards = mapToolsToStatusCards(tools, statusCards);
+      setStatusCards(updatedCards);
+    }
+  }, [tools, partialResults, isLoading]); // 移除 statusCards 和 mapToolsToStatusCards 依赖
   const [installingTool, setInstallingTool] = useState<string | null>(null);
-  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+  const [currentImageUrl] = useState<string | null>(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+
+  // 监听工具状态变化，更新首页状态卡片
+  useEffect(() => {
+    const updatedCards = statusCards.map(card => {
+      if (card.installable && card.installCommand) {
+        const tool = tools.find(t => t.name === card.name || t.name === card.installCommand);
+        if (tool) {
+          return {
+            ...card,
+            version: tool.version ? `v${tool.version}` : (tool.isInstalled ? '已安装' : '未安装'),
+            status: tool.isInstalled ? 'active' : 'warning' as 'active' | 'warning' | 'error',
+            detail: card.description // 保持使用原有的简单介绍
+          };
+        }
+      }
+      return card;
+    });
+
+    // 检查是否需要更新
+    const hasChanges = updatedCards.some((card, index) => {
+      const originalCard = statusCards[index];
+      return card.version !== originalCard.version ||
+             card.status !== originalCard.status ||
+             card.detail !== originalCard.detail;
+    });
+
+    if (hasChanges) {
+      setStatusCards(updatedCards);
+    }
+  }, [tools, statusCards]);
 
   // 安全打开链接的函数
   const openLinkSafely = (url: string) => {
@@ -355,7 +604,7 @@ function App() {
     // 更新菜单展开状态
     const newOpenKeys = getOpenKeys(currentView);
     setOpenKeys(newOpenKeys);
-  }, [currentView]);
+  }, [currentView, getOpenKeys]);
 
   // 组件加载时自动检测NPM源
   useEffect(() => {
@@ -366,6 +615,39 @@ function App() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // 监听工具状态变化，更新开发环境状态
+  useEffect(() => {
+    // 从statusCards中找到核心工具的状态
+    const nodeCard = statusCards.find(card => card.name === 'Node.js');
+    const fnmCard = statusCards.find(card => card.name === 'FNM');
+    const npmCard = statusCards.find(card => card.name === 'NPM 源');
+    const brewCard = statusCards.find(card => card.name === 'Homebrew');
+
+    // 检查工具是否已安装（status为'active'表示已安装）
+    const nodeInstalled = nodeCard?.status === 'active';
+    const fnmInstalled = fnmCard?.status === 'active';
+    const npmInstalled = npmCard?.status === 'active';
+    const brewInstalled = brewCard?.status === 'active';
+
+    const allInstalled = nodeInstalled && fnmInstalled && npmInstalled && brewInstalled;
+    const installedCount = [nodeInstalled, fnmInstalled, npmInstalled, brewInstalled].filter(Boolean).length;
+
+    const newStatus = allInstalled ? {
+      ready: true,
+      message: '开发环境准备就绪',
+      description: '所有核心开发工具已安装完成'
+    } : {
+      ready: false,
+      message: `开发环境准备中 (${installedCount}/4)`,
+      description: '请安装所有核心开发工具以获得最佳体验'
+    };
+
+    // 检查是否需要更新状态
+    if (JSON.stringify(devEnvironmentStatus) !== JSON.stringify(newStatus)) {
+      setDevEnvironmentStatus(newStatus);
+    }
+  }, [statusCards]); // 依赖statusCards数组
 
   // 检查工具安装状态
   const checkToolStatus = async (toolName: string) => {
@@ -546,49 +828,80 @@ function App() {
     }
   };
 
-  // 安装工具
-  const installTool = async (toolName: string) => {
-    if (!window.electronAPI || installingTool) return;
-
-    setInstallingTool(toolName);
-
+  // 通用刷新工具状态
+  const refreshToolStatus = async (displayName: string, isInitializing: boolean = false) => {
+    const action = isInitializing ? '初始化检测' : '刷新';
+    console.log(`${action}${displayName}状态被调用`);
     try {
-      const result = await window.electronAPI.installTool(toolName);
+      // 根据显示名称找到对应的工具命令
+      const toolCard = statusCards.find(card => card.name === displayName);
+      const toolCommand = toolCard?.installCommand;
 
-      if (result.success) {
-        // 显示成功消息
-        await window.electronAPI.showMessageBox({
-          type: 'info',
-          title: '安装成功',
-          message: result.message,
-          buttons: ['确定']
+      if (toolCommand) {
+        console.log(`正在${action}单个工具: ${toolCommand}`);
+
+        // 只更新版本显示加载状态，保持原始的详情描述
+        setStatusCards(prevCards => {
+          const updatedCards = prevCards.map(card => {
+            if (card.name === displayName) {
+              return {
+                ...card,
+                version: isInitializing ? '检测中...' : '刷新中...',
+                status: 'warning' as const
+                // 保持原有的 detail 不变
+              };
+            }
+            return card;
+          });
+          return updatedCards;
         });
 
-        // 重新检测工具状态
-        setTimeout(() => {
-          checkToolStatus(toolName);
-        }, 2000);
+        // 使用新的单个工具刷新功能
+        const toolStatus = await refreshSingleTool(toolCommand);
+        console.log(`${toolCommand} ${action}结果:`, toolStatus);
+
+        // 更新状态卡片中的版本信息，但保持原有的 detail 不变
+        setStatusCards(prevCards => {
+          const updatedCards = prevCards.map(card => {
+            if (card.name === displayName) {
+              return {
+                ...card,
+                version: toolStatus.version || (toolStatus.isInstalled ? '已安装' : '未安装'),
+                status: toolStatus.isInstalled ? 'active' as const : 'error' as const
+                // 保持原有的 detail 字段不变
+              };
+            }
+            return card;
+          });
+          return updatedCards;
+        });
+
+        console.log(`已更新 ${displayName} 状态卡片`);
       } else {
-        // 显示错误消息
-        await window.electronAPI.showMessageBox({
-          type: 'error',
-          title: '安装失败',
-          message: result.error,
-          buttons: ['确定']
-        });
+        console.warn(`未找到工具 ${displayName} 的安装命令`);
+        // 如果找不到工具命令，执行全局刷新
+        await refreshTools();
       }
     } catch (error) {
-      console.error('安装工具失败:', error);
-      await window.electronAPI.showMessageBox({
-        type: 'error',
-        title: '安装失败',
-        message: `安装 ${toolName} 时发生错误`,
-        buttons: ['确定']
+      console.error(`${action}${displayName}状态失败:`, error);
+      // 显示错误状态
+      setStatusCards(prevCards => {
+        const updatedCards = prevCards.map(card => {
+          if (card.name === displayName) {
+            return {
+              ...card,
+              version: '检测失败',
+              status: 'error' as const,
+              detail: `${action}失败`
+            };
+          }
+          return card;
+        });
+        return updatedCards;
       });
-    } finally {
-      setInstallingTool(null);
     }
   };
+
 
   // 初始化时检测工具状态
   useEffect(() => {
@@ -601,12 +914,20 @@ function App() {
         checkToolStatus('fnm');
         // 检测 NPM 源
         checkNpmRegistry();
+
+        // 检测 AI 工具
+        setTimeout(() => {
+          console.log('开始初始化AI工具状态检测');
+          refreshToolStatus('Claude Code', true);
+          refreshToolStatus('Gemini CLI', true);
+          refreshToolStatus('Codex', true);
+        }, 500); // 稍微延迟检测AI工具
       } else {
         console.error('electronAPI 未找到');
         // 如果 electronAPI 不存在，设置为错误状态
         setStatusCards(prevCards =>
           prevCards.map(card => {
-            if (card.name === 'Node.js' || card.name === 'FNM') {
+            if (card.name === 'Node.js' || card.name === 'FNM' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') {
               return {
                 ...card,
                 version: 'API不可用',
@@ -621,7 +942,7 @@ function App() {
     }, 1000); // 延迟1秒执行
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [refreshTools]);
 
   // 监听版本切换事件
   useEffect(() => {
@@ -642,13 +963,83 @@ function App() {
   }, []);
 
   // 处理卡片点击事件
-  const handleCardClick = (card: any) => {
-    if (card.installable && card.status === 'error') {
-      installTool(card.installCommand);
-    } else if (card.name === 'Node.js' || card.name === 'NPM 源') {
-      setCurrentView('nodejs');
-    } else if (card.name.includes('API')) {
-      setCurrentView('ai-tools');
+  const handleCardClick = async (card: any) => {
+    // Node.js 和 NPM 源的特殊处理（优先处理）
+    if (card.name === 'Node.js' || card.name === 'NPM 源') {
+      if (card.status === 'active') {
+        // 已安装：根据具体工具跳转到对应页面
+        if (card.name === 'Node.js') {
+          setCurrentView('node-version');
+        } else if (card.name === 'NPM 源') {
+          setCurrentView('npm-source');
+        }
+      } else {
+        // 未安装或其他状态：不执行跳转
+        console.log(`${card.name} 状态为 ${card.status}，无法跳转`);
+      }
+      return;
+    }
+
+    // 如果是其他可安装的工具
+    if (card.installable) {
+      // 检查工具是否已安装
+      const toolStatus = tools.find(tool => tool.name === card.installCommand);
+
+      if (toolStatus && toolStatus.isInstalled) {
+        // 已安装：根据具体工具跳转到对应页面
+        switch (card.name) {
+          case 'FNM':
+            // FNM 不跳转，只显示状态
+            break;
+          case 'Homebrew':
+            // Homebrew 不跳转，只显示状态
+            break;
+          case 'Claude Code':
+          case 'Gemini CLI':
+          case 'Codex':
+            // AI工具暂时不跳转，预留功能
+            console.log('AI工具管理页面待实现');
+            break;
+          default:
+            // 其他可安装工具跳转到对应页面
+            if (card.name === 'FNM') {
+              setCurrentView('nodejs');
+            } else if (card.name === 'Homebrew') {
+              setCurrentView('homebrew');
+            }
+            break;
+        }
+      } else {
+        // 未安装：不执行任何操作，等待用户点击安装按钮
+        console.log(`${card.name} 未安装，请点击安装按钮`);
+      }
+    } else {
+      // 非可安装工具的点击逻辑
+      if (card.name.includes('API')) {
+        setCurrentView('ai-tools');
+      }
+    }
+  };
+
+  // 处理安装按钮点击事件
+  const handleInstallClick = async (e: React.MouseEvent, card: any) => {
+    e.stopPropagation(); // 阻止事件冒泡到卡片点击事件
+
+    if (!card.installable) {
+      return;
+    }
+
+    try {
+      setInstallingTool(card.installCommand);
+      await installTool(card.installCommand);
+      // 安装成功后刷新工具状态
+      setTimeout(() => {
+        refreshTools();
+      }, 2000);
+    } catch (error) {
+      console.error('安装失败:', error);
+    } finally {
+      setInstallingTool(null);
     }
   };
 
@@ -716,7 +1107,11 @@ function App() {
                 marginRight: 0,
               }}
             >
-              <NodeManager isDarkMode={isDarkMode} collapsed={collapsed} />
+              <NodeManager
+                isDarkMode={isDarkMode}
+                collapsed={collapsed}
+                isInstalling={installingTool !== null}
+              />
             </div>
           </div>
         );
@@ -886,23 +1281,6 @@ function App() {
 
   // 渲染平台活动页面
   const renderPlatformPromotions = () => {
-    const getStatusColor = (status: string) => {
-      switch (status) {
-        case 'active': return '#52c41a';
-        case 'expired': return '#ff4d4f';
-        case 'upcoming': return '#faad14';
-        default: return '#d9d9d9';
-      }
-    };
-
-    const getStatusText = (status: string) => {
-      switch (status) {
-        case 'active': return '进行中';
-        case 'expired': return '已结束';
-        case 'upcoming': return '即将开始';
-        default: return '未知';
-      }
-    };
 
     return (
       <div style={{
@@ -1299,19 +1677,67 @@ function App() {
           marginRight: 0,
         }}
       >
+  
+      {/* 开发环境状态提示 */}
       <div style={{ marginBottom: '32px' }}>
-        <Title level={3} style={{ marginBottom: '8px', color: isDarkMode ? '#ffffff' : '#000000' }}>
-          AI 工具管理
-        </Title>
-        <Paragraph type="secondary" style={{ fontSize: '14px', marginBottom: 0 }}>
-          选择并管理您的 AI 开发工具，提升开发效率
-        </Paragraph>
+        <Card
+          style={{
+            background: devEnvironmentStatus.ready
+              ? (isDarkMode ? '#1f3a1f' : '#f6ffed')
+              : (isDarkMode ? '#2a2a2a' : '#ffffff'),
+            border: devEnvironmentStatus.ready
+              ? '1px solid #52c41a'
+              : (isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8'),
+            borderRadius: '8px',
+          }}
+          styles={{ body: { padding: '16px' } }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: devEnvironmentStatus.ready
+                  ? '#52c41a'
+                  : '#faad14',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {devEnvironmentStatus.ready ? (
+                <CheckCircle size={20} color="#ffffff" />
+              ) : (
+                <AlertCircle size={20} color="#ffffff" />
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 600,
+                color: isDarkMode ? '#ffffff' : '#000000',
+                marginBottom: '4px',
+              }}>
+                {devEnvironmentStatus.message}
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: isDarkMode ? '#a0a0a0' : '#666',
+              }}>
+                {devEnvironmentStatus.description}
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
+      {/* 第一组：Homebrew 和 FNM */}
       <div style={{ marginBottom: '32px' }}>
         <Row gutter={[20, 20]}>
-          {statusCards.map((card, index) => (
-            <Col xs={24} sm={12} md={8} lg={6} xl={6} xxl={4} key={index}>
+          {statusCards.slice(0, 2).map((card, index) => (
+            <Col xs={24} sm={12} md={12} lg={12} xl={12} xxl={8} key={`group1-${index}`}>
               <Card
                 hoverable
                 style={{
@@ -1322,6 +1748,8 @@ function App() {
                   cursor: 'pointer',
                   background: isDarkMode ? '#2a2a2a' : '#ffffff',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}
                 styles={{
                   body: {
@@ -1352,31 +1780,49 @@ function App() {
                       {React.cloneElement(card.icon, { size: 20 })}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {card.status === 'active' && <CheckCircle size={16} color="#52c41a" />}
-                      {card.status === 'warning' && <AlertCircle size={16} color="#faad14" />}
-                      {card.status === 'error' && (
-                        card.installable ? (
-                          <Button
-                            size="small"
-                            type="primary"
-                            loading={installingTool === card.installCommand}
+                      {/* 已安装状态 */}
+                      {card.status === 'active' && (
+                        <CheckCircle size={16} color="#52c41a" />
+                      )}
+
+                      {/* 未安装但可安装状态 - 显示下载图标 */}
+                      {card.status === 'warning' && card.installable && (
+                        <Tooltip title="点击安装" placement="top">
+                          <DownloadOutlined
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCardClick(card);
+                              handleInstallClick(e, card);
                             }}
                             style={{
-                              fontSize: '10px',
-                              height: '24px',
-                              padding: '0 8px',
-                              borderRadius: '4px'
+                              color: isDarkMode ? '#1890ff' : '#1890ff',
+                              fontSize: '16px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              opacity: installingTool === card.installCommand ? 0.6 : 1,
                             }}
-                          >
-                            {installingTool === card.installCommand ? '安装中...' : '安装'}
-                          </Button>
-                        ) : (
-                          <XCircle size={16} color="#f5222d" />
-                        )
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = isDarkMode ? '#40a9ff' : '#096dd9';
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#1890ff';
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                          />
+                        </Tooltip>
                       )}
+
+                      {/* 警告状态（不可安装） */}
+                      {card.status === 'warning' && !card.installable && (
+                        <AlertCircle size={16} color="#faad14" />
+                      )}
+
+                      {/* 错误状态 */}
+                      {card.status === 'error' && (
+                        <XCircle size={16} color="#f5222d" />
+                      )}
+
+                      {/* 右侧箭头（用于不可安装的非错误状态） */}
                       {!card.installable && card.status !== 'error' && (
                         <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
                       )}
@@ -1394,8 +1840,9 @@ function App() {
                       gap: '8px'
                     }}>
                       {card.name}
-                      {/* 刷新按钮 - 仅在Node.js、FNM、NPM源卡片中显示 */}
-                      {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源') && (
+                      {/* 刷新按钮 - 在可安装的工具卡片中显示 */}
+                      {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源' ||
+                        card.name === 'Homebrew' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') && (
                         <Button
                           type="text"
                           size="small"
@@ -1408,6 +1855,375 @@ function App() {
                               refreshFnmStatus();
                             } else if (card.name === 'NPM 源') {
                               checkNpmRegistry();
+                            } else {
+                              // 使用通用刷新函数处理其他工具
+                              refreshToolStatus(card.name);
+                            }
+                          }}
+                          style={{
+                            padding: '2px',
+                            height: '20px',
+                            minWidth: '20px',
+                            lineHeight: '20px',
+                            color: card.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          title={`刷新${card.name}状态`}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: card.color,
+                      fontWeight: 500
+                    }}>
+                      {card.name === 'NPM 源' ? (
+                        <Tooltip title={card.detail} placement="top">
+                          <span style={{ cursor: 'help' }}>
+                            {card.version}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        card.version
+                      )}
+                    </div>
+                    {card.detail && card.name !== 'NPM 源' && (
+                      <div style={{
+                        fontSize: '10px',
+                        color: isDarkMode ? '#a0a0a0' : '#666',
+                        marginTop: '4px'
+                      }}>
+                        {card.detail}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </div>
+
+      {/* 第二组：Node.js 和 NPM 源 */}
+      <div style={{ marginBottom: '32px' }}>
+        <Row gutter={[20, 20]}>
+          {statusCards.slice(2, 4).map((card, index) => (
+            <Col xs={24} sm={12} md={12} lg={12} xl={12} xxl={8} key={`group2-${index}`}>
+              <Card
+                hoverable
+                style={{
+                  height: '160px',
+                  transition: 'all 0.3s ease',
+                  border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  background: isDarkMode ? '#2a2a2a' : '#ffffff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                styles={{
+                  body: {
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    height: '100%',
+                  }
+                }}
+                onClick={() => handleCardClick(card)}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div
+                      style={{
+                        color: card.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '10px',
+                        background: `${card.color}15`,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {React.cloneElement(card.icon, { size: 20 })}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {/* 已安装状态 */}
+                      {card.status === 'active' && (
+                        <CheckCircle size={16} color="#52c41a" />
+                      )}
+
+                      {/* 未安装但可安装状态 - 显示下载图标 */}
+                      {card.status === 'warning' && card.installable && (
+                        <Tooltip title="点击安装" placement="top">
+                          <DownloadOutlined
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInstallClick(e, card);
+                            }}
+                            style={{
+                              color: isDarkMode ? '#1890ff' : '#1890ff',
+                              fontSize: '16px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              opacity: installingTool === card.installCommand ? 0.6 : 1,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = isDarkMode ? '#40a9ff' : '#096dd9';
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#1890ff';
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+
+                      {/* 警告状态（不可安装） */}
+                      {card.status === 'warning' && !card.installable && (
+                        <AlertCircle size={16} color="#faad14" />
+                      )}
+
+                      {/* 错误状态 */}
+                      {card.status === 'error' && (
+                        <XCircle size={16} color="#f5222d" />
+                      )}
+
+                      {/* 右侧箭头（用于不可安装的非错误状态） */}
+                      {!card.installable && card.status !== 'error' && (
+                        <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      marginBottom: '6px',
+                      color: isDarkMode ? '#ffffff' : '#000000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      {card.name}
+                      {/* 刷新按钮 - 在可安装的工具卡片中显示 */}
+                      {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源' ||
+                        card.name === 'Homebrew' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') && (
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<RefreshCw size={14} />}
+                          onClick={(e) => {
+                            e.stopPropagation(); // 阻止事件冒泡到卡片点击事件
+                            if (card.name === 'Node.js') {
+                              refreshNodeStatus();
+                            } else if (card.name === 'FNM') {
+                              refreshFnmStatus();
+                            } else if (card.name === 'NPM 源') {
+                              checkNpmRegistry();
+                            } else {
+                              // 使用通用刷新函数处理其他工具
+                              refreshToolStatus(card.name);
+                            }
+                          }}
+                          style={{
+                            padding: '2px',
+                            height: '20px',
+                            minWidth: '20px',
+                            lineHeight: '20px',
+                            color: card.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          title={`刷新${card.name}状态`}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: card.color,
+                      fontWeight: 500
+                    }}>
+                      {card.name === 'NPM 源' ? (
+                        <Tooltip title={card.detail} placement="top">
+                          <span style={{ cursor: 'help' }}>
+                            {card.version}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        card.version
+                      )}
+                    </div>
+                    {card.detail && card.name !== 'NPM 源' && (
+                      <div style={{
+                        fontSize: '10px',
+                        color: isDarkMode ? '#a0a0a0' : '#666',
+                        marginTop: '4px'
+                      }}>
+                        {card.detail}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </div>
+
+      {/* 第三组：AI 工具 */}
+      <div style={{ marginBottom: '32px' }}>
+        <Row gutter={[20, 20]}>
+          {statusCards.slice(4).map((card, index) => (
+            <Col xs={24} sm={12} md={8} lg={8} xl={8} xxl={6} key={`group3-${index}`}>
+              <Card
+                hoverable
+                style={{
+                  height: '160px',
+                  transition: 'all 0.3s ease',
+                  border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  background: isDarkMode ? '#2a2a2a' : '#ffffff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                styles={{
+                  body: {
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    height: '100%',
+                  }
+                }}
+                onClick={() => handleCardClick(card)}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div
+                      style={{
+                        color: card.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '10px',
+                        background: `${card.color}15`,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {React.cloneElement(card.icon, { size: 20 })}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {/* 已安装状态 */}
+                      {card.status === 'active' && (
+                        <CheckCircle size={16} color="#52c41a" />
+                      )}
+
+                      {/* 未安装但可安装状态 - 显示下载图标 */}
+                      {card.status === 'warning' && card.installable && (
+                        <Tooltip title="点击安装" placement="top">
+                          <DownloadOutlined
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInstallClick(e, card);
+                            }}
+                            style={{
+                              color: isDarkMode ? '#1890ff' : '#1890ff',
+                              fontSize: '16px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              opacity: installingTool === card.installCommand ? 0.6 : 1,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = isDarkMode ? '#40a9ff' : '#096dd9';
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#1890ff';
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+
+                      {/* 警告状态（不可安装） */}
+                      {card.status === 'warning' && !card.installable && (
+                        <AlertCircle size={16} color="#faad14" />
+                      )}
+
+                      {/* 错误状态 */}
+                      {card.status === 'error' && (
+                        <XCircle size={16} color="#f5222d" />
+                      )}
+
+                      {/* 右侧箭头（用于不可安装的非错误状态） */}
+                      {!card.installable && card.status !== 'error' && (
+                        <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      marginBottom: '6px',
+                      color: isDarkMode ? '#ffffff' : '#000000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      {card.name}
+                      {/* 刷新按钮 - 在可安装的工具卡片中显示 */}
+                      {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源' ||
+                        card.name === 'Homebrew' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') && (
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<RefreshCw size={14} />}
+                          onClick={(e) => {
+                            e.stopPropagation(); // 阻止事件冒泡到卡片点击事件
+                            if (card.name === 'Node.js') {
+                              refreshNodeStatus();
+                            } else if (card.name === 'FNM') {
+                              refreshFnmStatus();
+                            } else if (card.name === 'NPM 源') {
+                              checkNpmRegistry();
+                            } else {
+                              // 使用通用刷新函数处理其他工具
+                              refreshToolStatus(card.name);
                             }
                           }}
                           style={{
