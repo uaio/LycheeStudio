@@ -275,7 +275,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     if (releaseInfo?.lts) {
       return `稳定版 (LTS)`;
     }
-    return '当前版 (Current)';
+    return '非LTS';
   };
 
   const isNewerThan = (version1: string, version2: string): boolean => {
