@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Input, Progress, Space, Tag, Modal } from 'antd';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
+import NodeManager from './components/NodeManager';
+import NPMManager from './components/NPMManager';
+import PackageManager from './components/PackageManager';
 import {
   Bot,
   Terminal,
@@ -613,7 +616,76 @@ function App() {
   const renderToolDetail = () => {
     // 处理不同的视图类型
     if (currentView === 'nodejs' || currentView === 'ai-tools' ||
-        currentView === 'dev-recommend' || currentView === 'help') {
+        currentView === 'dev-recommend' || currentView === 'help' ||
+        currentView === 'node-version' || currentView === 'npm-source' || currentView === 'package-managers') {
+
+      // 如果是 Node.js 相关的子页面，渲染对应组件
+      if (currentView === 'node-version') {
+        return (
+          <div style={{
+            marginLeft: collapsed ? '80px' : '200px',
+            height: 'calc(100vh - 38px)',
+            overflow: 'hidden',
+          }}>
+            <div
+              className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+              style={{
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                marginRight: 0,
+              }}
+            >
+              <NodeManager isDarkMode={isDarkMode} />
+            </div>
+          </div>
+        );
+      }
+
+      if (currentView === 'npm-source') {
+        return (
+          <div style={{
+            marginLeft: collapsed ? '80px' : '200px',
+            height: 'calc(100vh - 38px)',
+            overflow: 'hidden',
+          }}>
+            <div
+              className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+              style={{
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                marginRight: 0,
+              }}
+            >
+              <NPMManager isDarkMode={isDarkMode} />
+            </div>
+          </div>
+        );
+      }
+
+      if (currentView === 'package-managers') {
+        return (
+          <div style={{
+            marginLeft: collapsed ? '80px' : '200px',
+            height: 'calc(100vh - 38px)',
+            overflow: 'hidden',
+          }}>
+            <div
+              className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+              style={{
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                marginRight: 0,
+              }}
+            >
+              <PackageManager isDarkMode={isDarkMode} />
+            </div>
+          </div>
+        );
+      }
+
       // 显示占位页面
       const viewTitles = {
         'nodejs': 'Node.js 管理',
@@ -631,7 +703,7 @@ function App() {
 
       return (
         <div style={{
-          marginLeft: '240px',
+          marginLeft: collapsed ? '80px' : '200px',
           height: 'calc(100vh - 38px)',
           overflow: 'hidden',
         }}>
@@ -1003,9 +1075,21 @@ function App() {
                 icon: <Code size={16} />,
                 label: 'Node.js',
                 children: [
-                  { key: 'node-version', label: '版本切换' },
-                  { key: 'npm-source', label: 'NPM 源管理' },
-                  { key: 'package-managers', label: '包管理工具' },
+                  {
+                    key: 'node-version',
+                    label: '版本切换',
+                    onClick: () => setCurrentView('node-version')
+                  },
+                  {
+                    key: 'npm-source',
+                    label: 'NPM 源管理',
+                    onClick: () => setCurrentView('npm-source')
+                  },
+                  {
+                    key: 'package-managers',
+                    label: '包管理工具',
+                    onClick: () => setCurrentView('package-managers')
+                  },
                 ],
               },
               {
@@ -1106,7 +1190,7 @@ function App() {
     </>
   );
 
-  // 渲染首页
+  
   const renderHome = () => (
     <div style={{
       marginLeft: collapsed ? '80px' : '200px', // 为侧边栏留出空间，适配收起状态

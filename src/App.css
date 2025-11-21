@@ -176,3 +176,775 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+
+/* ========================================
+   工具管理器组件样式
+   ======================================== */
+
+/* 通用工具组件样式 */
+.tool-section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--theme-color, #1a1a1a);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-description {
+  margin: 0;
+  color: var(--theme-color, #666666);
+  font-size: 14px;
+}
+
+.section-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 统计卡片样式 */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 0 4px;
+}
+
+.stat-card {
+  background: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--theme-color, #1a1a1a);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--theme-color, #666666);
+}
+
+/* 工具卡片样式 */
+.tool-card {
+  background: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.tool-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.tool-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--theme-color, #1a1a1a);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 保存状态提示 */
+.save-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+.save-message.success {
+  background: #f0f9ff;
+  color: #0066cc;
+  border: 1px solid #b3e5fc;
+}
+
+.save-message.error {
+  background: #fff2f0;
+  color: #cc0000;
+  border: 1px solid #ffccbc;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   NPM Manager 专用样式
+   ======================================== */
+
+.current-registry-card {
+  background: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.current-registry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.registry-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff7b7b 0%, #ff4757 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.registry-info {
+  flex: 1;
+  margin-left: 16px;
+}
+
+.registry-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--theme-color, #1a1a1a);
+  margin-bottom: 4px;
+}
+
+.registry-url {
+  font-size: 14px;
+  color: var(--theme-color, #666666);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  word-break: break-all;
+}
+
+.registry-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-active {
+  color: #00c851;
+  font-weight: 500;
+}
+
+.status-inactive {
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+.registries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.registry-card {
+  background: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.registry-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.registry-card.selected {
+  border-color: #1890ff;
+  background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
+}
+
+.registry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.registry-title h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--theme-color, #1a1a1a);
+}
+
+.registry-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.badge.fast {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.badge.medium {
+  background: #fffbe6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.badge.slow {
+  background: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+.badge.region {
+  background: #f0f5ff;
+  color: #1890ff;
+  border: 1px solid #adc6ff;
+}
+
+.badge.ping {
+  background: #f9f0ff;
+  color: #722ed1;
+  border: 1px solid #d3adf7;
+}
+
+.registry-selector {
+  width: 24px;
+  height: 24px;
+}
+
+.selected-indicator {
+  width: 24px;
+  height: 24px;
+  background: #1890ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.unselected-indicator {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #d9d9d9;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.registry-card:hover .unselected-indicator {
+  border-color: #1890ff;
+}
+
+.registry-description {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--theme-color, #666666);
+  line-height: 1.4;
+}
+
+.registry-url-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--theme-color, #999999);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--theme-bg, #f5f5f5);
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.custom-registry-card {
+  background: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.custom-registry-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--theme-color, #666666);
+}
+
+/* ========================================
+   Package Manager 专用样式
+   ======================================== */
+
+.current-status-card {
+  background: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.status-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--theme-color, #1a1a1a);
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.status-item {
+  text-align: center;
+  padding: 16px;
+  background: var(--theme-bg, #f8f9fa);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.status-item:hover {
+  background: var(--theme-bg, #e9ecef);
+}
+
+.status-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 8px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--theme-color, #1a1a1a);
+  margin-bottom: 4px;
+}
+
+.status-value {
+  font-size: 12px;
+  color: var(--theme-color, #666666);
+}
+
+.install-section {
+  background: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.quick-install-section {
+  margin-top: 20px;
+}
+
+.quick-install-section label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--theme-color, #1a1a1a);
+  margin-bottom: 12px;
+}
+
+.quick-install-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.quick-install-btn {
+  padding: 12px 16px;
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 8px;
+  background: var(--theme-bg, #ffffff);
+  color: var(--theme-color, #1a1a1a);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.quick-install-btn:hover {
+  background: #1890ff;
+  color: white;
+  border-color: #1890ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.2);
+}
+
+.packages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.package-card-modern {
+  background: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.package-card-modern:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.package-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.package-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.package-info {
+  flex: 1;
+  margin-left: 12px;
+}
+
+.package-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--theme-color, #1a1a1a);
+  margin-bottom: 2px;
+}
+
+.package-version {
+  font-size: 13px;
+  color: var(--theme-color, #666666);
+  background: var(--theme-bg, #f0f0f0);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.package-description {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: var(--theme-color, #666666);
+  line-height: 1.4;
+}
+
+.package-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 通用输入组样式 */
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.text-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--theme-border, #d9d9d9);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--theme-bg, #ffffff);
+  color: var(--theme-color, #1a1a1a);
+  transition: all 0.3s ease;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  padding-left: 36px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--theme-color, #999999);
+  pointer-events: none;
+}
+
+/* 通用按钮样式 */
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-primary {
+  background: #1890ff;
+  color: white;
+  border: 1px solid #1890ff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.2);
+}
+
+.btn-secondary {
+  background: var(--theme-bg, #ffffff);
+  color: var(--theme-color, #1a1a1a);
+  border: 1px solid var(--theme-border, #d9d9d9);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--theme-bg, #f0f0f0);
+  border-color: #bfbfbf;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: #ff4d4f;
+  color: white;
+  border: 1px solid #ff4d4f;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #ff7875;
+  border-color: #ff7875;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 77, 79, 0.2);
+}
+
+/* 空状态样式 */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--theme-color, #999999);
+}
+
+.empty-state h3 {
+  margin: 16px 0 8px 0;
+  font-size: 18px;
+  color: var(--theme-color, #666666);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--theme-color, #999999);
+}
+
+/* 动画效果 */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 深色模式适配 */
+.dark-mode .stat-icon {
+  background: linear-gradient(135deg, #4c1d95 0%, #6a5acd 100%);
+}
+
+.dark-mode .registry-icon {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+.dark-mode .status-icon {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.dark-mode .package-icon {
+  background: linear-gradient(135deg, #c0392b 0%, #f39c12 100%);
+}
+
+.dark-mode .badge {
+  opacity: 0.9;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .stats-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .registries-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .current-registry {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .registry-info {
+    margin-left: 0;
+  }
+
+  .input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 576px) {
+  .quick-install-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .package-actions {
+    flex-direction: column;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

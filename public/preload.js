@@ -48,9 +48,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 平台信息
   platform: process.platform,
 
-  // 文件操作（如果需要的话）
-  openFile: () => ipcRenderer.invoke('dialog:openFile'),
-  saveFile: () => ipcRenderer.invoke('dialog:saveFile'),
+  // 文件操作（如果需要的话，请实现对应的IPC处理器）
+  // openFile: () => ipcRenderer.invoke('dialog:openFile'),
+  // saveFile: () => ipcRenderer.invoke('dialog:saveFile'),
+
+  // 外部链接操作
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
 
   // 主题相关 - 直接返回当前平台信息，避免 IPC 调用问题
   getPlatform: () => process.platform,
@@ -63,6 +66,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getNpmRegistry: () => ipcRenderer.invoke('get-npm-registry'),
   getNpmRegistries: () => ipcRenderer.invoke('get-npm-registries'),
   setNpmRegistry: (registryUrl) => ipcRenderer.invoke('set-npm-registry', registryUrl),
+
+  // 通用命令执行
+  executeCommand: (command) => ipcRenderer.invoke('execute-command', command),
 });
 
 // 监听主题变化

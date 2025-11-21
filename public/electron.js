@@ -19,7 +19,8 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      localStorage: path.join(app.getPath('userData'), 'local-storage.json')
     },
     icon: path.join(__dirname, 'assets/icon.png'), // 应用图标
   });
@@ -507,6 +508,32 @@ ipcMain.handle('set-npm-registry', async (event, registryUrl) => {
         message: 'NPM源切换成功',
         registry: registryUrl
       });
+    });
+  });
+});
+
+// 打开外部链接
+ipcMain.handle('open-external', async (event, url) => {
+  shell.openExternal(url);
+});
+
+// 通用命令执行
+ipcMain.handle('execute-command', async (event, command) => {
+  return new Promise((resolve) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        resolve({
+          success: false,
+          error: error.message,
+          output: null
+        });
+      } else {
+        resolve({
+          success: true,
+          output: stdout.trim(),
+          error: stderr.trim()
+        });
+      }
     });
   });
 });
