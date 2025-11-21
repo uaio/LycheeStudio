@@ -73,6 +73,8 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   const [currentLTS, setCurrentLTS] = useState<string>('');
   const [saveMessage, setSaveMessage] = useState('');
   const [versionFilter, setVersionFilter] = useState<string>('all');
+  const [expandedVersions, setExpandedVersions] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     loadNodeData();
@@ -502,29 +504,65 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
   // 渲染可用版本列表
   const renderAvailableVersions = () => {
-    // 过滤版本
+    // 过滤和分组版本
     const getFilteredVersions = () => {
+      let filtered = availableVersions;
+
       switch (versionFilter) {
         case 'lts':
-          return availableVersions.filter(v => v.lts);
-        case 'latest':
-          return availableVersions.filter((v, i, arr) => {
-            const major = v.version.substring(1).split('.')[0];
-            return !arr.find((item, index) =>
-              index < i && item.version.substring(1).split('.')[0] === major
-            );
-          });
+          filtered = filtered.filter(v => v.lts);
+          break;
         case 'security':
-          return availableVersions.filter(v => v.security);
+          filtered = filtered.filter(v => v.security);
+          break;
         default:
-          return availableVersions;
+          break;
       }
+
+      // 按主版本分组
+      const grouped = filtered.reduce((acc, version) => {
+        const major = version.version.substring(1).split('.')[0];
+        if (!acc[major]) {
+          acc[major] = [];
+        }
+        acc[major].push(version);
+        return acc;
+      }, {} as Record<string, NodeReleaseInfo[]>);
+
+      // 对每个主版本内的版本按新版本排序
+      Object.keys(grouped).forEach(major => {
+        grouped[major].sort((a, b) => b.version.localeCompare(a.version));
+      });
+
+      return grouped;
     };
 
-    const filteredVersions = getFilteredVersions();
+    const groupedVersions = getFilteredVersions();
+    const versionGroups = Object.keys(groupedVersions)
+      .map(major => ({
+        major,
+        versions: groupedVersions[major]
+      }))
+      .sort((a, b) => Number(b.major) - Number(a.major)); // 按主版本号降序
 
-    // 表格列定义
-    const columns = [
+    // 分页处理 - 每页5个大版本
+    const pageSize = 5;
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const currentGroups = versionGroups.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(versionGroups.length / pageSize);
+
+    // 切换折叠状态
+    const toggleExpanded = (major: string) => {
+      setExpandedVersions(prev =>
+        prev.includes(major)
+          ? prev.filter(v => v !== major)
+          : [...prev, major]
+      );
+    };
+
+    // 内部表格列定义
+    const innerColumns = [
       {
         title: '版本',
         dataIndex: 'version',
@@ -534,7 +572,6 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
           <Space>
             <Text strong style={{
               color: record.version === latestVersion ? '#1890ff' : undefined,
-              fontSize: record.version === latestVersion ? '14px' : '13px'
             }}>
               {version}
             </Text>
@@ -546,13 +583,12 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
       },
       {
         title: '类型',
-        dataIndex: 'lts',
         key: 'type',
         width: 100,
-        render: (lts: string, record: NodeReleaseInfo) => (
+        render: (record: NodeReleaseInfo) => (
           <Space wrap size="small">
-            {lts ? <Tag color="gold">LTS</Tag> : <Tag color="default">Current</Tag>}
-            {record.security && <Tag color="red">安全</Tag>}
+            {record.lts ? <Tag color="gold" size="small">LTS</Tag> : <Tag color="default" size="small">Current</Tag>}
+            {record.security && <Tag color="red" size="small">安全</Tag>}
           </Space>
         ),
       },
@@ -563,18 +599,13 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
         render: (record: NodeReleaseInfo) => (
           isVersionInstalled(record.version) ? (
             <Space>
-              <Tag color="success">
-                <CheckCircleOutlined /> 已安装
-              </Tag>
+              <Tag color="success" size="small">已安装</Tag>
               {installedVersions.find(v => v.version === record.version)?.current && (
-                <Tag color="blue">当前</Tag>
-              )}
-              {installedVersions.find(v => v.version === record.version)?.default && (
-                <Tag color="green">默认</Tag>
+                <Tag color="blue" size="small">当前</Tag>
               )}
             </Space>
           ) : (
-            <Tag type="nounderline">未安装</Tag>
+            <Tag type="nounderline" size="small">未安装</Tag>
           )
         ),
       },
@@ -582,53 +613,40 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
         title: '发布时间',
         dataIndex: 'date',
         key: 'date',
-        width: 120,
+        width: 100,
         render: (date: string) => (
-          <Text style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
+          <Text style={{ fontSize: '11px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
             {date}
           </Text>
         ),
       },
       {
-        title: 'npm 版本',
+        title: 'npm',
         dataIndex: 'npm',
         key: 'npm',
-        width: 80,
+        width: 60,
         render: (npm: string) => (
-          <Text style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
+          <Text style={{ fontSize: '11px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
             v{npm}
-          </Text>
-        ),
-      },
-      {
-        title: '模块',
-        dataIndex: 'modules',
-        key: 'modules',
-        width: 80,
-        render: (modules: number) => (
-          <Text style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
-            {modules}
           </Text>
         ),
       },
       {
         title: '操作',
         key: 'actions',
-        width: 100,
+        width: 80,
         render: (record: NodeReleaseInfo) => (
           <Space>
             {isVersionInstalled(record.version) ? (
-              !installedVersions.find(v => v.version === record.version)?.default && (
-                <Button
-                  size="small"
-                  type="primary"
-                  ghost
-                  onClick={() => switchToVersion(record.version)}
-                  loading={isLoading}
-                >
-                  使用
-                </Button>
-              )
+              <Button
+                size="small"
+                type="primary"
+                ghost
+                onClick={() => switchToVersion(record.version)}
+                loading={isLoading}
+              >
+                使用
+              </Button>
             ) : (
               <Button
                 size="small"
@@ -651,7 +669,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
           <Space>
             <StarOutlined />
             <span>可用版本</span>
-            <Badge count={filteredVersions.length} />
+            <Badge count={versionGroups.length} />
           </Space>
         }
         extra={
@@ -664,7 +682,6 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
             >
               <Select.Option value="all">全部版本</Select.Option>
               <Select.Option value="lts">LTS 版本</Select.Option>
-              <Select.Option value="latest">各版本最新</Select.Option>
               <Select.Option value="security">安全更新</Select.Option>
             </Select>
             <Button
@@ -678,34 +695,141 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
           </Space>
         }
       >
-        <Table
-          dataSource={filteredVersions.map(v => ({ ...v, key: v.version }))}
-          columns={columns}
-          size="small"
-          pagination={{
-            pageSize: 20,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) =>
-              `第 ${range[0]}-${range[1]} 条，共 ${total} 个版本`,
-            pageSizeOptions: ['10', '20', '50', '100'],
-          }}
-          scroll={{ x: 600 }}
-          rowClassName={(record) => {
-            if (isVersionInstalled(record.version)) {
-              return record.default ? 'table-row-default' : 'table-row-installed';
-            }
-            return '';
-          }}
-          style={{
-            '.table-row-installed': {
-              backgroundColor: isDarkMode ? '#162312' : '#f6ffed',
-            },
-            '.table-row-default': {
-              backgroundColor: isDarkMode ? '#0d2818' : '#d9f7be',
-            }
-          }}
-        />
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          {currentGroups.map((group) => {
+            const isExpanded = expandedVersions.includes(group.major);
+            const hasInstalledVersions = group.versions.some(v => isVersionInstalled(v.version));
+            const latestInGroup = group.versions[0]; // 最多显示5个版本
+
+            return (
+              <Card
+                key={group.major}
+                size="small"
+                title={
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Space>
+                      <Text strong>Node.js v{group.major}</Text>
+                      <Tag color={hasInstalledVersions ? 'green' : 'default'} size="small">
+                        {group.versions.length} 个版本
+                      </Tag>
+                      {hasInstalledVersions && (
+                        <Tag color="success" size="small">
+                          <CheckCircleOutlined /> 已安装
+                        </Tag>
+                      )}
+                    </Space>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={isExpanded ? '▲' : '▼'}
+                      onClick={() => toggleExpanded(group.major)}
+                    >
+                      {isExpanded ? '收起' : '展开'}
+                    </Button>
+                  </div>
+                }
+                style={{
+                  border: hasInstalledVersions ? '1px solid #52c41a' : undefined,
+                  background: hasInstalledVersions ?
+                    (isDarkMode ? '#162312' : '#f6ffed') : undefined
+                }}
+              >
+                {/* 精简展示 - 只显示最新版本 */}
+                {!isExpanded && (
+                  <div style={{ padding: '8px 0' }}>
+                    <Row gutter={[16, 8]} align="middle">
+                      <Col span={6}>
+                        <Space>
+                          <Text strong style={{
+                            color: latestInGroup.version === latestVersion ? '#1890ff' : undefined
+                          }}>
+                            {latestInGroup.version}
+                          </Text>
+                          {latestInGroup.version === latestVersion && (
+                            <Tag color="blue" size="small">最新</Tag>
+                          )}
+                        </Space>
+                      </Col>
+                      <Col span={8}>
+                        <Space wrap size="small">
+                          {latestInGroup.lts ? <Tag color="gold" size="small">LTS</Tag> : <Tag color="default" size="small">Current</Tag>}
+                          {latestInGroup.security && <Tag color="red" size="small">安全</Tag>}
+                          {isVersionInstalled(latestInGroup.version) && (
+                            <Tag color="success" size="small">已安装</Tag>
+                          )}
+                        </Space>
+                      </Col>
+                      <Col span={6}>
+                        <Text style={{ fontSize: '12px', color: isDarkMode ? '#a0a0a0' : '#666' }}>
+                          {latestInGroup.date} • npm v{latestInGroup.npm}
+                        </Text>
+                      </Col>
+                      <Col span={4} style={{ textAlign: 'right' }}>
+                        {isVersionInstalled(latestInGroup.version) ? (
+                          <Button
+                            size="small"
+                            type="primary"
+                            ghost
+                            onClick={() => switchToVersion(latestInGroup.version)}
+                            loading={isLoading}
+                          >
+                            使用
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            type="primary"
+                            icon={<DownloadOutlined />}
+                            onClick={() => installVersion(latestInGroup.version)}
+                            loading={isInstalling && installationMessage.includes(latestInGroup.version)}
+                          >
+                            安装
+                          </Button>
+                        )}
+                      </Col>
+                    </Row>
+                  </div>
+                )}
+
+                {/* 展开的详细表格 */}
+                {isExpanded && (
+                  <Table
+                    dataSource={group.versions.slice(0, 10).map(v => ({ ...v, key: v.version }))}
+                    columns={innerColumns}
+                    size="small"
+                    pagination={false}
+                    scroll={{ x: 400 }}
+                    showHeader={false}
+                    style={{ marginTop: isExpanded ? 16 : 0 }}
+                  />
+                )}
+              </Card>
+            );
+          })}
+
+          {/* 分页控件 */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+              <Button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                size="small"
+              >
+                上一页
+              </Button>
+              <Text>
+                第 {currentPage} 页，共 {totalPages} 页
+              </Text>
+              <Button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                size="small"
+              >
+                下一页
+              </Button>
+            </div>
+          )}
+        </Space>
       </Card>
     );
   };
