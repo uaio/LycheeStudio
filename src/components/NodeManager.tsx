@@ -245,22 +245,33 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   const switchToVersion = async (version: string) => {
     setIsLoading(true);
     try {
-      const result = await window.electronAPI.executeCommand(`fnm use ${version}`);
+      // 尝试在 zsh 环境中执行 fnm use 命令
+      const result = await window.electronAPI.executeCommand(`/bin/zsh -i -c 'fnm use ${version}'`);
+
       if (result.success) {
-        setCurrentVersion(version);
-        setInstalledVersions(prev => prev.map(v => ({
-          ...v,
-          current: v.version === version
-        })));
         setSaveMessage(`已切换到 ${version}`);
+        // 重新加载数据以更新当前版本状态
+        setTimeout(() => {
+          loadNodeData();
+        }, 1000);
       } else {
-        setSaveMessage(`切换到 ${version} 失败: ${result.error || '未知错误'}`);
+        // 如果 zsh 失败，尝试直接执行 fnm 命令
+        const fallbackResult = await window.electronAPI.executeCommand(`fnm use ${version}`);
+        if (fallbackResult.success) {
+          setSaveMessage(`已切换到 ${version}`);
+          setTimeout(() => {
+            loadNodeData();
+          }, 1000);
+        } else {
+          setSaveMessage(`切换到 ${version} 失败: ${fallbackResult.error || '未知错误'}`);
+        }
       }
     } catch (error) {
       console.error('切换版本失败:', error);
-      setSaveMessage(`切换到 ${version} 失败`);
+      setSaveMessage(`切换到 ${version} 失败: ${error}`);
     } finally {
       setIsLoading(false);
+      setTimeout(() => setSaveMessage(''), 3000);
     }
   };
 
@@ -288,7 +299,8 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     setInstallationMessage(`正在安装 ${versionToInstall}...`);
 
     try {
-      const result = await window.electronAPI.executeCommand(`fnm install ${versionToInstall}`);
+      // 在 zsh 环境中使用 fnm 安装指定版本，确保环境变量正确设置
+      const result = await window.electronAPI.executeCommand(`/bin/zsh -i -c 'fnm install ${versionToInstall}'`);
       if (result.success) {
         setInstallationMessage(`${versionToInstall} 安装成功`);
         setTimeout(() => {
