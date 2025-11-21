@@ -15,8 +15,7 @@ import {
   Empty,
   Alert,
   Badge,
-  Descriptions,
-  Spin
+  Descriptions
 } from 'antd';
 import {
   CodeOutlined,
@@ -26,11 +25,8 @@ import {
   CheckCircleOutlined,
   PlusOutlined,
   AppstoreOutlined,
-  GlobalOutlined,
-  ExclamationCircleOutlined,
   StarOutlined,
   InfoCircleOutlined,
-  ThunderboltOutlined,
   EnvironmentOutlined
 } from '@ant-design/icons';
 
@@ -77,6 +73,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
   useEffect(() => {
     loadNodeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -166,22 +163,44 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
         try {
           // 尝试获取真实的安装时间
-          const pathResult = await window.electronAPI.executeCommand(`echo $FNM_DIR`);
-          if (pathResult.success && pathResult.output) {
-            const fnmDir = pathResult.output.trim();
+          const fnmDirResult = await window.electronAPI.executeCommand('echo $FNM_DIR');
+          if (fnmDirResult.success && fnmDirResult.output) {
+            const fnmDir = fnmDirResult.output.trim();
             const versionPath = `${fnmDir}/node-versions/${version}`;
 
-            // 获取目录的修改时间作为安装时间
-            const statResult = await window.electronAPI.executeCommand(`stat -c %Y "${versionPath}" 2>/dev/null || echo "0"`);
-            if (statResult.success && statResult.output) {
-              const timestamp = parseInt(statResult.output.trim()) * 1000; // 转换为毫秒
-              if (timestamp > 0) {
-                installedAt = new Date(timestamp).toISOString();
-              }
+            // 尝试检测操作系统并使用正确的 stat 命令格式
+            // 先尝试 macOS 格式，如果失败再尝试 Linux 格式
+            let statCommand = '';
+
+            // 首先尝试 macOS 格式 (stat -f %m)
+            statCommand = `stat -f %m "${versionPath}" 2>/dev/null || echo "0"`;
+            let statResult = await window.electronAPI.executeCommand(statCommand);
+
+            // 如果 macOS 格式失败，尝试 Linux 格式 (stat -c %Y)
+            if ((!statResult.success || statResult.output.trim() === "0") &&
+                statResult.error && statResult.error.includes("illegal option")) {
+              statCommand = `stat -c %Y "${versionPath}" 2>/dev/null || echo "0"`;
+              statResult = await window.electronAPI.executeCommand(statCommand);
             }
+
+            // 使用上面已经获取的 statResult
+            if (statResult.success && statResult.output) {
+              const timestampStr = statResult.output.trim();
+              const timestamp = parseInt(timestampStr) * 1000; // 转换为毫秒
+              if (timestamp > 0 && !isNaN(timestamp)) {
+                installedAt = new Date(timestamp).toISOString();
+                console.log(`版本 ${version} 的安装时间: ${installedAt}`);
+              } else {
+                console.warn(`无法解析版本 ${version} 的时间戳: ${timestampStr}`);
+              }
+            } else {
+              console.warn(`stat 命令执行失败，版本 ${version}:`, statResult.error);
+            }
+          } else {
+            console.warn('无法获取 FNM_DIR 环境变量:', fnmDirResult.error);
           }
         } catch (error) {
-          console.warn('无法获取安装时间:', error);
+          console.warn('获取安装时间时发生错误:', error);
           // 使用默认值
         }
 
