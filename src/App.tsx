@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Modal, App as AntdApp } from 'antd';
+import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { DownloadOutlined } from '@ant-design/icons';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
@@ -22,9 +23,7 @@ import {
   RefreshCw,
   Plus,
   Gift,
-  ChevronLeft,
-  ChevronRight as ChevronRightIcon
-} from 'lucide-react';
+  } from 'lucide-react';
 import './App.css';
 
 const { Text } = Typography;
@@ -522,15 +521,13 @@ function App() {
   useEffect(() => {
     // 检测期间：使用部分结果进行渐进式更新，基于当前状态保留已检测结果
     if (!isLoading && partialResults.length > 0) {
-      console.log('检测期间更新状态卡片，部分结果数量:', partialResults.length);
-      const updatedCards = mapToolsToStatusCards(partialResults, statusCards);
+            const updatedCards = mapToolsToStatusCards(partialResults, statusCards);
       setStatusCards(updatedCards);
     }
 
     // 检测完成后：使用完整结果，基于当前状态保留已检测结果
     if (!isLoading && tools.length > 0) {
-      console.log('检测完成后更新状态卡片，完整结果数量:', tools.length);
-      const updatedCards = mapToolsToStatusCards(tools, statusCards);
+            const updatedCards = mapToolsToStatusCards(tools, statusCards);
       setStatusCards(updatedCards);
     }
   }, [tools, partialResults, isLoading]); // 移除 statusCards 和 mapToolsToStatusCards 依赖
@@ -755,20 +752,17 @@ function App() {
 
   // 刷新Node.js状态
   const refreshNodeStatus = async () => {
-    console.log('刷新Node.js状态被调用');
-    await checkToolStatus('node');
+        await checkToolStatus('node');
   };
 
   // 刷新FNM状态
   const refreshFnmStatus = async () => {
-    console.log('刷新FNM状态被调用');
-    await checkToolStatus('fnm');
+        await checkToolStatus('fnm');
   };
 
   // 检查NPM源
   const checkNpmRegistry = async () => {
-    console.log('刷新NPM源状态被调用');
-    if (!window.electronAPI) {
+        if (!window.electronAPI) {
       console.error('electronAPI 不存在');
       return;
     }
@@ -793,8 +787,7 @@ function App() {
           return updatedCards;
         });
       } else {
-        console.error('获取NPM源失败:', result.error);
-        setStatusCards(prevCards => {
+                setStatusCards(prevCards => {
           const updatedCards = prevCards.map(card => {
             if (card.name === 'NPM 源') {
               return {
@@ -831,15 +824,13 @@ function App() {
   // 通用刷新工具状态
   const refreshToolStatus = async (displayName: string, isInitializing: boolean = false) => {
     const action = isInitializing ? '初始化检测' : '刷新';
-    console.log(`${action}${displayName}状态被调用`);
-    try {
+        try {
       // 根据显示名称找到对应的工具命令
       const toolCard = statusCards.find(card => card.name === displayName);
       const toolCommand = toolCard?.installCommand;
 
       if (toolCommand) {
-        console.log(`正在${action}单个工具: ${toolCommand}`);
-
+        
         // 只更新版本显示加载状态，保持原始的详情描述
         setStatusCards(prevCards => {
           const updatedCards = prevCards.map(card => {
@@ -858,8 +849,7 @@ function App() {
 
         // 使用新的单个工具刷新功能
         const toolStatus = await refreshSingleTool(toolCommand);
-        console.log(`${toolCommand} ${action}结果:`, toolStatus);
-
+        
         // 更新状态卡片中的版本信息，但保持原有的 detail 不变
         setStatusCards(prevCards => {
           const updatedCards = prevCards.map(card => {
@@ -876,8 +866,7 @@ function App() {
           return updatedCards;
         });
 
-        console.log(`已更新 ${displayName} 状态卡片`);
-      } else {
+              } else {
         console.warn(`未找到工具 ${displayName} 的安装命令`);
         // 如果找不到工具命令，执行全局刷新
         await refreshTools();
@@ -917,8 +906,7 @@ function App() {
 
         // 检测 AI 工具
         setTimeout(() => {
-          console.log('开始初始化AI工具状态检测');
-          refreshToolStatus('Claude Code', true);
+                    refreshToolStatus('Claude Code', true);
           refreshToolStatus('Gemini CLI', true);
           refreshToolStatus('Codex', true);
         }, 500); // 稍微延迟检测AI工具
@@ -948,8 +936,7 @@ function App() {
   useEffect(() => {
     const handleNodeVersionChanged = (event: CustomEvent) => {
       const { version } = event.detail;
-      console.log('检测到Node.js版本变更:', version);
-      // 重新检测Node.js状态以同步首页显示
+            // 重新检测Node.js状态以同步首页显示
       checkToolStatus('node');
     };
 
@@ -975,8 +962,7 @@ function App() {
         }
       } else {
         // 未安装或其他状态：不执行跳转
-        console.log(`${card.name} 状态为 ${card.status}，无法跳转`);
-      }
+              }
       return;
     }
 
@@ -998,8 +984,7 @@ function App() {
           case 'Gemini CLI':
           case 'Codex':
             // AI工具暂时不跳转，预留功能
-            console.log('AI工具管理页面待实现');
-            break;
+                        break;
           default:
             // 其他可安装工具跳转到对应页面
             if (card.name === 'FNM') {
@@ -1011,8 +996,7 @@ function App() {
         }
       } else {
         // 未安装：不执行任何操作，等待用户点击安装按钮
-        console.log(`${card.name} 未安装，请点击安装按钮`);
-      }
+              }
     } else {
       // 非可安装工具的点击逻辑
       if (card.name.includes('API')) {
@@ -1647,9 +1631,21 @@ function App() {
           placement="right"
         >
           {collapsed ? (
-            <ChevronRightIcon size={12} style={{ color: isDarkMode ? '#b0b0b0' : '#666666' }} />
+            <MenuUnfoldOutlined
+              style={{
+                fontSize: '14px',
+                color: isDarkMode ? '#b0b0b0' : '#666666',
+                transition: 'all 0.2s ease'
+              }}
+            />
           ) : (
-            <ChevronLeft size={12} style={{ color: isDarkMode ? '#b0b0b0' : '#666666' }} />
+            <MenuFoldOutlined
+              style={{
+                fontSize: '14px',
+                color: isDarkMode ? '#b0b0b0' : '#666666',
+                transition: 'all 0.2s ease'
+              }}
+            />
           )}
         </Tooltip>
       </div>
