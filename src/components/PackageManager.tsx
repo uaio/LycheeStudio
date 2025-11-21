@@ -9,7 +9,6 @@ import {
   Row,
   Col,
   Statistic,
-  message,
   Alert,
   Popconfirm,
   Empty,
@@ -48,7 +47,7 @@ interface NpmPackage {
   size?: string;
 }
 
-const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ isDarkMode, collapsed = false }) => {
+const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageApi: any }> = ({ isDarkMode, collapsed = false, messageApi }) => {
   const [packages, setPackages] = useState<NpmPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -137,9 +136,9 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
   React.useEffect(() => {
     if (saveMessage) {
       if (saveMessage.includes('成功')) {
-        message.success(saveMessage);
+        messageApi.success(saveMessage);
       } else {
-        message.error(saveMessage);
+        messageApi.error(saveMessage);
       }
     }
   }, [saveMessage]);

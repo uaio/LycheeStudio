@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Input, Progress, Space, Tag, Modal } from 'antd';
+import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Input, Progress, Space, Tag, Modal, App as AntdApp } from 'antd';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
 import NodeManager from './components/NodeManager';
@@ -41,6 +41,46 @@ declare global {
     };
   }
 }
+
+// 统一的 Node.js 默认版本获取函数
+export const getCurrentNodeVersion = async (): Promise<string> => {
+  if (!window.electronAPI) {
+    console.error('electronAPI 不存在');
+    return '';
+  }
+
+  try {
+    const listResult = await window.electronAPI.executeCommand('fnm list');
+
+    if (listResult.success && listResult.output) {
+      const lines = listResult.output.split('\n').filter(line => line.trim());
+
+      // 查找标记为 default 的版本
+      for (const line of lines) {
+        const versionMatch = line.match(/v\d+\.\d+\.\d+/);
+        if (versionMatch && line.includes('default')) {
+          const version = versionMatch[0];
+          return version;
+        }
+      }
+
+      // 如果没有找到 default 版本，返回第一个版本（如果有）
+      for (const line of lines) {
+        const versionMatch = line.match(/v\d+\.\d+\.\d+/);
+        if (versionMatch) {
+          const version = versionMatch[0];
+          return version;
+        }
+      }
+
+      return '';
+    }
+    return '';
+  } catch (error) {
+    console.error('获取当前Node.js版本失败:', error);
+    return '';
+  }
+};
 
 const { Header, Content, Sider } = Layout;
 const { Title, Paragraph } = Typography;
@@ -228,6 +268,9 @@ const initialStatusCards = [
 type ThemeType = 'light' | 'dark' | 'system';
 
 function App() {
+  // 使用 Ant Design App 组件获取 message API
+  const { message } = AntdApp.useApp();
+
   const [currentView, setCurrentView] = useState<'home' | string>(() => {
     // 从URL参数读取当前页面状态
     const urlParams = new URLSearchParams(window.location.search);
@@ -342,29 +385,45 @@ function App() {
       let detail = '';
 
       if (checkResult.installed) {
-        const versionResult = await window.electronAPI.getToolVersion(toolName);
-
-        if (versionResult.version) {
-          version = versionResult.version;
-          status = 'active';
-          // 根据工具类型设置不同的detail信息
-          if (toolName === 'node') {
+        // 对于Node.js，使用统一的版本获取函数
+        if (toolName === 'node') {
+          const currentVersion = await getCurrentNodeVersion();
+          if (currentVersion) {
+            version = currentVersion;
+            status = 'active';
             detail = 'JavaScript 运行环境';
-          } else if (toolName === 'fnm') {
-            detail = 'Fast Node Manager';
           } else {
-            detail = '运行正常';
+            // 如果没有获取到版本，尝试使用getToolVersion作为备用
+            const versionResult = await window.electronAPI.getToolVersion(toolName);
+            if (versionResult.version) {
+              version = versionResult.version + ' (系统)';
+              status = 'active';
+              detail = 'JavaScript 运行环境';
+            } else {
+              version = '已安装';
+              status = 'active';
+              detail = 'JavaScript 运行环境';
+            }
           }
         } else {
-          version = '已安装';
-          status = 'active';
-          // 根据工具类型设置不同的detail信息
-          if (toolName === 'node') {
-            detail = 'JavaScript 运行环境';
-          } else if (toolName === 'fnm') {
-            detail = 'Fast Node Manager';
+          // 其他工具使用原来的方法
+          const versionResult = await window.electronAPI.getToolVersion(toolName);
+          if (versionResult.version) {
+            version = versionResult.version;
+            status = 'active';
+            if (toolName === 'fnm') {
+              detail = 'Fast Node Manager';
+            } else {
+              detail = '运行正常';
+            }
           } else {
-            detail = '运行正常';
+            version = '已安装';
+            status = 'active';
+            if (toolName === 'fnm') {
+              detail = 'Fast Node Manager';
+            } else {
+              detail = '运行正常';
+            }
           }
         }
       } else {
@@ -565,6 +624,24 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // 监听版本切换事件
+  useEffect(() => {
+    const handleNodeVersionChanged = (event: CustomEvent) => {
+      const { version } = event.detail;
+      console.log('检测到Node.js版本变更:', version);
+      // 重新检测Node.js状态以同步首页显示
+      checkToolStatus('node');
+    };
+
+    // 添加事件监听器
+    window.addEventListener('nodeVersionChanged', handleNodeVersionChanged as EventListener);
+
+    // 清理事件监听器
+    return () => {
+      window.removeEventListener('nodeVersionChanged', handleNodeVersionChanged as EventListener);
+    };
+  }, []);
+
   // 处理卡片点击事件
   const handleCardClick = (card: any) => {
     if (card.installable && card.status === 'error') {
@@ -640,7 +717,7 @@ function App() {
                 marginRight: 0,
               }}
             >
-              <NodeManager isDarkMode={isDarkMode} collapsed={collapsed} />
+              <NodeManager isDarkMode={isDarkMode} collapsed={collapsed} messageApi={message} />
             </div>
           </div>
         );
@@ -666,7 +743,7 @@ function App() {
                 marginRight: 0,
               }}
             >
-              <NPMManager isDarkMode={isDarkMode} collapsed={collapsed} />
+              <NPMManager isDarkMode={isDarkMode} collapsed={collapsed} messageApi={message} />
             </div>
           </div>
         );
@@ -692,7 +769,7 @@ function App() {
                 marginRight: 0,
               }}
             >
-              <PackageManager isDarkMode={isDarkMode} collapsed={collapsed} />
+              <PackageManager isDarkMode={isDarkMode} collapsed={collapsed} messageApi={message} />
             </div>
           </div>
         );
@@ -1403,6 +1480,7 @@ function App() {
 
   return (
     <ConfigProvider theme={themeConfig}>
+      <AntdApp>
       <Layout
         style={{
           minHeight: '100vh',
@@ -1487,6 +1565,7 @@ function App() {
           />
         )}
       </Modal>
+      </AntdApp>
     </ConfigProvider>
   );
 }

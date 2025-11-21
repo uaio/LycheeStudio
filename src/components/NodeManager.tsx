@@ -7,7 +7,6 @@ import {
   Typography,
   Divider,
   Tag,
-  message,
   List,
   Popconfirm,
   Row,
@@ -29,8 +28,10 @@ import {
   AppstoreOutlined,
   StarOutlined,
   InfoCircleOutlined,
-  EnvironmentOutlined
+  EnvironmentOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
+import { getCurrentNodeVersion } from '../App';
 
 const { Title, Text } = Typography;
 
@@ -61,7 +62,7 @@ interface NodeReleaseInfo {
   modules: number;
 }
 
-const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ isDarkMode, collapsed = false }) => {
+const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageApi: any }> = ({ isDarkMode, collapsed = false, messageApi }) => {
   const [currentVersion, setCurrentVersion] = useState<string>('');
   const [installedVersions, setInstalledVersions] = useState<NodeVersion[]>([]);
   const [availableVersions, setAvailableVersions] = useState<NodeReleaseInfo[]>([]);
@@ -84,9 +85,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   useEffect(() => {
     if (saveMessage) {
       if (saveMessage.includes('成功')) {
-        message.success(saveMessage);
+        messageApi.success(saveMessage);
       } else {
-        message.error(saveMessage);
+        messageApi.error(saveMessage);
       }
       setTimeout(() => setSaveMessage(''), 3000);
     }
@@ -95,18 +96,15 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   const loadNodeData = async () => {
     setIsLoading(true);
     try {
-      // 1. 获取当前版本
-      const currentResult = await window.electronAPI.executeCommand('fnm current');
-      if (currentResult.success && currentResult.output) {
-        const version = currentResult.output.trim();
-        setCurrentVersion(version);
-      }
-
-      // 2. 获取已安装版本列表 (使用 fnm list)
+      // 1. 获取已安装版本列表 (使用 fnm list)
       const listResult = await window.electronAPI.executeCommand('fnm list');
+
       if (listResult.success && listResult.output) {
-        const installed = await parseFnmList(listResult.output);
-        setInstalledVersions(installed);
+        // 2. 从 fnm list 中解析默认版本和所有已安装版本
+        const { defaultVersion, installedVersions } = await parseFnmList(listResult.output);
+
+        setCurrentVersion(defaultVersion);
+        setInstalledVersions(installedVersions);
       }
 
       // 3. 获取最新版本信息
@@ -114,7 +112,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
     } catch (error) {
       console.error('加载Node数据失败:', error);
-      message.error('加载Node.js数据失败');
+      messageApi.error('加载Node.js数据失败');
     } finally {
       setIsLoading(false);
     }
@@ -152,74 +150,55 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     }
   };
 
-  const parseFnmList = async (output: string): Promise<NodeVersion[]> => {
+  const parseFnmList = async (output: string): Promise<{ defaultVersion: string; installedVersions: NodeVersion[] }> => {
     const lines = output.split('\n').filter(line => line.trim());
     const versions: NodeVersion[] = [];
+    let defaultVersion = '';
 
     for (const line of lines) {
-      // 解析格式：* v24.8.0 default 或 v20.18.0
-      const isCurrent = line.includes('*');
-      const isDefault = line.includes('default');
+      // 解析格式：* v24.8.0 default 或 v20.18.0 或 * system
+      // 注意：在这个版本的fnm中，* 表示已安装，不代表当前版本
       const versionMatch = line.match(/v\d+\.\d+\.\d+/);
 
       if (versionMatch) {
         const version = versionMatch[0];
+        const isDefault = line.includes('default');
+
+        // 记录默认版本
+        if (isDefault) {
+          defaultVersion = version;
+        }
+
         let installedAt = new Date().toISOString(); // 默认值
 
         try {
-          // 尝试获取真实的安装时间
-          const fnmDirResult = await window.electronAPI.executeCommand('echo $FNM_DIR');
-          if (fnmDirResult.success && fnmDirResult.output) {
-            const fnmDir = fnmDirResult.output.trim();
-            const versionPath = `${fnmDir}/node-versions/${version}`;
+          // 尝试获取真实的安装时间 - 使用固定的路径格式
+          const installedPath = `/Users/anwan/.fnm/node-versions/${version}`;
+          const installResult = await window.electronAPI.executeCommand(`stat -f %m "${installedPath}" 2>/dev/null || echo "0"`);
+          const installTime = installResult.success && installResult.output && installResult.output.trim() !== "0"
+            ? new Date(parseInt(installResult.output.trim()) * 1000).toISOString()
+            : installedAt;
 
-            // 尝试检测操作系统并使用正确的 stat 命令格式
-            // 先尝试 macOS 格式，如果失败再尝试 Linux 格式
-            let statCommand = '';
-
-            // 首先尝试 macOS 格式 (stat -f %m)
-            statCommand = `stat -f %m "${versionPath}" 2>/dev/null || echo "0"`;
-            let statResult = await window.electronAPI.executeCommand(statCommand);
-
-            // 如果 macOS 格式失败，尝试 Linux 格式 (stat -c %Y)
-            if ((!statResult.success || statResult.output.trim() === "0") &&
-                statResult.error && statResult.error.includes("illegal option")) {
-              statCommand = `stat -c %Y "${versionPath}" 2>/dev/null || echo "0"`;
-              statResult = await window.electronAPI.executeCommand(statCommand);
-            }
-
-            // 使用上面已经获取的 statResult
-            if (statResult.success && statResult.output) {
-              const timestampStr = statResult.output.trim();
-              const timestamp = parseInt(timestampStr) * 1000; // 转换为毫秒
-              if (timestamp > 0 && !isNaN(timestamp)) {
-                installedAt = new Date(timestamp).toISOString();
-                console.log(`版本 ${version} 的安装时间: ${installedAt}`);
-              } else {
-                console.warn(`无法解析版本 ${version} 的时间戳: ${timestampStr}`);
-              }
-            } else {
-              console.warn(`stat 命令执行失败，版本 ${version}:`, statResult.error);
-            }
-          } else {
-            console.warn('无法获取 FNM_DIR 环境变量:', fnmDirResult.error);
-          }
+          versions.push({
+            version,
+            current: isDefault, // 默认版本就是当前版本
+            default: isDefault,
+            installed: true,
+            installedAt: installTime
+          });
         } catch (error) {
-          console.warn('获取安装时间时发生错误:', error);
-          // 使用默认值
+          versions.push({
+            version,
+            current: isDefault, // 默认版本就是当前版本
+            default: isDefault,
+            installed: true,
+            installedAt
+          });
         }
-
-        versions.push({
-          version,
-          current: isCurrent,
-          default: isDefault,
-          installed: true,
-          installedAt
-        });
       }
     }
 
-    return versions;
+    return { defaultVersion, installedVersions: versions };
   };
 
   const generateMockVersions = (): NodeReleaseInfo[] => {
@@ -245,34 +224,48 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   const switchToVersion = async (version: string) => {
     setIsLoading(true);
     try {
-      // 尝试在 zsh 环境中执行 fnm use 命令
-      const result = await window.electronAPI.executeCommand(`/bin/zsh -i -c 'fnm use ${version}'`);
+      // 使用 fnm default 设置全局默认版本
+      const result = await window.electronAPI.executeCommand(`/bin/zsh -i -c 'fnm default ${version}'`);
 
       if (result.success) {
-        setSaveMessage(`已切换到 ${version}`);
+        setSaveMessage(`已设置全局默认版本为 ${version}`);
+
         // 重新加载数据以更新当前版本状态
         setTimeout(() => {
           loadNodeData();
-        }, 1000);
+          // 通知首页更新状态（通过全局事件）
+          window.dispatchEvent(new CustomEvent('nodeVersionChanged', { detail: { version } }));
+        }, 1500); // 增加延迟确保环境变量完全生效
       } else {
-        // 如果 zsh 失败，尝试直接执行 fnm 命令
-        const fallbackResult = await window.electronAPI.executeCommand(`fnm use ${version}`);
+        // 如果 zsh 失败，尝试直接执行 fnm default 命令
+        const fallbackResult = await window.electronAPI.executeCommand(`fnm default ${version}`);
         if (fallbackResult.success) {
-          setSaveMessage(`已切换到 ${version}`);
+          setSaveMessage(`已设置全局默认版本为 ${version}`);
           setTimeout(() => {
             loadNodeData();
-          }, 1000);
+            // 通知首页更新状态
+            window.dispatchEvent(new CustomEvent('nodeVersionChanged', { detail: { version } }));
+          }, 1500);
         } else {
-          setSaveMessage(`切换到 ${version} 失败: ${fallbackResult.error || '未知错误'}`);
+          setSaveMessage(`设置默认版本失败: ${fallbackResult.error || '未知错误'}`);
         }
       }
     } catch (error) {
-      console.error('切换版本失败:', error);
-      setSaveMessage(`切换到 ${version} 失败: ${error}`);
+      console.error('设置默认版本失败:', error);
+      setSaveMessage(`设置默认版本失败: ${error}`);
     } finally {
       setIsLoading(false);
       setTimeout(() => setSaveMessage(''), 3000);
     }
+  };
+
+  // 切换折叠状态
+  const toggleExpanded = (major: string) => {
+    setExpandedVersions(prev =>
+      prev.includes(major)
+        ? prev.filter(v => v !== major)
+        : [...prev, major]
+    );
   };
 
   const installVersion = async (versionInput: string) => {
@@ -457,7 +450,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
                       loading={isLoading}
                       disabled={!canSwitch}
                     >
-                      {isDefaultVersion ? '使用中' : canSwitch ? '设置' : '使用中'}
+                      {isDefaultVersion ? '默认' : canSwitch ? '设为默认' : '默认'}
                     </Button>,
                     <Popconfirm
                       title="确定要卸载这个版本吗？"
@@ -564,15 +557,6 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     const currentGroups = versionGroups.slice(startIndex, endIndex);
     const totalPages = Math.ceil(versionGroups.length / pageSize);
 
-    // 切换折叠状态
-    const toggleExpanded = (major: string) => {
-      setExpandedVersions(prev =>
-        prev.includes(major)
-          ? prev.filter(v => v !== major)
-          : [...prev, major]
-      );
-    };
-
     // 内部表格列定义
     const innerColumns = [
       {
@@ -657,7 +641,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
                 onClick={() => switchToVersion(record.version)}
                 loading={isLoading}
               >
-                使用
+                设为默认
               </Button>
             ) : (
               <Button
@@ -785,7 +769,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
                             onClick={() => switchToVersion(latestInGroup.version)}
                             loading={isLoading}
                           >
-                            使用
+                            设为默认
                           </Button>
                         ) : (
                           <Button
@@ -926,6 +910,16 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Node.js 版本管理说明 */}
+      <Alert
+        message="Node.js 版本管理"
+        description="基于 fnm 进行版本管理，新终端会话将自动使用设置的默认版本。"
+        type="info"
+        showIcon
+        icon={<InfoCircleOutlined />}
+        closable
+      />
+
       {renderCurrentVersionStatus()}
       {renderInstalledVersions()}
       {renderAvailableVersions()}

@@ -50,7 +50,7 @@ interface NpmRegistry {
   ping?: number;
 }
 
-const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ isDarkMode, collapsed = false }) => {
+const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageApi: any }> = ({ isDarkMode, collapsed = false, messageApi }) => {
   const [currentRegistry, setCurrentRegistry] = useState('');
   const [currentRegistryName, setCurrentRegistryName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -165,9 +165,9 @@ const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ is
   React.useEffect(() => {
     if (saveMessage) {
       if (saveMessage.includes('成功')) {
-        message.success(saveMessage);
+        messageApi.success(saveMessage);
       } else {
-        message.error(saveMessage);
+        messageApi.error(saveMessage);
       }
     }
   }, [saveMessage]);
