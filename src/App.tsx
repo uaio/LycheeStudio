@@ -1511,6 +1511,7 @@ function App() {
 
         {/* 主内容区域 */}
         <Content
+          className={isDarkMode ? 'dark-mode' : ''}
           style={{
             marginTop: '38px', // 为标题栏留出空间
             background: isDarkMode ? '#141414' : '#ffffff',

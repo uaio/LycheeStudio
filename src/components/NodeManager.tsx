@@ -16,7 +16,8 @@ import {
   Badge,
   Descriptions,
   Table,
-  Select
+  Select,
+  Pagination
 } from 'antd';
 import {
   CodeOutlined,
@@ -76,6 +77,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
   const [versionFilter, setVersionFilter] = useState<string>('all');
   const [expandedVersions, setExpandedVersions] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5); // 每页显示5个大版本
 
   useEffect(() => {
     loadNodeData();
@@ -124,11 +126,11 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
       const response = await fetch('https://nodejs.org/dist/index.json');
       const releases: NodeReleaseInfo[] = await response.json();
 
-      // 过滤出有用的版本信息（从v16开始，包含LTS和最新版本）
+      // 过滤出有用的版本信息（从v10开始，包含LTS和最新版本）
       const filteredReleases = releases.filter(release => {
         const majorVersion = parseInt(release.version.substring(1).split('.')[0]);
-        return majorVersion >= 16 && (release.lts || !release.lts);
-      }).slice(0, 50); // 取前50个版本
+        return majorVersion >= 10; // 包含所有v10及以上的版本
+      });
 
       setAvailableVersions(filteredReleases);
 
@@ -203,22 +205,29 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
 
   const generateMockVersions = (): NodeReleaseInfo[] => {
     const versions: NodeReleaseInfo[] = [];
-    const majorVersions = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16];
+    const majorVersions = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10];
 
     majorVersions.forEach(major => {
-      for (let minor = 0; minor <= 2; minor++) {
-        versions.push({
-          version: `v${major}.${10 - minor}.0`,
-          date: new Date(Date.now() - (major * 100 + minor * 10) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          npm: `${10 - minor}.0.0`,
-          lts: major % 2 === 0 && minor === 0 ? `LTS${major}` : undefined,
-          security: minor === 0,
-          modules: 120 + major
-        });
+      // 为每个大版本生成多个小版本
+      for (let minor = 0; minor <= 9; minor++) {
+        for (let patch = 0; patch <= 2; patch++) {
+          // 只生成合理的版本组合
+          if (minor === 0 && patch > 0) continue;
+
+          versions.push({
+            version: `v${major}.${minor}.${patch}`,
+            date: new Date(Date.now() - (major * 100 + minor * 10 + patch) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            npm: `${9 - minor}.${patch}.0`,
+            lts: major % 2 === 0 && minor === 0 && patch === 0 ? `LTS${major}` : undefined,
+            security: minor <= 1 && patch === 0,
+            modules: 120 + major
+          });
+        }
       }
     });
 
-    return versions;
+    // 按版本号降序排序
+    return versions.sort((a, b) => b.version.localeCompare(a.version));
   };
 
   const switchToVersion = async (version: string) => {
@@ -410,8 +419,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
 
   // 渲染已安装版本列表
   const renderInstalledVersions = () => {
-    // 按版本号从高到低排序
-    const sortedVersions = [...installedVersions].sort((a, b) => {
+    // 优先显示默认版本，其余按版本号从高到低排序
+    const defaultVersion = installedVersions.find(v => v.default);
+    const otherVersions = [...installedVersions].filter(v => !v.default).sort((a, b) => {
       const aVersion = a.version.substring(1).split('.').map(Number);
       const bVersion = b.version.substring(1).split('.').map(Number);
 
@@ -422,6 +432,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
       }
       return 0;
     });
+
+    // 将默认版本放在第一位，其余版本按顺序排列
+    const sortedVersions = defaultVersion ? [defaultVersion, ...otherVersions] : otherVersions;
 
     return (
       <Card
@@ -434,69 +447,77 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
         }
       >
         {sortedVersions.length > 0 ? (
-          <List
-            dataSource={sortedVersions}
-            renderItem={(version) => {
-              const isDefaultVersion = version.default;
-              const canSwitch = !isDefaultVersion;
+          <div className="custom-scrollbar"
+               style={{
+                 maxHeight: '400px',    // 固定最大高度
+                 overflowY: 'auto',      // 垂直滚动
+                 overflowX: 'hidden',    // 隐藏水平滚动
+                 paddingRight: '8px'     // 为滚动条预留空间
+               }}>
+            <List
+              dataSource={sortedVersions}
+              renderItem={(version) => {
+                const isDefaultVersion = version.default;
+                const canSwitch = !isDefaultVersion;
 
-              return (
-                <List.Item
-                  actions={[
-                    <Button
-                      type={isDefaultVersion ? "primary" : "default"}
-                      icon={<AppstoreOutlined />}
-                      onClick={() => canSwitch && switchToVersion(version.version)}
-                      loading={isLoading}
-                      disabled={!canSwitch}
-                    >
-                      {isDefaultVersion ? '默认' : canSwitch ? '设为默认' : '默认'}
-                    </Button>,
-                    <Popconfirm
-                      title="确定要卸载这个版本吗？"
-                      description="卸载后需要重新下载"
-                      onConfirm={() => uninstallVersion(version.version)}
-                      okText="确定"
-                      cancelText="取消"
-                      disabled={isDefaultVersion}
-                    >
+                return (
+                  <List.Item
+                    actions={[
                       <Button
-                        danger
-                        icon={<DeleteOutlined />}
+                        type={isDefaultVersion ? "primary" : "default"}
+                        icon={<AppstoreOutlined />}
+                        onClick={() => canSwitch && switchToVersion(version.version)}
+                        loading={isLoading}
+                        disabled={!canSwitch}
+                      >
+                        {isDefaultVersion ? '默认' : canSwitch ? '设为默认' : '默认'}
+                      </Button>,
+                      <Popconfirm
+                        title="确定要卸载这个版本吗？"
+                        description="卸载后需要重新下载"
+                        onConfirm={() => uninstallVersion(version.version)}
+                        okText="确定"
+                        cancelText="取消"
                         disabled={isDefaultVersion}
                       >
-                        卸载
-                      </Button>
-                    </Popconfirm>
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <div style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 6,
-                        backgroundColor: isDarkMode ? '#424242' : '#f5f5f5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: isDarkMode ? '#1890ff' : '#1890ff'
-                      }}>
-                        <CodeOutlined style={{ fontSize: 16 }} />
-                      </div>
-                    }
-                    title={
-                      <Space>
-                        <Text strong>{version.version}</Text>
-                        {isDefaultVersion && <Tag color="warning">默认</Tag>}
-                      </Space>
-                    }
-                    description={`${getVersionType(version.version)} • 安装于 ${version.installedAt ? new Date(version.installedAt).toLocaleDateString() : '未知时间'}`}
-                  />
-                </List.Item>
-              );
-            }}
-          />
+                        <Button
+                          danger
+                          icon={<DeleteOutlined />}
+                          disabled={isDefaultVersion}
+                        >
+                          卸载
+                        </Button>
+                      </Popconfirm>
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={
+                        <div style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 6,
+                          backgroundColor: isDarkMode ? '#424242' : '#f5f5f5',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: isDarkMode ? '#1890ff' : '#1890ff'
+                        }}>
+                          <CodeOutlined style={{ fontSize: 16 }} />
+                        </div>
+                      }
+                      title={
+                        <Space>
+                          <Text strong>{version.version}</Text>
+                          {isDefaultVersion && <Tag color="warning">默认</Tag>}
+                        </Space>
+                      }
+                      description={`${getVersionType(version.version)} • 安装于 ${version.installedAt ? new Date(version.installedAt).toLocaleDateString() : '未知时间'}`}
+                    />
+                  </List.Item>
+                );
+              }}
+            />
+          </div>
         ) : (
           <Empty
             image={<DownloadOutlined style={{ fontSize: 48, color: isDarkMode ? '#666' : '#ccc' }} />}
@@ -550,8 +571,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
       }))
       .sort((a, b) => Number(b.major) - Number(a.major)); // 按主版本号降序
 
-    // 分页处理 - 每页5个大版本
-    const pageSize = 5;
+    // 分页处理
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     const currentGroups = versionGroups.slice(startIndex, endIndex);
@@ -672,7 +692,10 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
           <Space>
             <Select
               value={versionFilter}
-              onChange={setVersionFilter}
+              onChange={(value) => {
+                setVersionFilter(value);
+                setCurrentPage(1); // 重置到第一页
+              }}
               style={{ width: 120 }}
               size="small"
             >
@@ -682,7 +705,10 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
             </Select>
             <Button
               icon={<ReloadOutlined />}
-              onClick={fetchLatestVersions}
+              onClick={() => {
+                fetchLatestVersions();
+                setCurrentPage(1); // 重置到第一页
+              }}
               loading={isLoading}
               size="small"
             >
@@ -804,26 +830,46 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; messageA
           })}
 
           {/* 分页控件 */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
-              <Button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+          {versionGroups.length > 0 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: 20
+            }}>
+              <Pagination
+                current={currentPage}
+                total={versionGroups.length}
+                pageSize={pageSize}
+                showSizeChanger
+                onChange={(page, size) => {
+                  setCurrentPage(page);
+                  if (size !== pageSize) {
+                    setPageSize(size);
+                  }
+                }}
+                pageSizeOptions={['5', '10', '20']}
                 size="small"
-              >
-                上一页
-              </Button>
-              <Text>
-                第 {currentPage} 页，共 {totalPages} 页
-              </Text>
-              <Button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                size="small"
-              >
-                下一页
-              </Button>
+              />
             </div>
+          )}
+
+          {/* 无版本提示 */}
+          {versionGroups.length === 0 && (
+            <Empty
+              description={
+                <Text style={{ color: isDarkMode ? '#a0a0a0' : '#666' }}>
+                  当前筛选条件下没有可用版本
+                </Text>
+              }
+              style={{ padding: '30px 0' }}
+            >
+              <Button type="link" onClick={() => {
+                setVersionFilter('all');
+                setCurrentPage(1);
+              }}>
+                显示全部版本
+              </Button>
+            </Empty>
           )}
         </Space>
       </Card>
