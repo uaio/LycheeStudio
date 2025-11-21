@@ -357,81 +357,103 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   );
 
   // 渲染已安装版本列表
-  const renderInstalledVersions = () => (
-    <Card
-      title={
-        <Space>
-          <CheckCircleOutlined />
-          <span>已安装版本</span>
-          <Badge count={installedVersions.length} />
-        </Space>
+  const renderInstalledVersions = () => {
+    // 按版本号从高到低排序
+    const sortedVersions = [...installedVersions].sort((a, b) => {
+      const aVersion = a.version.substring(1).split('.').map(Number);
+      const bVersion = b.version.substring(1).split('.').map(Number);
+
+      for (let i = 0; i < 3; i++) {
+        const aNum = aVersion[i] || 0;
+        const bNum = bVersion[i] || 0;
+        if (aNum !== bNum) return bNum - aNum; // 降序排列
       }
-    >
-      {installedVersions.length > 0 ? (
-        <List
-          dataSource={installedVersions}
-          renderItem={(version) => (
-            <List.Item
-              actions={[
-                <Button
-                  type={version.current ? "primary" : "default"}
-                  icon={<AppstoreOutlined />}
-                  onClick={() => switchToVersion(version.version)}
-                  loading={isLoading}
+      return 0;
+    });
+
+    return (
+      <Card
+        title={
+          <Space>
+            <CheckCircleOutlined />
+            <span>已安装版本</span>
+            <Badge count={installedVersions.length} />
+          </Space>
+        }
+      >
+        {sortedVersions.length > 0 ? (
+          <List
+            dataSource={sortedVersions}
+            renderItem={(version) => {
+              const isDefaultVersion = version.default;
+              const canSwitch = !isDefaultVersion;
+
+              return (
+                <List.Item
+                  actions={[
+                    <Button
+                      type={isDefaultVersion ? "primary" : "default"}
+                      icon={<AppstoreOutlined />}
+                      onClick={() => canSwitch && switchToVersion(version.version)}
+                      loading={isLoading}
+                      disabled={!canSwitch}
+                    >
+                      {isDefaultVersion ? '使用中' : canSwitch ? '设置' : '使用中'}
+                    </Button>,
+                    <Popconfirm
+                      title="确定要卸载这个版本吗？"
+                      description="卸载后需要重新下载"
+                      onConfirm={() => uninstallVersion(version.version)}
+                      okText="确定"
+                      cancelText="取消"
+                      disabled={isDefaultVersion}
+                    >
+                      <Button
+                        danger
+                        icon={<DeleteOutlined />}
+                        disabled={isDefaultVersion}
+                      >
+                        卸载
+                      </Button>
+                    </Popconfirm>
+                  ]}
                 >
-                  {version.current ? '使用中' : '切换'}
-                </Button>,
-                <Popconfirm
-                  title="确定要卸载这个版本吗？"
-                  description="卸载后需要重新下载"
-                  onConfirm={() => uninstallVersion(version.version)}
-                  okText="确定"
-                  cancelText="取消"
-                >
-                  <Button
-                    danger
-                    icon={<DeleteOutlined />}
-                  >
-                    卸载
-                  </Button>
-                </Popconfirm>
-              ]}
-            >
-              <List.Item.Meta
-                avatar={
-                  <div style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 6,
-                    backgroundColor: isDarkMode ? '#424242' : '#f5f5f5',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: isDarkMode ? '#1890ff' : '#1890ff'
-                  }}>
-                    <CodeOutlined style={{ fontSize: 16 }} />
-                  </div>
-                }
-                title={
-                  <Space>
-                    <Text strong>{version.version}</Text>
-                    {version.current && <Tag color="success">当前</Tag>}
-                    {version.default && <Tag color="warning">默认</Tag>}
-                  </Space>
-                }
-                description={`${getVersionType(version.version)} • 安装于 ${version.installedAt ? new Date(version.installedAt).toLocaleDateString() : '未知时间'}`}
-              />
-            </List.Item>
-          )}
-        />
-      ) : (
-        <Empty
-          image={<DownloadOutlined style={{ fontSize: 48, color: isDarkMode ? '#666' : '#ccc' }} />}
-          description="未安装任何 Node.js 版本"
-        />
-      )}
-    </Card>
-  );
+                  <List.Item.Meta
+                    avatar={
+                      <div style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 6,
+                        backgroundColor: isDarkMode ? '#424242' : '#f5f5f5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: isDarkMode ? '#1890ff' : '#1890ff'
+                      }}>
+                        <CodeOutlined style={{ fontSize: 16 }} />
+                      </div>
+                    }
+                    title={
+                      <Space>
+                        <Text strong>{version.version}</Text>
+                        {isDefaultVersion && <Tag color="warning">默认</Tag>}
+                      </Space>
+                    }
+                    description={`${getVersionType(version.version)} • 安装于 ${version.installedAt ? new Date(version.installedAt).toLocaleDateString() : '未知时间'}`}
+                  />
+                </List.Item>
+              );
+            }}
+          />
+        ) : (
+          <Empty
+            image={<DownloadOutlined style={{ fontSize: 48, color: isDarkMode ? '#666' : '#ccc' }} />}
+            description="未安装任何 Node.js 版本"
+          />
+        )}
+      </Card>
+    );
+  };
 
   // 渲染可用版本列表
   const renderAvailableVersions = () => {
