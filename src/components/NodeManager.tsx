@@ -103,7 +103,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
       // 2. 获取已安装版本列表 (使用 fnm list)
       const listResult = await window.electronAPI.executeCommand('fnm list');
       if (listResult.success && listResult.output) {
-        const installed = parseFnmList(listResult.output);
+        const installed = await parseFnmList(listResult.output);
         setInstalledVersions(installed);
       }
 
@@ -150,11 +150,11 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     }
   };
 
-  const parseFnmList = (output: string): NodeVersion[] => {
+  const parseFnmList = async (output: string): Promise<NodeVersion[]> => {
     const lines = output.split('\n').filter(line => line.trim());
     const versions: NodeVersion[] = [];
 
-    lines.forEach(line => {
+    for (const line of lines) {
       // 解析格式：* v24.8.0 default 或 v20.18.0
       const isCurrent = line.includes('*');
       const isDefault = line.includes('default');
@@ -162,15 +162,38 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
       if (versionMatch) {
         const version = versionMatch[0];
+        let installedAt = new Date().toISOString(); // 默认值
+
+        try {
+          // 尝试获取真实的安装时间
+          const pathResult = await window.electronAPI.executeCommand(`echo $FNM_DIR`);
+          if (pathResult.success && pathResult.output) {
+            const fnmDir = pathResult.output.trim();
+            const versionPath = `${fnmDir}/node-versions/${version}`;
+
+            // 获取目录的修改时间作为安装时间
+            const statResult = await window.electronAPI.executeCommand(`stat -c %Y "${versionPath}" 2>/dev/null || echo "0"`);
+            if (statResult.success && statResult.output) {
+              const timestamp = parseInt(statResult.output.trim()) * 1000; // 转换为毫秒
+              if (timestamp > 0) {
+                installedAt = new Date(timestamp).toISOString();
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('无法获取安装时间:', error);
+          // 使用默认值
+        }
+
         versions.push({
           version,
           current: isCurrent,
           default: isDefault,
           installed: true,
-          installedAt: new Date().toISOString()
+          installedAt
         });
       }
-    });
+    }
 
     return versions;
   };
