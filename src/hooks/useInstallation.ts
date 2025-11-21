@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ToolStatus, InstallationProgress, InstallationLog, InstallationTask, ToolName, TOOLS_INFO } from '../types/installation';
+import { ToolStatus, InstallationProgress, InstallationLog, TOOLS_INFO } from '../types/installation';
 import { installationService } from '../services/installationService';
 
 export const useInstallation = () => {
@@ -9,30 +9,8 @@ export const useInstallation = () => {
   const [logs, setLogs] = useState<InstallationLog[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showLogPanel, setShowLogPanel] = useState(false);
+  const [partialResults, setPartialResults] = useState<ToolStatus[]>([]);
   const logPanelRef = useRef<HTMLDivElement>(null);
-
-  // 初始化：检测所有工具状态
-  useEffect(() => {
-    detectAllTools();
-  }, []);
-
-  // 监听安装进度
-  useEffect(() => {
-    const handleProgress = (progress: InstallationProgress) => {
-      setCurrentProgress(progress);
-    };
-
-    const handleLog = (log: InstallationLog) => {
-      setLogs(prev => [...prev, log]);
-    };
-
-    installationService.onProgress(handleProgress);
-    installationService.onLog(handleLog);
-
-    return () => {
-      // 清理回调（在实际实现中需要更好的清理机制）
-    };
-  }, []);
 
   // 检测所有工具
   const detectAllTools = useCallback(async () => {
@@ -41,16 +19,70 @@ export const useInstallation = () => {
       const toolStatuses = await installationService.detectAllTools();
       setTools(toolStatuses);
     } catch (error) {
-      console.error('检测工具失败:', error);
-    } finally {
+          } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // 初始化：检测所有工具状态
+  useEffect(() => {
+    detectAllTools();
+  }, [detectAllTools]);
+
+  // 监听安装进度
+  useEffect(() => {
+    const handleProgress = (progress: InstallationProgress) => {
+      setCurrentProgress(progress);
+
+      // 处理分组完成事件，更新部分结果
+      if (progress.stage === 'group-completed' && progress.groupResults) {
+        setPartialResults(progress.groupResults);
+      }
+    };
+
+    const handleLog = (log: InstallationLog) => {
+      setLogs(prev => [...prev, log]);
+    };
+
+    const progressCallbackId = installationService.onProgress(handleProgress);
+    const logCallbackId = installationService.onLog(handleLog);
+
+    return () => {
+      // 清理回调
+      installationService.removeProgressCallback(progressCallbackId);
+      installationService.removeLogCallback(logCallbackId);
+    };
+  }, []);
+
   // 刷新工具状态
   const refreshTools = useCallback(async () => {
-    await detectAllTools();
-  }, [detectAllTools]);
+    setIsLoading(true);
+    try {
+      const toolStatuses = await installationService.detectAllTools();
+      setTools(toolStatuses);
+    } catch (error) {
+          } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // 刷新单个工具状态
+  const refreshSingleTool = useCallback(async (toolName: string) => {
+    try {
+            const toolStatus = await installationService.detectTool(toolName);
+
+      // 更新工具列表中的状态
+      setTools(prevTools =>
+        prevTools.map(tool =>
+          tool.name === toolName ? toolStatus : tool
+        )
+      );
+
+            return toolStatus;
+    } catch (error) {
+            throw error;
+    }
+  }, []);
 
   // 安装工具
   const installTool = useCallback(async (toolName: string) => {
@@ -67,8 +99,7 @@ export const useInstallation = () => {
 
       return result;
     } catch (error) {
-      console.error('安装失败:', error);
-      throw error;
+            throw error;
     }
   }, [detectAllTools]);
 
@@ -191,10 +222,12 @@ export const useInstallation = () => {
     logs,
     isMinimized,
     showLogPanel,
+    partialResults, // 新增：部分检测结果
 
     // 方法
     detectAllTools,
     refreshTools,
+    refreshSingleTool,
     installTool,
     cancelInstallation,
     getToolStatus,
@@ -208,6 +241,7 @@ export const useInstallation = () => {
     getStatusText,
     getStatusColor,
 
+  
     // 引用
     logPanelRef
   };

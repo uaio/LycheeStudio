@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, Typography, Space, Alert, Steps, Tag } from 'antd';
+import { Modal, Button, Typography, Space, Alert, Tag } from 'antd';
 import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { ToolStatus, InstallationError } from '../types/installation';
 

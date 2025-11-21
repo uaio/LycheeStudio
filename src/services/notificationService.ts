@@ -19,8 +19,7 @@ class NotificationService {
   // 检查通知权限
   private async checkPermission() {
     if (!this.isSupported) {
-      console.warn('该浏览器不支持系统通知');
-      return false;
+            return false;
     }
 
     this.permission = await Notification.requestPermission();
@@ -33,8 +32,7 @@ class NotificationService {
       this.permission = await Notification.requestPermission();
       return this.permission === 'granted';
     } catch (error) {
-      console.error('请求通知权限失败:', error);
-      return false;
+            return false;
     }
   }
 
@@ -90,8 +88,7 @@ class NotificationService {
   // 通用通知方法
   private showNotification(options: NotificationOptions) {
     if (!this.hasPermission()) {
-      console.log('通知:', options.title, '-', options.body);
-      return;
+            return;
     }
 
     try {
@@ -116,9 +113,7 @@ class NotificationService {
         }, 5000);
       }
     } catch (error) {
-      console.error('发送通知失败:', error);
-      console.log('通知:', options.title, '-', options.body);
-    }
+                }
   }
 
   // 获取通知图标

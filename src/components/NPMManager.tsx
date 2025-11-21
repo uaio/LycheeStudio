@@ -10,7 +10,6 @@ import {
   Row,
   Col,
   Statistic,
-  Tooltip,
   Alert,
   App as AntdApp
 } from 'antd';
@@ -21,7 +20,6 @@ import {
   ExclamationCircleOutlined,
   PlusOutlined,
   ThunderboltOutlined,
-  SettingOutlined,
   RiseOutlined,
   AppstoreOutlined,
   ClockCircleOutlined,
@@ -172,7 +170,7 @@ const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ is
         message.error(saveMessage);
       }
     }
-  }, [saveMessage]);
+  }, [saveMessage, message]);
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>

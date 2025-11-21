@@ -13,7 +13,7 @@ export interface ToolStatus {
 
 export interface InstallationProgress {
   tool: string;
-  stage: 'checking' | 'downloading' | 'installing' | 'configuring' | 'completed' | 'error';
+  stage: 'checking' | 'downloading' | 'installing' | 'configuring' | 'completed' | 'error' | 'group-completed';
   progress: number;
   total?: number;
   downloaded?: number;
@@ -21,6 +21,8 @@ export interface InstallationProgress {
   eta?: number;
   message: string;
   timestamp: number;
+  groupIndex?: number;
+  groupResults?: ToolStatus[];
 }
 
 export interface InstallationLog {
@@ -80,33 +82,45 @@ export interface InstallationEngine {
 export const TOOLS_INFO = {
   brew: {
     name: 'Homebrew',
-    description: 'macOS 包管理器',
+    description: 'macOS 包管理器，用于安装和管理开发工具',
     installCommand: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
     dependencies: [],
   },
   fnm: {
-    name: 'fnm',
-    description: 'Fast Node Manager',
+    name: 'FNM',
+    description: 'Fast Node Manager - 快速的 Node.js 版本管理器',
     installCommand: 'brew install fnm',
     dependencies: ['brew'],
   },
   claudeCode: {
-    name: 'claude-cdoe',
-    description: 'Claude Code CLI',
-    installCommand: 'npm install -g @anthropic-ai/claude-code',
-    dependencies: ['fnm'],
-  },
-  codex: {
-    name: 'codex',
-    description: 'Codex CLI',
-    installCommand: 'npm install -g @github/codex-cli',
-    dependencies: ['fnm'],
+    name: 'Claude Code',
+    description: 'Anthropic Claude Code CLI - AI驱动的开发工具',
+    installCommand: 'brew install claude-code',
+    dependencies: ['brew'],
   },
   geminiCli: {
-    name: 'gemini-cli',
-    description: 'Gemini CLI',
-    installCommand: 'npm install -g @google/generative-ai-cli',
+    name: 'Gemini CLI',
+    description: 'Google Gemini CLI - AI代码助手和生成工具',
+    installCommand: 'brew install gemini-cli',
+    dependencies: ['brew'],
+  },
+  codex: {
+    name: 'Codex',
+    description: 'OpenAI Codex CLI - AI代码生成和补全工具',
+    installCommand: 'brew install codex',
+    dependencies: ['brew'],
+  },
+  node: {
+    name: 'Node.js',
+    description: 'Node.js - JavaScript 运行环境',
+    installCommand: 'fnm install --lts',
     dependencies: ['fnm'],
+  },
+  npm: {
+    name: 'NPM 源',
+    description: 'NPM - Node.js 包管理器',
+    installCommand: 'npm --version', // NPM 随 Node.js 一起安装，不需要单独安装
+    dependencies: ['node'],
   },
 } as const;
 

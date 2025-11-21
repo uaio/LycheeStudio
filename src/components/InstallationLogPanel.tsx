@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Card, Button, Typography, Progress, Space, Tag } from 'antd';
+import { Button, Typography, Progress, Space, Tag } from 'antd';
 import { MinusOutlined, CloseOutlined, ExpandOutlined } from '@ant-design/icons';
 import { InstallationProgress, InstallationLog } from '../types/installation';
 

@@ -9,7 +9,6 @@ import {
   Row,
   Col,
   Statistic,
-  Alert,
   Popconfirm,
   Empty,
   Tooltip,
@@ -20,15 +19,12 @@ import {
   DownloadOutlined,
   DeleteOutlined,
   ReloadOutlined,
-  SearchOutlined,
   PlusOutlined,
-  ExclamationCircleOutlined,
   CheckCircleOutlined,
-  GlobalOutlined,
   LinkOutlined
 } from '@ant-design/icons';
 
-const { Title, Paragraph, Text } = Typography;
+const { Text } = Typography;
 
 // 声明 Electron API 类型
 declare global {
@@ -144,7 +140,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
         message.error(saveMessage);
       }
     }
-  }, [saveMessage]);
+  }, [saveMessage, message]);
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
