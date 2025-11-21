@@ -18,7 +18,8 @@ import {
   Table,
   Select,
   Pagination,
-  App as AntdApp
+  App as AntdApp,
+  Tooltip
 } from 'antd';
 import {
   CodeOutlined,
@@ -31,9 +32,15 @@ import {
   StarOutlined,
   InfoCircleOutlined,
   EnvironmentOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+  CloudDownloadOutlined,
+  ToolOutlined
 } from '@ant-design/icons';
 import { getCurrentNodeVersion } from '../App';
+import { useInstallation } from '../hooks/useInstallation';
+import { InstallationLogPanel } from './InstallationLogPanel';
+import { InstallDialog } from './InstallDialog';
+import { showNotification } from '../services/notificationService';
 
 const { Title, Text } = Typography;
 
@@ -68,11 +75,39 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
   // 直接在组件内使用 useApp 获取 message API
   const { message } = AntdApp.useApp();
   const [currentVersion, setCurrentVersion] = useState<string>('');
+
+  // 使用安装 Hook
+  const {
+    tools,
+    isLoading: toolsLoading,
+    currentProgress,
+    logs,
+    isMinimized,
+    showLogPanel,
+    refreshTools,
+    installTool,
+    cancelInstallation,
+    getToolStatus,
+    canInstall,
+    getProgressPercentage,
+    getCurrentStage,
+    getProgressMessage,
+    toggleMinimize,
+    closeLogPanel,
+    getStatusText,
+    getStatusColor
+  } = useInstallation();
+
+  // 安装对话框状态
+  const [installDialogVisible, setInstallDialogVisible] = useState(false);
+  const [selectedTool, setSelectedTool] = useState<any>(null);
+  const [dialogMode, setDialogMode] = useState<'confirm' | 'error' | 'installing'>('confirm');
+  const [installError, setInstallError] = useState<any>(null);
+  const [isInstalling, setIsInstalling] = useState(false);
   const [installedVersions, setInstalledVersions] = useState<NodeVersion[]>([]);
   const [availableVersions, setAvailableVersions] = useState<NodeReleaseInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [customVersionInput, setCustomVersionInput] = useState('');
-  const [isInstalling, setIsInstalling] = useState(false);
   const [installationMessage, setInstallationMessage] = useState('');
   const [latestVersion, setLatestVersion] = useState<string>('');
   const [currentLTS, setCurrentLTS] = useState<string>('');
@@ -86,6 +121,29 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
     loadNodeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 监听安装进度，完成时发送通知和刷新状态
+  useEffect(() => {
+    if (currentProgress?.stage === 'completed') {
+      showNotification.success(
+        '安装完成',
+        `${currentProgress.tool} 安装成功！`
+      );
+      // 刷新工具状态
+      setTimeout(() => {
+        refreshTools();
+      }, 1000);
+    }
+
+    if (currentProgress?.stage === 'error') {
+      showNotification.error(
+        '安装失败',
+        `${currentProgress.tool} 安装失败，请查看日志了解详情`
+      );
+      setDialogMode('error');
+      setIsInstalling(false);
+    }
+  }, [currentProgress, refreshTools]);
 
   useEffect(() => {
     if (saveMessage) {
@@ -278,6 +336,76 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
         ? prev.filter(v => v !== major)
         : [...prev, major]
     );
+  };
+
+  // 处理工具安装
+  const handleToolInstall = (tool: any) => {
+    setSelectedTool(tool);
+    setDialogMode('confirm');
+    setInstallDialogVisible(true);
+    setInstallError(null);
+  };
+
+  // 确认安装
+  const handleInstallConfirm = async () => {
+    if (!selectedTool) return;
+
+    setDialogMode('installing');
+    setIsInstalling(true);
+
+    try {
+      await installTool(selectedTool.name);
+      message.success(`${selectedTool.name} 安装成功`);
+    } catch (error) {
+      setDialogMode('error');
+      setInstallError({
+        code: 'INSTALLATION_ERROR',
+        message: (error as Error).message,
+        originalError: (error as Error).stack || '',
+        solution: '请检查网络连接和权限设置',
+        canRetry: true,
+        retryCount: 0,
+        maxRetries: 3
+      });
+    }
+  };
+
+  // 重试安装
+  const handleRetry = async () => {
+    if (!selectedTool || !installError) return;
+
+    setDialogMode('installing');
+    setIsInstalling(true);
+
+    try {
+      await installTool(selectedTool.name);
+      message.success(`${selectedTool.name} 重试安装成功`);
+      setDialogMode('confirm');
+    } catch (error) {
+      setDialogMode('error');
+      setInstallError({
+        ...installError,
+        retryCount: (installError?.retryCount || 0) + 1
+      });
+    }
+  };
+
+  // 取消安装
+  const handleCancelInstallation = () => {
+    if (currentProgress?.tool) {
+      cancelInstallation(currentProgress.tool);
+      setIsInstalling(false);
+      setDialogMode('confirm');
+    }
+  };
+
+  // 关闭对话框
+  const handleDialogClose = () => {
+    setInstallDialogVisible(false);
+    setSelectedTool(null);
+    setDialogMode('confirm');
+    setInstallError(null);
+    setIsInstalling(false);
   };
 
   const installVersion = async (versionInput: string) => {
@@ -959,6 +1087,91 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* 工具安装状态 */}
+      <Card
+        title={
+          <Space>
+            <ToolOutlined />
+            <span>开发工具</span>
+            <Button
+              size="small"
+              icon={<ReloadOutlined />}
+              onClick={refreshTools}
+              loading={toolsLoading}
+            >
+              刷新状态
+            </Button>
+          </Space>
+        }
+        extra={
+          <Tooltip title="当前工具状态决定可以安装哪些版本">
+            <InfoCircleOutlined style={{ color: '#999' }} />
+          </Tooltip>
+        }
+      >
+        <Row gutter={[16, 16]}>
+          {tools.map((tool) => {
+            const installCheck = canInstall(tool.name);
+            return (
+              <Col span={8} key={tool.name}>
+                <Card
+                  size="small"
+                  style={{
+                    textAlign: 'center',
+                    border: `1px solid ${getStatusColor(tool) === 'success' ? '#52c41a' : getStatusColor(tool) === 'error' ? '#ff4d4f' : '#d9d9d9'}`
+                  }}
+                >
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{
+                      width: 32,
+                      height: 32,
+                      margin: '0 auto',
+                      borderRadius: 4,
+                      backgroundColor: getStatusColor(tool) === 'success' ? '#f6ffed' : getStatusColor(tool) === 'error' ? '#fff2f0' : '#f5f5f5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {tool.isInstalled ? (
+                        <CheckCircleOutlined style={{
+                          color: getStatusColor(tool) === 'success' ? '#52c41a' : getStatusColor(tool) === 'error' ? '#ff4d4f' : '#999',
+                          fontSize: 16
+                        }} />
+                      ) : (
+                        <CloudDownloadOutlined style={{ color: '#999', fontSize: 16 }} />
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 4 }}>
+                    <Text strong style={{ fontSize: 12 }}>{tool.name}</Text>
+                    {tool.version && (
+                      <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>
+                        {tool.version}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    <Tag color={getStatusColor(tool)} size="small">
+                      {getStatusText(tool)}
+                    </Tag>
+                  </div>
+                  <Button
+                    size="small"
+                    type={tool.isInstalled ? 'default' : 'primary'}
+                    icon={<ToolOutlined />}
+                    disabled={tool.isInstalled || isInstalling || !installCheck.can}
+                    onClick={() => handleToolInstall(tool)}
+                    style={{ width: '100%' }}
+                  >
+                    {tool.isInstalled ? '已安装' : installCheck.reason || '安装'}
+                  </Button>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+      </Card>
+
       {/* Node.js 版本管理说明 */}
       <Alert
         message="Node.js 版本管理"
@@ -973,6 +1186,28 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ i
       {renderInstalledVersions()}
       {renderAvailableVersions()}
       {renderCustomInstall()}
+
+      {/* 安装日志面板 */}
+      <InstallationLogPanel
+        show={showLogPanel}
+        isMinimized={isMinimized}
+        progress={currentProgress}
+        logs={logs}
+        onMinimize={toggleMinimize}
+        onClose={closeLogPanel}
+      />
+
+      {/* 安装对话框 */}
+      <InstallDialog
+        visible={installDialogVisible}
+        tool={selectedTool}
+        mode={dialogMode}
+        error={installError}
+        onConfirm={handleInstallConfirm}
+        onRetry={handleRetry}
+        onCancel={handleCancelInstallation}
+        onClose={handleDialogClose}
+      />
     </div>
   );
 };
