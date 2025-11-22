@@ -408,103 +408,358 @@ const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ is
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      {/* 第一部分：当前状态 */}
+      {/* 源列表管理 - 融合当前状态 */}
       <Card
         title={
           <Space>
-            <DatabaseOutlined />
-            <span>当前状态</span>
+            <ThunderboltOutlined style={{ color: isDarkMode ? '#1890ff' : '#52c41a' }} />
+            <span style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>NPM 源管理</span>
           </Space>
         }
         extra={
-          <Button
-            icon={<ReloadOutlined />}
-            loading={isLoading}
-            onClick={loadCurrentRegistry}
-          >
-            刷新状态
-          </Button>
+          <Space>
+            <Button
+              icon={<ReloadOutlined />}
+              loading={isLoading}
+              onClick={loadCurrentRegistry}
+              size="small"
+            >
+              刷新
+            </Button>
+          </Space>
         }
+        style={{
+          background: isDarkMode ? '#141414' : '#ffffff',
+          borderRadius: '8px',
+          boxShadow: isDarkMode ? '0 1px 4px rgba(255,255,255,0.1)' : '0 1px 4px rgba(0,0,0,0.06)'
+        }}
+        styles={{ body: { padding: '16px' } }}
       >
-        <Row gutter={[16, 16]}>
-          <Col xs={24} md={8}>
-            <Statistic
-              title="当前使用的源"
-              value={currentRegistryName}
-              prefix={<GlobalOutlined />}
-            />
-          </Col>
-          <Col xs={24} md={8}>
-            <Statistic
-              title="可用源数量"
-              value={registries.length}
-              prefix={<AppstoreOutlined />}
-            />
-          </Col>
-          <Col xs={24} md={8}>
-            <Statistic
-              title="自定义源"
-              value={registries.filter(r => r.isCustom).length}
-              prefix={<SettingOutlined />}
-            />
-          </Col>
-        </Row>
-
-        <Divider />
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Space size="large">
+        {/* 顶部状态栏 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px',
+          padding: '12px 16px',
+          background: isDarkMode ? '#1a1a1a' : '#f8f9fa',
+          borderRadius: '8px',
+          border: `1px solid ${isDarkMode ? '#303030' : '#e0e0e0'}`
+        }}>
+          <Space size="large" style={{ flex: 1 }}>
             <Space>
-              <GlobalOutlined style={{ fontSize: '28px', color: isDarkMode ? '#1890ff' : '#52c41a' }} />
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: registries.find(r => r.isActive)
+                  ? (isDarkMode ? 'linear-gradient(135deg, #1890ff, #096dd9)' : 'linear-gradient(135deg, #52c41a, #389e0d)')
+                  : (isDarkMode ? 'linear-gradient(135deg, #faad14, #d48806)' : 'linear-gradient(135deg, #ff7875, #ff4d4f)'),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+              }}>
+                <GlobalOutlined style={{
+                  fontSize: '18px',
+                  color: '#ffffff'
+                }} />
+              </div>
               <div>
-                <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: isDarkMode ? '#ffffff' : '#000000',
+                  marginBottom: '2px'
+                }}>
                   {currentRegistryName}
-                </Title>
-                <Text type="secondary" copyable={{ text: currentRegistry }}>
-                  {currentRegistry}
-                </Text>
+                </div>
+                <Space>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    {currentRegistry}
+                  </Text>
+                  <Text copyable={{ text: currentRegistry }} style={{ cursor: 'pointer' }}>
+                    <LinkOutlined style={{ color: isDarkMode ? '#1890ff' : '#1890ff', fontSize: '12px' }} />
+                  </Text>
+                </Space>
               </div>
             </Space>
           </Space>
-          <div>
+
+          <Space size="large">
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                color: isDarkMode ? '#1890ff' : '#1890ff',
+                marginBottom: '2px'
+              }}>
+                {registries.length}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: isDarkMode ? '#a0a0a0' : '#666666'
+              }}>
+                总源数
+              </div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                color: isDarkMode ? '#52c41a' : '#52c41a',
+                marginBottom: '2px'
+              }}>
+                {registries.filter(r => r.isCustom).length}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: isDarkMode ? '#a0a0a0' : '#666666'
+              }}>
+                自定义源
+              </div>
+            </div>
             {currentRegistry ? (
-              <Badge status="success" text="已配置" />
+              <Badge status="success" text="已配置" style={{ fontSize: '12px' }} />
             ) : (
-              <Badge status="error" text="未配置" />
+              <Badge status="error" text="未配置" style={{ fontSize: '12px' }} />
             )}
-          </div>
-        </div>
-      </Card>
-
-      {/* 第二部分：管理源列表 */}
-      <Card
-        title={
-          <Space>
-            <ThunderboltOutlined />
-            <span>源列表管理</span>
           </Space>
-        }
-        extra={
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            点击"使用"按钮切换源，自定义源支持编辑和删除
-          </Text>
-        }
-      >
-        <Table
-          dataSource={registries.map(registry => ({ ...registry, key: registry.id }))}
-          columns={tableColumns}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条源`
-          }}
-          size="small"
-          scroll={{ x: 800 }}
-        />
+        </div>
+        <Row gutter={[12, 12]}>
+          {registries.map((registry) => (
+            <Col xs={24} sm={12} lg={8} key={registry.id}>
+              <Card
+                hoverable={!registry.isActive}
+                className={`registry-card ${registry.isActive ? 'active' : ''}`}
+                style={{
+                  height: '100%',
+                  borderRadius: '6px',
+                  border: registry.isActive
+                    ? `2px solid ${isDarkMode ? '#1890ff' : '#1890ff'}`
+                    : `1px solid ${isDarkMode ? '#303030' : '#d9d9d9'}`,
+                  background: registry.isActive
+                    ? (isDarkMode ? 'linear-gradient(135deg, #1890ff15, #096dd905)' : 'linear-gradient(135deg, #e6f7ff, #f0f9ff)')
+                    : (isDarkMode ? '#1a1a1a' : '#ffffff'),
+                  transition: 'all 0.3s ease',
+                  cursor: registry.isActive ? 'default' : 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                styles={{ body: { padding: '12px' } }}
+                onClick={() => !registry.isActive && setRegistry(registry)}
+              >
+                {/* 当前使用标识 */}
+                {registry.isActive && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    background: isDarkMode ? '#1890ff' : '#1890ff',
+                    color: '#ffffff',
+                    padding: '2px 6px',
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    borderBottomLeftRadius: '6px'
+                  }}>
+                    当前使用
+                  </div>
+                )}
+
+                <div>
+                  {/* 头部信息 */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: '8px'
+                  }}>
+                    <Space>
+                      <div style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: registry.isCustom
+                          ? 'linear-gradient(135deg, #faad14, #d48806)'
+                          : 'linear-gradient(135deg, #52c41a, #389e0d)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}>
+                        <GlobalOutlined
+                          style={{
+                            fontSize: '14px',
+                            color: '#ffffff'
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: isDarkMode ? '#ffffff' : '#000000',
+                          marginBottom: '2px'
+                        }}>
+                          {registry.name}
+                        </div>
+                        <Space size="small" style={{ marginTop: '2px' }}>
+                          {registry.isCustom && (
+                            <Tag color="orange" size="small">自定义</Tag>
+                          )}
+                          <Tag
+                            color={getSpeedBadgeColor(registry.speed)}
+                            size="small"
+                            style={{ margin: 0, fontSize: '10px' }}
+                          >
+                            {getSpeedIcon(registry.speed)}
+                            {registry.speed === 'fast' ? '快速' : registry.speed === 'medium' ? '中等' : '较慢'}
+                          </Tag>
+                        </Space>
+                      </div>
+                    </Space>
+                  </div>
+
+                  {/* 地址信息 */}
+                  <div style={{
+                    marginBottom: '8px',
+                    padding: '6px 8px',
+                    background: isDarkMode ? '#262626' : '#f5f5f5',
+                    borderRadius: '4px',
+                    border: `1px solid ${isDarkMode ? '#404040' : '#e0e0e0'}`
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}>
+                      <Text
+                        ellipsis
+                        style={{
+                          maxWidth: '160px',
+                          fontSize: '11px',
+                          fontFamily: 'Monaco, Consolas, monospace',
+                          color: isDarkMode ? '#e0e0e0' : '#333333'
+                        }}
+                      >
+                        {registry.url}
+                      </Text>
+                      <Text
+                        copyable={{ text: registry.url }}
+                        style={{
+                          cursor: 'pointer',
+                          color: isDarkMode ? '#1890ff' : '#1890ff',
+                          fontSize: '11px'
+                        }}
+                      >
+                        <LinkOutlined />
+                      </Text>
+                    </div>
+                  </div>
+
+                  {/* 描述信息 */}
+                  <div style={{ marginBottom: '8px' }}>
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: '11px',
+                        lineHeight: '1.3',
+                        color: isDarkMode ? '#a0a0a0' : '#666666'
+                      }}
+                    >
+                      {registry.description}
+                    </Text>
+                  </div>
+
+                  {/* 底部信息 */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <Space size="small">
+                      <Tag size="small" style={{ margin: 0, fontSize: '10px' }}>
+                        {registry.region || '未知'}
+                      </Tag>
+                      {registry.ping && (
+                        <Text
+                          type="secondary"
+                          style={{
+                            fontSize: '10px',
+                            color: isDarkMode ? '#a0a0a0' : '#999999'
+                          }}
+                        >
+                          {registry.ping}ms
+                        </Text>
+                      )}
+                    </Space>
+
+                    <Space size="small">
+                      <Button
+                        type={registry.isActive ? 'default' : 'primary'}
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRegistry(registry);
+                        }}
+                        loading={isLoading && registry.isActive}
+                        style={{
+                          fontSize: '11px',
+                          height: '24px',
+                          padding: '0 8px'
+                        }}
+                      >
+                        {registry.isActive ? '当前使用' : '使用'}
+                      </Button>
+
+                      {registry.isCustom && (
+                        <>
+                          <Button
+                            icon={<EditOutlined />}
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditRegistry(registry);
+                            }}
+                            style={{
+                              fontSize: '11px',
+                              height: '24px',
+                              padding: '0 6px'
+                            }}
+                          />
+                          <Popconfirm
+                            title="确定要删除这个自定义源吗？"
+                            onConfirm={(e) => {
+                              e?.stopPropagation();
+                              handleDeleteRegistry(registry);
+                            }}
+                            okText="删除"
+                            cancelText="取消"
+                          >
+                            <Button
+                              icon={<DeleteOutlined />}
+                              size="small"
+                              danger
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                fontSize: '11px',
+                                height: '24px',
+                                padding: '0 6px'
+                              }}
+                            />
+                          </Popconfirm>
+                        </>
+                      )}
+                    </Space>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          ))}
+        </Row>
       </Card>
 
-      {/* 第三部分：添加自定义源 */}
+      {/* 第二部分：添加自定义源 */}
       <Card
         title={
           <Space>
