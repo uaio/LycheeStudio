@@ -52,7 +52,6 @@ interface NodeVersion {
   current?: boolean;
   default?: boolean;
   installed: boolean;
-  path?: string;
   installedAt?: string;
 }
 
@@ -219,24 +218,13 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
           installedAt = new Date(Date.now() - estimatedDaysAgo * 24 * 60 * 60 * 1000).toISOString();
         }
 
-          if (installedAt) {
-            versions.push({
-              version,
-              current: isDefault, // 默认版本就是当前版本
-              default: isDefault,
-              installed: true,
-              installedAt
-            });
-          } else {
-            // 如果无法获取安装时间，不显示该版本或使用占位符
-            versions.push({
-              version,
-              current: isDefault, // 默认版本就是当前版本
-              default: isDefault,
-              installed: true,
-              installedAt: new Date().toISOString() // 最后的备用方案
-            });
-          }
+        versions.push({
+          version,
+          current: isDefault, // 默认版本就是当前版本
+          default: isDefault,
+          installed: true,
+          installedAt: installedAt || new Date().toISOString()
+        });
       }
     }
 
@@ -280,7 +268,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
             version: `v${major}.${minor}.${patch}`,
             date: releaseDate.toISOString().split('T')[0],
             npm: `${9 - minor}.${patch}.0`,
-            lts: major % 2 === 0 && minor === 0 && patch === 0 ? `LTS${major}` : undefined,
+            lts: (major % 2 === 0 && major >= 14) || (major === 20 && minor === 9) ? `LTS${major}` : undefined,
             security: minor <= 1 && patch === 0,
             modules: 120 + major
           });
@@ -432,7 +420,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
     }
   };
 
-  
+
   const formatInstallDate = (dateString?: string): string => {
     if (!dateString) {
       return '未知时间';
@@ -471,6 +459,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
     }
   };
 
+  
   const getVersionType = (version: string): string => {
     const releaseInfo = availableVersions.find(r => r.version === version);
     if (releaseInfo?.lts) {
@@ -510,22 +499,11 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
       }
     >
       {currentVersion ? (
-        <Descriptions column={2} size="small" bordered>
+        <Descriptions column={1} size="small" bordered>
           <Descriptions.Item label="当前版本">
             <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
               {currentVersion}
             </Title>
-          </Descriptions.Item>
-          <Descriptions.Item label="版本类型">
-            <Space>
-              <Tag color="blue">{getVersionType(currentVersion)}</Tag>
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="安装路径">
-            <Space>
-              <EnvironmentOutlined />
-              <Text code style={{ fontSize: '12px' }}>~/.fnm/node-versions</Text>
-            </Space>
           </Descriptions.Item>
           <Descriptions.Item label="最新版本">
             <Space>
@@ -712,9 +690,24 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
         return acc;
       }, {} as Record<string, NodeReleaseInfo[]>);
 
-      // 对每个主版本内的版本按新版本排序
+      // 对每个主版本内的版本按版本号从高到低排序
       Object.keys(grouped).forEach(major => {
-        grouped[major].sort((a, b) => b.version.localeCompare(a.version));
+        grouped[major].sort((a, b) => {
+          // 移除 'v' 前缀并分割版本号
+          const versionA = a.version.substring(1).split('.').map(Number);
+          const versionB = b.version.substring(1).split('.').map(Number);
+
+          // 比较主版本号
+          if (versionA[0] !== versionB[0]) {
+            return versionB[0] - versionA[0]; // 降序
+          }
+          // 比较次版本号
+          if (versionA[1] !== versionB[1]) {
+            return versionB[1] - versionA[1]; // 降序
+          }
+          // 比较修订版本号
+          return versionB[2] - versionA[2]; // 降序
+        });
       });
 
       return grouped;
@@ -756,13 +749,23 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
       {
         title: '类型',
         key: 'type',
-        width: 100,
-        render: (record: NodeReleaseInfo) => (
-          <Space wrap size="small">
-            {record.lts ? <Tag color="gold" size="small">LTS</Tag> : <Tag color="default" size="small">Current</Tag>}
-            {record.security && <Tag color="red" size="small">安全</Tag>}
-          </Space>
-        ),
+        width: 120,
+        render: (record: NodeReleaseInfo) => {
+          const versionType = getVersionType(record.version);
+          return (
+            <Space wrap size="small">
+              {versionType === '稳定版 (LTS)' && (
+                <Tag color="gold" size="small">LTS 稳定版</Tag>
+              )}
+              {versionType === '安全修复版' && (
+                <Tag color="red" size="small">安全修复</Tag>
+              )}
+              {record.security && (
+                <Tag color="volcano" size="small">安全</Tag>
+              )}
+            </Space>
+          );
+        },
       },
       {
         title: '状态',
