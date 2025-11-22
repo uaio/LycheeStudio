@@ -17,6 +17,9 @@ import {
   Table,
   Select,
   Pagination,
+  Spin,
+  Progress,
+  Modal,
   App as AntdApp
 } from 'antd';
 import {
@@ -29,7 +32,8 @@ import {
   AppstoreOutlined,
   StarOutlined,
   InfoCircleOutlined,
-  EnvironmentOutlined
+  EnvironmentOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -70,7 +74,9 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
   const [availableVersions, setAvailableVersions] = useState<NodeReleaseInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [customVersionInput, setCustomVersionInput] = useState('');
+  const [isInstallingVersion, setIsInstallingVersion] = useState(false);
   const [installationMessage, setInstallationMessage] = useState('');
+  const [installationProgress, setInstallationProgress] = useState(0);
   const [latestVersion, setLatestVersion] = useState<string>('');
   const [saveMessage, setSaveMessage] = useState('');
   const [versionFilter, setVersionFilter] = useState<string>('all');
@@ -166,32 +172,71 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
           defaultVersion = version;
         }
 
-        let installedAt = new Date().toISOString(); // 默认值
+        // 不设置默认安装时间，改为在成功时才设置
+        let installedAt: string | undefined;
 
         try {
-          // 尝试获取真实的安装时间 - 使用固定的路径格式
-          const installedPath = `/Users/anwan/.fnm/node-versions/${version}`;
-          const installResult = await window.electronAPI.executeCommand(`stat -f %m "${installedPath}" 2>/dev/null || echo "0"`);
-          const installTime = installResult.success && installResult.output && installResult.output.trim() !== "0"
-            ? new Date(parseInt(installResult.output.trim()) * 1000).toISOString()
-            : installedAt;
+          // 尝试获取真实的安装时间 - 动态获取 FNM 安装路径，支持跨平台
+          const getInstallTime = async (baseDir: string) => {
+            // macOS 和 Linux 使用不同的 stat 命令语法
+            const commands = [
+              `stat -f %m "${baseDir}/node-versions/${version}" 2>/dev/null || echo "0"`,  // macOS
+              `stat -c %Y "${baseDir}/node-versions/${version}" 2>/dev/null || echo "0"`,  // Linux
+            ];
 
-          versions.push({
-            version,
-            current: isDefault, // 默认版本就是当前版本
-            default: isDefault,
-            installed: true,
-            installedAt: installTime
-          });
+            for (const cmd of commands) {
+              const installResult = await window.electronAPI.executeCommand(cmd);
+
+              if (installResult.success && installResult.output && installResult.output.trim() !== "0") {
+                const timestamp = parseInt(installResult.output.trim());
+                if (timestamp > 0) {
+                  return new Date(timestamp * 1000).toISOString();
+                }
+              }
+            }
+            return null;
+          };
+
+          // 按优先级尝试不同的路径
+          const possiblePaths = [
+            '$FNM_DIR',                     // 环境变量指定路径
+            '$HOME/.local/share/fnm',       // 新版 FNM 默认路径
+            '$HOME/.fnm'                   // 旧版 FNM 路径
+          ];
+
+          for (const basePath of possiblePaths) {
+            const time = await getInstallTime(basePath);
+            if (time) {
+              installedAt = time;
+              break;
+            }
+          }
         } catch (error) {
-          versions.push({
-            version,
-            current: isDefault, // 默认版本就是当前版本
-            default: isDefault,
-            installed: true,
-            installedAt
-          });
+          // 如果获取安装时间失败，使用版本号估算一个合理的发布时间
+          const [major, minor] = version.substring(1).split('.').map(Number);
+          const currentYear = new Date().getFullYear();
+          const estimatedDaysAgo = (currentYear - 2009 - (major - 1)) * 365 + (12 - (minor || 0)) * 30;
+          installedAt = new Date(Date.now() - estimatedDaysAgo * 24 * 60 * 60 * 1000).toISOString();
         }
+
+          if (installedAt) {
+            versions.push({
+              version,
+              current: isDefault, // 默认版本就是当前版本
+              default: isDefault,
+              installed: true,
+              installedAt
+            });
+          } else {
+            // 如果无法获取安装时间，不显示该版本或使用占位符
+            versions.push({
+              version,
+              current: isDefault, // 默认版本就是当前版本
+              default: isDefault,
+              installed: true,
+              installedAt: new Date().toISOString() // 最后的备用方案
+            });
+          }
       }
     }
 
@@ -200,18 +245,40 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
 
   const generateMockVersions = (): NodeReleaseInfo[] => {
     const versions: NodeReleaseInfo[] = [];
-    const majorVersions = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10];
+    const currentYear = new Date().getFullYear();
+    // 动态生成主版本列表，从当前年份往前推算
+    const majorVersions: number[] = [];
+    const startYear = 2009; // Node.js 首次发布年份
+    for (let year = currentYear; year >= startYear; year--) {
+      const majorVersion = year - startYear + 10; // Node.js v10 大约是2018年
+      if (majorVersion >= 10) {
+        majorVersions.push(majorVersion);
+      }
+    }
+    // 确保包含一些关键版本
+    [10, 12, 14, 16, 18, 20].forEach(v => {
+      if (!majorVersions.includes(v)) {
+        majorVersions.push(v);
+      }
+    });
+    // 去重并排序
+    const uniqueMajorVersions = [...new Set(majorVersions)].sort((a, b) => b - a);
 
-    majorVersions.forEach(major => {
+    uniqueMajorVersions.forEach(major => {
       // 为每个大版本生成多个小版本
       for (let minor = 0; minor <= 9; minor++) {
         for (let patch = 0; patch <= 2; patch++) {
           // 只生成合理的版本组合
           if (minor === 0 && patch > 0) continue;
 
+          // 计算更真实的发布时间 - 基于当前年份动态计算
+          const currentYear = new Date().getFullYear();
+          const monthsAgo = (currentYear - 2009 - (major - 10)) * 6 + (12 - (minor || 0)) * 1 + (2 - (patch || 0)) * 0.5;
+          const releaseDate = new Date(currentYear, 0 - monthsAgo, 15 + (patch || 0) * 5);
+
           versions.push({
             version: `v${major}.${minor}.${patch}`,
-            date: new Date(Date.now() - (major * 100 + minor * 10 + patch) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            date: releaseDate.toISOString().split('T')[0],
             npm: `${9 - minor}.${patch}.0`,
             lts: major % 2 === 0 && minor === 0 && patch === 0 ? `LTS${major}` : undefined,
             security: minor <= 1 && patch === 0,
@@ -225,44 +292,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
     return versions.sort((a, b) => b.version.localeCompare(a.version));
   };
 
-  const switchToVersion = async (version: string) => {
-    setIsLoading(true);
-    try {
-      // 使用 fnm default 设置全局默认版本
-      const result = await window.electronAPI.executeCommand(`/bin/zsh -i -c 'fnm default ${version}'`);
-
-      if (result.success) {
-        setSaveMessage(`已设置全局默认版本为 ${version}`);
-
-        // 重新加载数据以更新当前版本状态
-        setTimeout(() => {
-          loadNodeData();
-          // 通知首页更新状态（通过全局事件）
-          window.dispatchEvent(new CustomEvent('nodeVersionChanged', { detail: { version } }));
-        }, 1500); // 增加延迟确保环境变量完全生效
-      } else {
-        // 如果 zsh 失败，尝试直接执行 fnm default 命令
-        const fallbackResult = await window.electronAPI.executeCommand(`fnm default ${version}`);
-        if (fallbackResult.success) {
-          setSaveMessage(`已设置全局默认版本为 ${version}`);
-          setTimeout(() => {
-            loadNodeData();
-            // 通知首页更新状态
-            window.dispatchEvent(new CustomEvent('nodeVersionChanged', { detail: { version } }));
-          }, 1500);
-        } else {
-          setSaveMessage(`设置默认版本失败: ${fallbackResult.error || '未知错误'}`);
-        }
-      }
-    } catch (error) {
-      console.error('设置默认版本失败:', error);
-      setSaveMessage(`设置默认版本失败: ${error}`);
-    } finally {
-      setIsLoading(false);
-      setTimeout(() => setSaveMessage(''), 3000);
-    }
-  };
-
+  
   // 切换折叠状态
   const toggleExpanded = (major: string) => {
     setExpandedVersions(prev =>
@@ -273,7 +303,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
   };
 
   
-  const installVersion = async (versionInput: string) => {
+  const installVersion = async (versionInput: string, autoSwitch = false) => {
     let versionToInstall = versionInput;
 
     // 处理版本输入
@@ -293,27 +323,78 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
       }
     }
 
-    setIsInstalling(true);
-    setInstallationMessage(`正在安装 ${versionToInstall}...`);
+    setIsInstallingVersion(true);
+    setInstallationMessage(`正在准备安装 ${versionToInstall}...`);
+    setInstallationProgress(0);
 
     try {
-      // 在 zsh 环境中使用 fnm 安装指定版本，确保环境变量正确设置
-      const result = await window.electronAPI.executeCommand(`/bin/zsh -i -c 'fnm install ${versionToInstall}'`);
+      // 模拟安装进度
+      const progressSteps = [
+        { progress: 20, message: `正在下载 ${versionToInstall}...` },
+        { progress: 40, message: `正在解压 ${versionToInstall}...` },
+        { progress: 60, message: `正在安装 ${versionToInstall}...` },
+        { progress: 80, message: `正在配置环境...` },
+        { progress: 95, message: `即将完成...` }
+      ];
+
+      // 模拟进度更新
+      for (const step of progressSteps) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setInstallationProgress(step.progress);
+        setInstallationMessage(step.message);
+      }
+
+      // 在用户的默认shell环境中使用 fnm 安装指定版本
+      const result = await window.electronAPI.executeCommand(`fnm install ${versionToInstall}`);
+
+      setInstallationProgress(100);
       if (result.success) {
-        setInstallationMessage(`${versionToInstall} 安装成功`);
-        setTimeout(() => {
-          setInstallationMessage('');
-          setCustomVersionInput('');
-          loadNodeData(); // 重新加载数据
-        }, 2000);
+        if (autoSwitch) {
+          setInstallationMessage(`${versionToInstall} 安装成功！正在切换...`);
+          // 安装成功后自动切换并设置为默认版本
+          setTimeout(async () => {
+            // 先设置为默认版本
+            const defaultResult = await window.electronAPI.executeCommand(`fnm default ${versionToInstall}`);
+            // 然后切换到该版本
+            const switchResult = await window.electronAPI.executeCommand(`fnm use ${versionToInstall}`);
+
+            if (defaultResult.success && switchResult.success) {
+              setInstallationMessage(`${versionToInstall} 安装并设为默认版本！`);
+              setTimeout(() => {
+                setInstallationMessage('');
+                setInstallationProgress(0);
+                loadNodeData(); // 重新加载数据
+                window.dispatchEvent(new CustomEvent('nodeVersionChanged', { detail: { version: versionToInstall } }));
+              }, 1500);
+            } else {
+              setInstallationMessage(`${versionToInstall} 安装成功但设置失败: ${defaultResult.error || switchResult.error || '未知错误'}`);
+              setTimeout(() => {
+                setInstallationProgress(0);
+                loadNodeData();
+              }, 2000);
+            }
+          }, 1000);
+        } else {
+          setInstallationMessage(`${versionToInstall} 安装成功！`);
+          setTimeout(() => {
+            setInstallationMessage('');
+            setInstallationProgress(0);
+            setCustomVersionInput('');
+            loadNodeData(); // 重新加载数据
+          }, 2000);
+        }
       } else {
         setInstallationMessage(`${versionToInstall} 安装失败: ${result.error || '未知错误'}`);
+        setTimeout(() => {
+          setInstallationProgress(0);
+        }, 2000);
       }
     } catch (error) {
       console.error('安装失败:', error);
       setInstallationMessage(`${versionToInstall} 安装失败`);
+      setInstallationProgress(0);
     } finally {
-      setIsInstalling(false);
+      setIsInstallingVersion(false);
     }
   };
 
@@ -325,6 +406,69 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
 
   const isVersionInstalled = (version: string): boolean => {
     return installedVersions.some(v => v.version === version);
+  };
+
+  const switchToVersion = async (version: string) => {
+    setIsLoading(true);
+    try {
+      // 使用 fnm default 设置为全局默认版本
+      const result = await window.electronAPI.executeCommand(`fnm default ${version}`);
+
+      if (result.success) {
+        // 设置默认版本后，也切换到该版本
+        const switchResult = await window.electronAPI.executeCommand(`fnm use ${version}`);
+
+        // 重新加载数据以更新当前版本状态
+        setTimeout(() => {
+          loadNodeData();
+          // 通知首页更新状态
+          window.dispatchEvent(new CustomEvent('nodeVersionChanged', { detail: { version } }));
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('设置默认版本失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  
+  const formatInstallDate = (dateString?: string): string => {
+    if (!dateString) {
+      return '未知时间';
+    }
+
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      // 如果是今天安装的
+      if (diffDays === 0) {
+        return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+
+      // 如果是昨天安装的
+      if (diffDays === 1) {
+        return `昨天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+
+      // 如果是7天内安装的
+      if (diffDays <= 7) {
+        return `${diffDays}天前`;
+      }
+
+      // 如果是今年安装的
+      if (date.getFullYear() === now.getFullYear()) {
+        return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+      }
+
+      // 超过一年的
+      return date.toLocaleDateString('zh-CN', { year: '2-digit', month: '2-digit', day: '2-digit' });
+    } catch (error) {
+      return '时间格式错误';
+    }
   };
 
   const getVersionType = (version: string): string => {
@@ -386,15 +530,32 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
           <Descriptions.Item label="最新版本">
             <Space>
               <Text>{latestVersion || '检查中...'}</Text>
-              {latestVersion && isNewerThan(latestVersion, currentVersion) && (
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<DownloadOutlined />}
-                  onClick={() => installVersion(latestVersion)}
-                >
-                    升级
-                </Button>
+              {latestVersion && (
+                <>
+                  {isNewerThan(latestVersion, currentVersion) ? (
+                    isVersionInstalled(latestVersion) ? (
+                      <Button
+                        type="default"
+                        size="small"
+                        icon={<SettingOutlined />}
+                        onClick={() => switchToVersion(latestVersion)}
+                      >
+                        设置
+                      </Button>
+                    ) : (
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<DownloadOutlined />}
+                        onClick={() => installVersion(latestVersion, true)}
+                      >
+                        升级
+                      </Button>
+                    )
+                  ) : (
+                    <Tag color="green">已最新</Tag>
+                  )}
+                </>
               )}
             </Space>
           </Descriptions.Item>
@@ -507,7 +668,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
                           {isDefaultVersion && <Tag color="warning">默认</Tag>}
                         </Space>
                       }
-                      description={`${getVersionType(version.version)} • 安装于 ${version.installedAt ? new Date(version.installedAt).toLocaleDateString() : '未知时间'}`}
+                      description={`${getVersionType(version.version)} • 安装于 ${formatInstallDate(version.installedAt)}`}
                     />
                   </List.Item>
                 );
@@ -664,7 +825,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
                 type="primary"
                 icon={<DownloadOutlined />}
                 onClick={() => installVersion(record.version)}
-                loading={isInstalling && installationMessage.includes(record.version)}
+                loading={isInstallingVersion && installationMessage.includes(record.version)}
               >
                 安装
               </Button>
@@ -798,7 +959,7 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
                             type="primary"
                             icon={<DownloadOutlined />}
                             onClick={() => installVersion(latestInGroup.version)}
-                            loading={isInstalling && installationMessage.includes(latestInGroup.version)}
+                            loading={isInstallingVersion && installationMessage.includes(latestInGroup.version)}
                           >
                             安装
                           </Button>
@@ -900,23 +1061,77 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
           value={customVersionInput}
           onChange={(e) => setCustomVersionInput(e.target.value)}
           onPressEnter={handleInstallClick}
-          disabled={isInstalling}
+          disabled={isInstallingVersion}
         />
         <Button
           type="primary"
           icon={<DownloadOutlined />}
-          disabled={!customVersionInput.trim() || isInstalling}
+          disabled={!customVersionInput.trim() || isInstallingVersion}
           onClick={handleInstallClick}
-          loading={isInstalling}
+          loading={isInstallingVersion}
         >
           安装
         </Button>
       </Space.Compact>
 
-      {installationMessage && (
+      {/* 安装进度Modal */}
+      <Modal
+        title={null}
+        open={isInstallingVersion}
+        footer={null}
+        closable={false}
+        maskClosable={false}
+        centered
+        width={480}
+        styles={{
+          body: {
+            padding: 32,
+            textAlign: 'center',
+          }
+        }}
+      >
+        <Space direction="vertical" style={{ width: '100%' }} align="center" size="large">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <Spin size="large" />
+            <Typography.Title level={4} style={{ margin: 0, color: '#1890ff' }}>
+              {installationMessage}
+            </Typography.Title>
+          </div>
+
+          {installationProgress > 0 && (
+            <div style={{ width: '100%' }}>
+              <Progress
+                percent={installationProgress}
+                status={installationProgress === 100 ? 'success' : 'active'}
+                strokeColor={{
+                  '0%': '#108ee9',
+                  '100%': '#52c41a',
+                }}
+                size={8}
+                style={{ width: '100%' }}
+                format={(percent) => `${percent}%`}
+              />
+            </div>
+          )}
+
+          <div style={{
+            padding: '12px 20px',
+            backgroundColor: '#f6ffed',
+            border: '1px solid #b7eb8f',
+            borderRadius: 6,
+            marginTop: 8
+          }}>
+            <Typography.Text type="secondary" style={{ fontSize: 13, color: '#52c41a' }}>
+              🔧 正在安装 Node.js 版本，请勿关闭窗口
+            </Typography.Text>
+          </div>
+        </Space>
+      </Modal>
+
+      {installationMessage && !isInstallingVersion && (
         <Alert
           message={installationMessage}
-          type={installationMessage.includes('成功') ? 'success' : 'info'}
+          type={installationMessage.includes('成功') ? 'success' : installationMessage.includes('失败') ? 'error' : 'info'}
           style={{ marginTop: 16 }}
           showIcon
           action={
@@ -926,6 +1141,8 @@ const NodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean; isInstal
               </Button>
             )
           }
+          closable={!installationMessage.includes('成功')}
+          onClose={() => setInstallationMessage('')}
         />
       )}
     </Card>
