@@ -142,7 +142,9 @@ class InstallationServiceImpl implements InstallationEngine {
         // 使用 brew info 检查通过 Homebrew 安装的工具
         try {
           const brewPackageName = toolName;
-          const brewInfoResult = await window.electronAPI.executeCommand(`brew info ${brewPackageName}`);
+          // 对于 codex 使用 --cask 选项
+          const brewCommand = toolName === 'codex' ? `brew info --cask ${brewPackageName}` : `brew info ${brewPackageName}`;
+          const brewInfoResult = await window.electronAPI.executeCommand(brewCommand);
 
           // 调试：打印输出
           
@@ -163,7 +165,8 @@ class InstallationServiceImpl implements InstallationEngine {
               }
 
               // 获取安装路径
-              const brewPrefixResult = await window.electronAPI.executeCommand(`brew --prefix ${brewPackageName}`);
+              const prefixCommand = toolName === 'codex' ? `brew --prefix --cask ${brewPackageName}` : `brew --prefix ${brewPackageName}`;
+              const brewPrefixResult = await window.electronAPI.executeCommand(prefixCommand);
               if (brewPrefixResult.success && brewPrefixResult.output) {
                 path = brewPrefixResult.output.trim();
               }

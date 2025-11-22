@@ -107,7 +107,7 @@ export const TOOLS_INFO = {
   codex: {
     name: 'Codex',
     description: 'OpenAI Codex CLI - AI代码生成和补全工具',
-    installCommand: 'brew install codex',
+    installCommand: 'brew install --cask codex',
     dependencies: ['brew'],
   },
   node: {
