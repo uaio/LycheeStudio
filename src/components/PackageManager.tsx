@@ -651,9 +651,11 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
                     </Tooltip>
                     <Popconfirm
                       title="确定要卸载这个包吗？"
+                      description={`卸载 ${record.name} 后可能影响依赖此包的项目`}
                       onConfirm={() => uninstallPackage(record.name)}
                       okText="确定"
                       cancelText="取消"
+                      okButtonProps={{ danger: true }}
                     >
                       <Tooltip title="卸载包">
                         <Button
@@ -757,16 +759,24 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
                         );
                       } else {
                         return (
-                          <Button
-                            type="default"
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={() => uninstallPackage(pkg.name)}
-                            loading={isLoading}
-                            danger
+                          <Popconfirm
+                            title="确定要卸载这个包吗？"
+                            description={`卸载 ${pkg.name} 后可能影响依赖此包的项目`}
+                            onConfirm={() => uninstallPackage(pkg.name)}
+                            okText="确定"
+                            cancelText="取消"
+                            okButtonProps={{ danger: true }}
                           >
-                            卸载
-                          </Button>
+                            <Button
+                              type="default"
+                              size="small"
+                              icon={<DeleteOutlined />}
+                              loading={isLoading}
+                              danger
+                            >
+                              卸载
+                            </Button>
+                          </Popconfirm>
                         );
                       }
                     })()
@@ -875,16 +885,24 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
                         );
                       } else {
                         return (
-                          <Button
-                            type="default"
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={() => uninstallPackage(pm.name)}
-                            loading={isLoading}
-                            danger
+                          <Popconfirm
+                            title="确定要卸载这个包管理器吗？"
+                            description={`卸载 ${pm.name} 可能影响您的开发环境`}
+                            onConfirm={() => uninstallPackage(pm.name)}
+                            okText="确定"
+                            cancelText="取消"
+                            okButtonProps={{ danger: true }}
                           >
-                            卸载
-                          </Button>
+                            <Button
+                              type="default"
+                              size="small"
+                              icon={<DeleteOutlined />}
+                              loading={isLoading}
+                              danger
+                            >
+                              卸载
+                            </Button>
+                          </Popconfirm>
                         );
                       }
                     })()
