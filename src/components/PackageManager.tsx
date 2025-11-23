@@ -605,10 +605,9 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
             }))}
             size="small"
             pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
-              showQuickJumper: true
+              pageSize: 15,
+              showTotal: (total) => `共 ${total} 个包`,
+              simple: true
             }}
             columns={[
               {
