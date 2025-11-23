@@ -25,13 +25,13 @@ import {
   PlusOutlined,
   CheckCircleOutlined,
   LinkOutlined,
-  PackageOutlined,
+  InboxOutlined,
   ThunderboltOutlined,
   CodeOutlined,
   ToolOutlined,
   SettingOutlined,
-  ZapOutlined,
-  ShieldCheckOutlined,
+  AppstoreAddOutlined,
+  SafetyCertificateOutlined,
   RocketOutlined,
   StarOutlined,
   InfoCircleOutlined,
@@ -122,7 +122,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
       category: '代码质量',
       tags: ['代码检查', '质量保证'],
       homepage: 'https://eslint.org/',
-      icon: <ShieldCheckOutlined />,
+      icon: <SafetyCertificateOutlined />,
       color: '#4B32C3'
     },
     {
@@ -149,7 +149,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
       category: '开发工具',
       tags: ['TypeScript', '直接运行'],
       homepage: 'https://typestrong.org/ts-node/',
-      icon: <ZapOutlined />,
+      icon: <AppstoreAddOutlined />,
       color: '#3178C6'
     },
     {
@@ -179,7 +179,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
       description: '可靠、快速、安全的依赖管理工具',
       homepage: 'https://yarnpkg.com/',
       features: ['快速安装', '离线模式', '确定性安装', '工作空间'],
-      icon: <PackageOutlined />,
+      icon: <InboxOutlined />,
       color: '#2C8EBB',
       installCommand: 'npm install -g yarn'
     }
@@ -295,7 +295,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
             <Statistic
               title="系统状态"
               value="正常"
-              prefix={<ShieldCheckOutlined />}
+              prefix={<SafetyCertificateOutlined />}
               valueStyle={{ color: isDarkMode ? '#faad14' : '#faad14', fontSize: '24px' }}
             />
           </Card>
