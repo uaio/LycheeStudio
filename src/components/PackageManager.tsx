@@ -275,7 +275,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
             <Statistic
               title="全局包"
               value={packages.length}
-              prefix={<PackageOutlined />}
+              prefix={<InboxOutlined />}
               valueStyle={{ color: isDarkMode ? '#1890ff' : '#1890ff', fontSize: '24px' }}
             />
           </Card>
@@ -410,7 +410,7 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
           />
         ) : (
           <Empty
-            image={<PackageOutlined style={{ fontSize: '64px', color: '#d9d9d9' }} />}
+            image={<InboxOutlined style={{ fontSize: '64px', color: '#d9d9d9' }} />}
             description={
               <span>
                 {searchTerm ? '未找到匹配的包' : '当前没有安装任何全局包'}
