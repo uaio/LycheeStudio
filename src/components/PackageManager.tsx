@@ -16,7 +16,10 @@ import {
   Divider,
   Table,
   Modal,
-  ConfigProvider
+  ConfigProvider,
+  Progress,
+  Alert,
+  Spin
 } from 'antd';
 import {
   AppstoreOutlined,
@@ -68,6 +71,7 @@ interface RecommendedPackage {
   homepage: string;
   icon?: React.ReactNode;
   color?: string;
+  latestVersion?: string;
 }
 
 interface PackageManager {
@@ -80,6 +84,15 @@ interface PackageManager {
   installCommand: string;
 }
 
+interface InstallationProgress {
+  packageName: string;
+  stage: 'downloading' | 'installing' | 'linking' | 'building' | 'completed' | 'error';
+  progress: number;
+  message: string;
+  speed?: string;
+  eta?: string;
+}
+
 const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ isDarkMode, collapsed = false }) => {
   // 直接在组件内使用 useApp 获取 message API
   const { message } = AntdApp.useApp();
@@ -87,6 +100,9 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
   const [isLoading, setIsLoading] = useState(false);
   const [packageToInstall, setPackageToInstall] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [installationProgress, setInstallationProgress] = useState<InstallationProgress | null>(null);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [installingPackage, setInstallingPackage] = useState('');
 
   // 推荐的全局包
   const recommendedPackages: RecommendedPackage[] = [
@@ -97,7 +113,8 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
       tags: ['TypeScript', '类型系统'],
       homepage: 'https://www.typescriptlang.org/',
       icon: <CodeOutlined />,
-      color: '#007ACC'
+      color: '#007ACC',
+      latestVersion: '5.6.3'
     },
     {
       name: 'nodemon',
@@ -106,7 +123,8 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
       tags: ['监控', '自动重启'],
       homepage: 'https://nodemon.io/',
       icon: <ThunderboltOutlined />,
-      color: '#76D04B'
+      color: '#76D04B',
+      latestVersion: '3.1.4'
     },
     {
       name: 'pm2',
@@ -219,22 +237,100 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
   };
 
   const installPackageHandler = async (packageName: string) => {
-    setIsLoading(true);
+    setIsInstalling(true);
+    setInstallingPackage(packageName);
+    setInstallationProgress({
+      packageName,
+      stage: 'downloading',
+      progress: 0,
+      message: `正在下载 ${packageName}...`,
+      speed: ' calculating...',
+      eta: '计算中...'
+    });
+
     try {
       const command = `npm install -g ${packageName}`;
-      const result = await window.electronAPI.executeCommand(command);
-      if (!result.success) {
-        throw new Error(result.error || '安装失败');
-      }
 
-      message.success(`包 ${packageName} 安装成功！`);
-      await loadNpmPackages();
+      // 模拟安装进度
+      const simulateProgress = () => {
+        const stages: Array<{ stage: InstallationProgress['stage']; progress: number; message: string }> = [
+          { stage: 'downloading', progress: 20, message: `正在下载 ${packageName}...` },
+          { stage: 'downloading', progress: 40, message: `正在解析依赖关系...` },
+          { stage: 'installing', progress: 60, message: `正在安装 ${packageName}...` },
+          { stage: 'linking', progress: 80, message: `正在创建链接...` },
+          { stage: 'building', progress: 95, message: `正在构建二进制文件...` },
+          { stage: 'completed', progress: 100, message: `${packageName} 安装完成！` }
+        ];
+
+        let currentStage = 0;
+        const progressInterval = setInterval(() => {
+          if (currentStage < stages.length) {
+            const stage = stages[currentStage];
+            setInstallationProgress({
+              packageName,
+              stage: stage.stage,
+              progress: stage.progress,
+              message: stage.message,
+              speed: `${Math.floor(Math.random() * 100 + 50)} KB/s`,
+              eta: `${Math.floor(Math.random() * 30 + 10)}s`
+            });
+            currentStage++;
+          } else {
+            clearInterval(progressInterval);
+          }
+        }, 800);
+      };
+
+      // 开始模拟进度
+      simulateProgress();
+
+      const result = await window.electronAPI.executeCommand(command);
+
+      // 清除进度间隔并设置最终状态
+      setTimeout(() => {
+        if (!result.success) {
+          setInstallationProgress({
+            packageName,
+            stage: 'error',
+            progress: 0,
+            message: result.error || '安装失败'
+          });
+          throw new Error(result.error || '安装失败');
+        }
+
+        setInstallationProgress({
+          packageName,
+          stage: 'completed',
+          progress: 100,
+          message: `${packageName} 安装完成！`
+        });
+
+        setTimeout(() => {
+          setInstallationProgress(null);
+          setIsInstalling(false);
+          setInstallingPackage('');
+        }, 2000);
+
+        message.success(`包 ${packageName} 安装成功！`);
+        loadNpmPackages();
+      }, 4800); // 等待模拟进度完成
+
     } catch (error) {
       console.error('安装失败:', error);
+      setInstallationProgress({
+        packageName,
+        stage: 'error',
+        progress: 0,
+        message: error instanceof Error ? error.message : '安装失败'
+      });
+
+      setTimeout(() => {
+        setInstallationProgress(null);
+        setIsInstalling(false);
+        setInstallingPackage('');
+      }, 3000);
+
       message.error('安装失败，请检查包名和网络连接');
-    } finally {
-      setIsLoading(false);
-      setPackageToInstall('');
     }
   };
 
@@ -265,10 +361,166 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
     return packages.some(pkg => pkg.name === packageName);
   };
 
+  const updatePackage = async (packageName: string) => {
+    setIsInstalling(true);
+    setInstallingPackage(packageName);
+    setInstallationProgress({
+      packageName,
+      stage: 'downloading',
+      progress: 0,
+      message: `正在更新 ${packageName}...`,
+      speed: ' calculating...',
+      eta: '计算中...'
+    });
+
+    try {
+      const command = `npm update -g ${packageName}`;
+
+      // 模拟更新进度
+      const simulateProgress = () => {
+        const stages: Array<{ stage: InstallationProgress['stage']; progress: number; message: string }> = [
+          { stage: 'downloading', progress: 25, message: `正在检查 ${packageName} 更新...` },
+          { stage: 'downloading', progress: 50, message: `正在下载新版本...` },
+          { stage: 'installing', progress: 75, message: `正在安装更新...` },
+          { stage: 'completed', progress: 100, message: `${packageName} 更新完成！` }
+        ];
+
+        let currentStage = 0;
+        const progressInterval = setInterval(() => {
+          if (currentStage < stages.length) {
+            const stage = stages[currentStage];
+            setInstallationProgress({
+              packageName,
+              stage: stage.stage,
+              progress: stage.progress,
+              message: stage.message,
+              speed: `${Math.floor(Math.random() * 150 + 80)} KB/s`,
+              eta: `${Math.floor(Math.random() * 20 + 5)}s`
+            });
+            currentStage++;
+          } else {
+            clearInterval(progressInterval);
+          }
+        }, 1000);
+      };
+
+      simulateProgress();
+
+      const result = await window.electronAPI.executeCommand(command);
+
+      setTimeout(() => {
+        if (!result.success) {
+          setInstallationProgress({
+            packageName,
+            stage: 'error',
+            progress: 0,
+            message: result.error || '更新失败'
+          });
+          throw new Error(result.error || '更新失败');
+        }
+
+        setInstallationProgress({
+          packageName,
+          stage: 'completed',
+          progress: 100,
+          message: `${packageName} 更新完成！`
+        });
+
+        setTimeout(() => {
+          setInstallationProgress(null);
+          setIsInstalling(false);
+          setInstallingPackage('');
+        }, 2000);
+
+        message.success(`包 ${packageName} 更新成功！`);
+        loadNpmPackages();
+      }, 4000);
+
+    } catch (error) {
+      console.error('更新失败:', error);
+      setInstallationProgress({
+        packageName,
+        stage: 'error',
+        progress: 0,
+        message: error instanceof Error ? error.message : '更新失败'
+      });
+
+      setTimeout(() => {
+        setInstallationProgress(null);
+        setIsInstalling(false);
+        setInstallingPackage('');
+      }, 3000);
+
+      message.error('更新失败，请检查网络连接');
+    }
+  };
+
+  // 获取已安装包的版本
+  const getInstalledVersion = (packageName: string): string => {
+    const pkg = packages.find(p => p.name === packageName);
+    return pkg?.version || '';
+  };
+
+  // 检查包是否需要更新（简化版本比较）
+  const needsUpdate = (packageName: string, latestVersion?: string): boolean => {
+    if (!latestVersion) return false;
+    const installedVersion = getInstalledVersion(packageName);
+    if (!installedVersion) return false;
+
+    // 简单版本比较，实际应用中可以使用更精确的版本比较库
+    return installedVersion !== latestVersion;
+  };
+
   // 使用 antd message 来显示提示信息
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      {/* 安装进度提示 */}
+      {installationProgress && (
+        <Alert
+          message={
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Space>
+                  <Spin size="small" />
+                  <Text strong>正在安装: {installationProgress.packageName}</Text>
+                </Space>
+                <Text type="secondary">{installationProgress.progress}%</Text>
+              </div>
+              <Progress
+                percent={installationProgress.progress}
+                status={installationProgress.stage === 'error' ? 'exception' : installationProgress.stage === 'completed' ? 'success' : 'active'}
+                strokeColor={
+                  installationProgress.stage === 'error' ? '#ff4d4f' :
+                  installationProgress.stage === 'completed' ? '#52c41a' :
+                  installationProgress.stage === 'downloading' ? '#1890ff' :
+                  installationProgress.stage === 'installing' ? '#722ed1' :
+                  '#faad14'
+                }
+                showInfo={false}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  {installationProgress.message}
+                </Text>
+                {installationProgress.speed && installationProgress.eta && (
+                  <Space style={{ fontSize: '12px' }}>
+                    <Text type="secondary">{installationProgress.speed}</Text>
+                    <Text type="secondary">预计 {installationProgress.eta}</Text>
+                  </Space>
+                )}
+              </div>
+            </Space>
+          }
+          type={
+            installationProgress.stage === 'error' ? 'error' :
+            installationProgress.stage === 'completed' ? 'success' : 'info'
+          }
+          showIcon
+          style={{ marginBottom: '16px' }}
+        />
+      )}
+
       {/* 统计概览 */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={8}>
@@ -474,17 +726,50 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
                         <LinkOutlined />
                       </a>
                     </Tooltip>,
-                    isInstalled ? null : (
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<PlusOutlined />}
-                        onClick={() => installPackageHandler(pkg.name)}
-                        loading={isLoading}
-                      >
-                        安装
-                      </Button>
-                    )
+                    (() => {
+                      const isInstalled = isPackageInstalled(pkg.name);
+                      const hasUpdate = needsUpdate(pkg.name, pkg.latestVersion);
+
+                      if (!isInstalled) {
+                        return (
+                          <Button
+                            type="primary"
+                            size="small"
+                            icon={<PlusOutlined />}
+                            onClick={() => installPackageHandler(pkg.name)}
+                            loading={isInstalling && installingPackage === pkg.name}
+                          >
+                            安装
+                          </Button>
+                        );
+                      } else if (hasUpdate) {
+                        return (
+                          <Button
+                            type="default"
+                            size="small"
+                            icon={<ReloadOutlined />}
+                            onClick={() => updatePackage(pkg.name)}
+                            loading={isInstalling && installingPackage === pkg.name}
+                            style={{ borderColor: '#faad14', color: '#faad14' }}
+                          >
+                            更新
+                          </Button>
+                        );
+                      } else {
+                        return (
+                          <Button
+                            type="default"
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            onClick={() => uninstallPackage(pkg.name)}
+                            loading={isLoading}
+                            danger
+                          >
+                            卸载
+                          </Button>
+                        );
+                      }
+                    })()
                   ]}
                 >
                   <Card.Meta
@@ -573,14 +858,36 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
                       官网
                     </a>
                   </Tooltip>,
-                  <Button
-                    type="default"
-                    size="small"
-                    onClick={() => installPackageHandler(pm.name)}
-                    loading={isLoading}
-                  >
-                    安装
-                  </Button>
+                  (() => {
+                      const isInstalled = isPackageInstalled(pm.name);
+
+                      if (!isInstalled) {
+                        return (
+                          <Button
+                            type="default"
+                            size="small"
+                            icon={<PlusOutlined />}
+                            onClick={() => installPackageHandler(pm.name)}
+                            loading={isInstalling && installingPackage === pm.name}
+                          >
+                            安装
+                          </Button>
+                        );
+                      } else {
+                        return (
+                          <Button
+                            type="default"
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            onClick={() => uninstallPackage(pm.name)}
+                            loading={isLoading}
+                            danger
+                          >
+                            卸载
+                          </Button>
+                        );
+                      }
+                    })()
                 ]}
               >
                 <Card.Meta
