@@ -15,7 +15,8 @@ import {
   App as AntdApp,
   Divider,
   Table,
-  Modal
+  Modal,
+  ConfigProvider
 } from 'antd';
 import {
   AppstoreOutlined,
@@ -312,13 +313,21 @@ const PackageManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = (
         }
         extra={
           <Space>
-            <Input.Search
-              placeholder="搜索包名..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: 200 }}
-              size="small"
-            />
+            <Space.Compact style={{ display: 'flex' }}>
+              <Input
+                placeholder="搜索包名..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: 160 }}
+                size="small"
+              />
+              <Button
+                icon={<SearchOutlined />}
+                size="small"
+                type="primary"
+                onClick={() => {}}
+              />
+            </Space.Compact>
             <Button
               icon={<ReloadOutlined />}
               loading={isLoading}
