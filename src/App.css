@@ -3,6 +3,178 @@
   box-sizing: border-box;
 }
 
+/* Comprehensive Border Removal for Menu Items - 解决"边框没有移除"问题 */
+
+/* Remove all borders from Ant Design Menu components and their children */
+.ant-menu,
+.ant-menu *,
+.ant-menu-item,
+.ant-menu-submenu,
+.ant-menu-submenu-title,
+.ant-menu-item:hover,
+.ant-menu-item-selected,
+.ant-menu-submenu:hover,
+.ant-menu-submenu-selected,
+.ant-menu-submenu-open {
+  border: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Specific targeting for inline menu items and submenus */
+.ant-menu-inline .ant-menu-item,
+.ant-menu-inline .ant-menu-submenu-title,
+.ant-menu-inline .ant-menu-item-selected,
+.ant-menu-inline .ant-menu-submenu-selected,
+.ant-menu-sub .ant-menu-item,
+.ant-menu-sub .ant-menu-item-selected,
+.ant-menu-sub .ant-menu-submenu-title,
+.custom-sidebar-menu .ant-menu-item,
+.custom-sidebar-menu .ant-menu-submenu-title,
+.custom-sidebar-menu .ant-menu-item-selected,
+.custom-sidebar-menu .ant-menu-submenu-selected {
+  border: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove borders from all possible menu states */
+.ant-menu-item:active,
+.ant-menu-item:focus,
+.ant-menu-submenu-title:active,
+.ant-menu-submenu-title:focus,
+.ant-menu-item-selected:focus,
+.ant-menu-item-selected:active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Global border removal for any element that might have borders */
+.ant-menu-item,
+.ant-menu-submenu-title {
+  border-image: none !important;
+}
+
+/* Ensure no borders on any pseudo-elements */
+.ant-menu-item::before,
+.ant-menu-item::after,
+.ant-menu-submenu-title::before,
+.ant-menu-submenu-title::after {
+  border: none !important;
+  content: none !important;
+}
+
+/* Remove borders from any nested menu containers */
+.ant-menu-sub,
+.ant-menu-inline .ant-menu-sub {
+  border: none !important;
+  border-left: none !important;
+  box-shadow: none !important;
+}
+
+/* Target any specific Ant Design border classes */
+.ant-menu-item ant-menu-item-only-child,
+.ant-menu-submenu ant-menu-submenu-inline {
+  border: none !important;
+}
+
+/* Override any inline styles that might add borders */
+[style*="border"] {
+  border: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+/* Additional comprehensive border removal */
+.ant-menu-item,
+.ant-menu-submenu-title,
+.ant-menu-item:hover,
+.ant-menu-item-selected,
+.ant-menu-submenu:hover,
+.ant-menu-submenu-selected,
+.ant-menu-item:active,
+.ant-menu-item:focus,
+.ant-menu-submenu-title:active,
+.ant-menu-submenu-title:focus {
+  border: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
+
+/* Menu padding and margin consistency - 统一菜单左右边距 */
+.sidebar-scroll-container,
+.ant-menu,
+.ant-menu-root,
+.ant-menu-inline,
+.custom-sidebar-menu {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+/* Menu items and submenu items consistent padding and width */
+.ant-menu-item,
+.ant-menu-submenu-title,
+.ant-menu-inline .ant-menu-item,
+.ant-menu-inline .ant-menu-submenu-title,
+.ant-menu-sub .ant-menu-item,
+.ant-menu-sub .ant-menu-submenu-title,
+.custom-sidebar-menu .ant-menu-item,
+.custom-sidebar-menu .ant-menu-submenu-title {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100% !important;
+}
+
+/* Submenu items consistent indentation and width */
+.ant-menu-sub .ant-menu-item,
+.ant-menu-sub .ant-menu-submenu-title {
+  padding-left: 12px !important; /* Double padding for subitems (6px * 2) */
+  padding-right: 6px !important;
+  width: 100% !important;
+}
+
+/* Ensure all menu states maintain consistent padding */
+.ant-menu-item:hover,
+.ant-menu-item-selected,
+.ant-menu-item:focus,
+.ant-menu-item:active,
+.ant-menu-submenu-title:hover,
+.ant-menu-submenu-title:focus,
+.ant-menu-submenu-title:active {
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+.ant-menu-sub .ant-menu-item:hover,
+.ant-menu-sub .ant-menu-item-selected,
+.ant-menu-sub .ant-menu-item:focus,
+.ant-menu-sub .ant-menu-item:active,
+.ant-menu-sub .ant-menu-submenu-title:hover,
+.ant-menu-sub .ant-menu-submenu-title:focus,
+.ant-menu-sub .ant-menu-submenu-title:active {
+  padding-left: 12px !important;
+  padding-right: 6px !important;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -136,6 +308,100 @@ body {
 /* 侧边栏容器样式 */
 .ant-layout-sider-children {
   overflow: hidden !important;
+}
+
+/* ========================================
+   侧边栏导航样式
+   ======================================== */
+
+.logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.ant-layout-sider-trigger {
+  position: absolute;
+  bottom: 0;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ant-menu-submenu-title .ant-menu-item-icon {
+  font-size: 16px;
+}
+
+.ant-menu-item .ant-menu-item-icon {
+  font-size: 16px;
+}
+
+/* 自定义滚动条样式 */
+.ant-layout-sider {
+  overflow: hidden;
+}
+
+.ant-layout-sider .ant-menu {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ant-layout-sider .ant-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ant-layout-sider .ant-menu::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
+}
+
+.ant-layout-sider .ant-menu::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+.ant-layout-sider .ant-menu::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+/* 菜单项激活状态 */
+.ant-menu-item-selected {
+  background-color: #e6f7ff !important;
+  border-right: 3px solid #1890ff;
+}
+
+.ant-menu-item-selected::after {
+  border-right: 3px solid #1890ff;
+}
+
+/* 子菜单样式 */
+.ant-menu-submenu-open > .ant-menu-submenu-title > .ant-menu-submenu-arrow {
+  transform: rotate(90deg);
+}
+
+.ant-menu-submenu-arrow {
+  transition: transform 0.3s;
+}
+
+/* 侧边栏动画 */
+.ant-layout-sider {
+  transition: all 0.2s;
+}
+
+/* 内容区域过渡动画 */
+.ant-layout-content {
+  transition: all 0.2s;
+}
+
+/* 标题栏样式 */
+.ant-layout-header {
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  z-index: 10;
 }
 
 /* 响应式设计 */
@@ -988,4 +1254,176 @@ body {
 
 .dark-mode .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #525252;
+}
+
+/* ========================================
+   自定义侧边栏菜单样式
+   ======================================== */
+
+/* 自定义菜单基础样式 */
+.custom-sidebar-menu {
+  background: transparent !important;
+  padding: 0 12px !important;
+}
+
+/* 重置所有菜单项的默认边距和样式 */
+.custom-sidebar-menu .ant-menu-item,
+.custom-sidebar-menu .ant-menu-submenu-title {
+  margin: 0 !important;
+  padding: 12px 16px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* 子菜单项样式 */
+.custom-sidebar-menu .ant-menu-sub .ant-menu-item {
+  padding: 10px 16px 10px 32px !important;
+  margin: 2px 0 !important;
+  border-radius: 6px !important;
+}
+
+/* 无子菜单的项目选中状态 - 简约大气，无边框 */
+.custom-sidebar-menu .ant-menu-item-selected {
+  background-color: rgba(220, 38, 38, 0.08) !important;
+  color: #dc2626 !important;
+  font-weight: 600 !important;
+}
+
+/* 无子菜单的项目悬停状态 */
+.custom-sidebar-menu .ant-menu-item:hover {
+  background-color: rgba(220, 38, 38, 0.05) !important;
+  color: #dc2626 !important;
+}
+
+/* 有子菜单的父菜单项选中状态 - 只更改文字颜色，简约设计 */
+.custom-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  color: #dc2626 !important;
+  font-weight: 600 !important;
+  background-color: transparent !important;
+}
+
+/* 有子菜单的父菜单项悬停状态 */
+.custom-sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title:hover {
+  color: #dc2626 !important;
+  background-color: transparent !important;
+}
+
+/* 子菜单项选中状态 - 增加背景色，无边框 */
+.custom-sidebar-menu .ant-menu-sub .ant-menu-item-selected {
+  background-color: rgba(220, 38, 38, 0.08) !important;
+  color: #dc2626 !important;
+  font-weight: 500 !important;
+}
+
+/* 子菜单项悬停状态 - 简约设计 */
+.custom-sidebar-menu .ant-menu-sub .ant-menu-item:hover {
+  background-color: rgba(220, 38, 38, 0.04) !important;
+  color: #dc2626 !important;
+}
+
+/* 深色模式适配 - 简约大气 */
+.dark-mode .custom-sidebar-menu .ant-menu-item-selected {
+  background-color: rgba(248, 113, 113, 0.12) !important;
+  color: #f87171 !important;
+}
+
+.dark-mode .custom-sidebar-menu .ant-menu-item:hover {
+  background-color: rgba(248, 113, 113, 0.08) !important;
+  color: #f87171 !important;
+}
+
+.dark-mode .custom-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  color: #f87171 !important;
+}
+
+.dark-mode .custom-sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title:hover {
+  color: #f87171 !important;
+}
+
+.dark-mode .custom-sidebar-menu .ant-menu-sub .ant-menu-item-selected {
+  background-color: rgba(248, 113, 113, 0.12) !important;
+  color: #f87171 !important;
+}
+
+.dark-mode .custom-sidebar-menu .ant-menu-sub .ant-menu-item:hover {
+  background-color: rgba(248, 113, 113, 0.06) !important;
+  color: #f87171 !important;
+}
+
+/* 应用最小宽度限制 - Application minimum width constraints */
+#root,
+.ant-layout,
+body,
+html {
+  min-width: 1200px !important;
+  width: 100%;
+}
+
+/* 首页更大宽度适配 - Homepage larger width adaptation */
+.stats-overview {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  max-width: none !important;
+  width: 100%;
+}
+
+.packages-grid {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  max-width: none !important;
+  width: 100%;
+  gap: 20px !important;
+}
+
+.registries-grid {
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+  max-width: none !important;
+  width: 100%;
+  gap: 20px !important;
+}
+
+.status-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  max-width: none !important;
+  width: 100%;
+}
+
+/* 主内容区域最大宽度优化 - Main content area maximum width optimization */
+.ant-layout-content {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* 工具卡片容器宽度优化 - Tool card container width optimization */
+.tool-section,
+.main-content {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* 响应式大屏幕优化 - Large screen responsive optimization */
+@media (min-width: 1600px) {
+  .stats-overview {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+
+  .packages-grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
+  }
+
+  .registries-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)) !important;
+  }
+}
+
+@media (min-width: 2000px) {
+  .stats-overview {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+
+  .packages-grid {
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)) !important;
+  }
+
+  .registries-grid {
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)) !important;
+  }
 }

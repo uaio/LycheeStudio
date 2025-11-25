@@ -89,8 +89,11 @@ const ElectronTitleBar: React.FC<ElectronTitleBarProps> = ({
       ? '#1f1f1f'
       : 'rgba(255, 255, 255, 0.95)',
     borderBottom: isDarkMode
-      ? '1px solid rgba(255, 255, 255, 0.06)'
-      : '1px solid rgba(0, 0, 0, 0.08)',
+      ? '1px solid rgba(255, 255, 255, 0.1)'
+      : '1px solid rgba(0, 0, 0, 0.12)',
+    boxShadow: isDarkMode
+      ? '0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2)'
+      : '0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
     WebkitUserSelect: 'none' as any,

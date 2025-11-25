@@ -7,6 +7,8 @@ import ElectronTitleBar from './components/ElectronTitleBar';
 import NodeManager from './components/NodeManager';
 import NPMManager from './components/NPMManager';
 import PackageManager from './components/PackageManager';
+import ClaudeCodeManager from './components/ClaudeCodeManager';
+import ClaudeProviderManager from './components/ClaudeProviderManager';
 import { useInstallation } from './hooks/useInstallation';
 import {
   Bot,
@@ -38,6 +40,7 @@ declare global {
       getLatestNodeVersion: () => Promise<{ success: boolean; version?: string; error?: string }>;
       getNpmRegistry: () => Promise<{ success: boolean; name?: string; registry?: string; error?: string }>;
       showMessageBox: (options: any) => Promise<any>;
+      executeCommand: (command: string) => Promise<{ success: boolean; output?: string; error?: string }>;
     };
   }
 }
@@ -499,7 +502,9 @@ function App() {
     'node-version': 'nodejs',
     'npm-source': 'nodejs',
     'package-managers': 'nodejs',
-    'claude-code': 'ai-tools',
+    'claude-providers': 'claude-code',
+    'claude-prompts': 'claude-code',
+    'claude-mcp': 'claude-code',
     'openai-cli': 'ai-tools',
     'gemini-cli': 'ai-tools',
     'github-copilot': 'ai-tools',
@@ -526,7 +531,13 @@ function App() {
   // 计算当前应该展开的父菜单
   const getOpenKeys = useCallback((view: string): string[] => {
     const parentKey = subPageToParentMap[view];
-    return parentKey ? [parentKey] : [];
+    // 只有当访问的视图有实际页面实现时才展开父菜单
+    const hasActualPage = [
+      'node-version', 'npm-source', 'package-managers',
+      'claude-providers', 'claude-prompts', 'claude-mcp',
+      'platform-promotions', 'my-invitations'
+    ].includes(view);
+    return parentKey && hasActualPage ? [parentKey] : [];
   }, [subPageToParentMap]);
 
   const [openKeys, setOpenKeys] = useState<string[]>(() => {
@@ -1091,17 +1102,17 @@ function App() {
       if (currentView === 'node-version') {
         return (
           <div style={{
-            marginLeft: collapsed ? '80px' : '200px',
-            height: 'calc(100vh - 38px)',
+            marginLeft: collapsed ? '80px' : '240px',
+            height: 'calc(100vh - 48px)',
             overflow: 'hidden',
           }}>
             <div
               className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
               style={{
-                paddingTop: '32px',
-                paddingLeft: '32px',
-                paddingBottom: '32px',
-                paddingRight: '40px',
+                paddingTop: '48px',
+                paddingLeft: '48px',
+                paddingBottom: '48px',
+                paddingRight: '56px',
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
@@ -1121,17 +1132,17 @@ function App() {
       if (currentView === 'npm-source') {
         return (
           <div style={{
-            marginLeft: collapsed ? '80px' : '200px',
-            height: 'calc(100vh - 38px)',
+            marginLeft: collapsed ? '80px' : '240px',
+            height: 'calc(100vh - 48px)',
             overflow: 'hidden',
           }}>
             <div
               className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
               style={{
-                paddingTop: '32px',
-                paddingLeft: '32px',
-                paddingBottom: '32px',
-                paddingRight: '40px',
+                paddingTop: '48px',
+                paddingLeft: '48px',
+                paddingBottom: '48px',
+                paddingRight: '56px',
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
@@ -1147,17 +1158,17 @@ function App() {
       if (currentView === 'package-managers') {
         return (
           <div style={{
-            marginLeft: collapsed ? '80px' : '200px',
-            height: 'calc(100vh - 38px)',
+            marginLeft: collapsed ? '80px' : '240px',
+            height: 'calc(100vh - 48px)',
             overflow: 'hidden',
           }}>
             <div
               className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
               style={{
-                paddingTop: '32px',
-                paddingLeft: '32px',
-                paddingBottom: '32px',
-                paddingRight: '40px',
+                paddingTop: '48px',
+                paddingLeft: '48px',
+                paddingBottom: '48px',
+                paddingRight: '56px',
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
@@ -1165,6 +1176,58 @@ function App() {
               }}
             >
               <PackageManager isDarkMode={isDarkMode} collapsed={collapsed} />
+            </div>
+          </div>
+        );
+      }
+
+      if (currentView === 'claude-providers') {
+        return (
+          <div style={{
+            marginLeft: collapsed ? '80px' : '240px',
+            height: 'calc(100vh - 48px)',
+            overflow: 'hidden',
+          }}>
+            <div
+              className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+              style={{
+                paddingTop: '48px',
+                paddingLeft: '48px',
+                paddingBottom: '48px',
+                paddingRight: '56px',
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                marginRight: 0,
+              }}
+            >
+              <ClaudeProviderManager isDarkMode={isDarkMode} collapsed={collapsed} />
+            </div>
+          </div>
+        );
+      }
+
+      if (currentView === 'claude-code') {
+        return (
+          <div style={{
+            marginLeft: collapsed ? '80px' : '240px',
+            height: 'calc(100vh - 48px)',
+            overflow: 'hidden',
+          }}>
+            <div
+              className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+              style={{
+                paddingTop: '48px',
+                paddingLeft: '48px',
+                paddingBottom: '48px',
+                paddingRight: '56px',
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                marginRight: 0,
+              }}
+            >
+              <ClaudeCodeManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           </div>
         );
@@ -1187,16 +1250,16 @@ function App() {
 
       return (
         <div style={{
-          marginLeft: collapsed ? '80px' : '200px',
+          marginLeft: collapsed ? '64px' : '200px',
           height: 'calc(100vh - 38px)',
           overflow: 'hidden',
         }}>
           <div
             className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
             style={{
-              paddingTop: '32px',
+              paddingTop: '48px',
               paddingLeft: '16px',
-              paddingBottom: '32px',
+              paddingBottom: '48px',
               paddingRight: '8px',
               height: '100%',
               overflowY: 'auto',
@@ -1285,17 +1348,17 @@ function App() {
 
     return (
       <div style={{
-        marginLeft: collapsed ? '80px' : '200px',
+        marginLeft: collapsed ? '64px' : '200px',
         height: 'calc(100vh - 38px)',
         overflow: 'hidden',
       }}>
         <div
           className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
           style={{
-            paddingTop: '32px',
-            paddingLeft: '32px',
-            paddingBottom: '32px',
-            paddingRight: '40px',
+            paddingTop: '48px',
+            paddingLeft: '48px',
+            paddingBottom: '48px',
+            paddingRight: '56px',
             height: '100%',
             overflowY: 'auto',
             overflowX: 'hidden',
@@ -1387,17 +1450,17 @@ function App() {
   const renderMyInvitations = () => {
     return (
       <div style={{
-        marginLeft: collapsed ? '80px' : '200px',
+        marginLeft: collapsed ? '64px' : '200px',
         height: 'calc(100vh - 38px)',
         overflow: 'hidden',
       }}>
         <div
           className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
           style={{
-            paddingTop: '32px',
-            paddingLeft: '32px',
-            paddingBottom: '32px',
-            paddingRight: '40px',
+            paddingTop: '48px',
+            paddingLeft: '48px',
+            paddingBottom: '48px',
+            paddingRight: '56px',
             height: '100%',
             overflowY: 'auto',
             overflowX: 'hidden',
@@ -1489,8 +1552,8 @@ function App() {
   const renderSidebar = () => (
     <>
       <Sider
-        width={collapsed ? 80 : 200}
-        collapsedWidth={80}
+        width={collapsed ? 64 : 200}
+        collapsedWidth={64}
         collapsed={collapsed}
         style={{
           background: isDarkMode ? '#1f1f1f' : '#f8f9fa',
@@ -1507,9 +1570,9 @@ function App() {
         <div
           className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
           style={{
-            paddingTop: collapsed ? '8px' : '16px',
-            paddingLeft: collapsed ? '8px' : '16px',
-            paddingBottom: collapsed ? '8px' : '16px',
+            paddingTop: collapsed ? '6px' : '16px',
+            paddingLeft: collapsed ? '6px' : '16px',
+            paddingBottom: collapsed ? '6px' : '16px',
             paddingRight: 0,
             height: '100%',
             overflowY: 'auto',
@@ -1560,11 +1623,32 @@ function App() {
                 ],
               },
               {
+                key: 'claude-code',
+                icon: <Bot size={16} />,
+                label: 'Claude Code',
+                children: [
+                  {
+                    key: 'claude-providers',
+                    label: '提供商管理',
+                    onClick: () => setCurrentView('claude-providers')
+                  },
+                  {
+                    key: 'claude-prompts',
+                    label: '全局提示词管理',
+                    onClick: () => setCurrentView('claude-prompts')
+                  },
+                  {
+                    key: 'claude-mcp',
+                    label: 'MCP管理',
+                    onClick: () => setCurrentView('claude-mcp')
+                  },
+                ],
+              },
+              {
                 key: 'ai-tools',
                 icon: <Bot size={16} />,
                 label: 'AI 工具',
                 children: [
-                  { key: 'claude-code', label: 'Claude Code' },
                   { key: 'openai-cli', label: 'OpenAI CLI' },
                   { key: 'gemini-cli', label: 'Gemini CLI' },
                   { key: 'github-copilot', label: 'GitHub Copilot' },
@@ -1616,7 +1700,7 @@ function App() {
       <div
         style={{
           position: 'fixed',
-          left: collapsed ? 80 : 200,
+          left: collapsed ? 64 : 200,
           top: '50px',
           zIndex: 1000,
           transition: collapsed
@@ -1672,17 +1756,17 @@ function App() {
   
   const renderHome = () => (
     <div style={{
-      marginLeft: collapsed ? '80px' : '200px', // 为侧边栏留出空间，适配收起状态
-      height: 'calc(100vh - 38px)', // 固定高度，减去标题栏高度
+      marginLeft: collapsed ? '64px' : '200px', // 为侧边栏留出空间
+      height: 'calc(100vh - 48px)', // 固定高度，减去标题栏高度（已增加到48px）
       overflow: 'hidden', // 隐藏溢出
     }}>
       <div
         className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
         style={{
-          paddingTop: '32px',
-          paddingLeft: '32px',
-          paddingBottom: '32px',
-          paddingRight: '40px', // 原本的32px + 8px for scrollbar space
+          paddingTop: '48px', // 增加上边距
+          paddingLeft: '48px', // 增加左边距
+          paddingBottom: '48px', // 增加下边距
+          paddingRight: '56px', // 增加右边距（原本40px + 16px）
           height: '100%',
           overflowY: 'auto',
           overflowX: 'hidden',
