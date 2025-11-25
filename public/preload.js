@@ -1,39 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// localStorage polyfill for Electron
-if (!global.localStorage) {
-  global.localStorage = {
-    _data: {},
-    _keys: [],
-    setItem(key, value) {
-      this._data[key] = value;
-      if (!this._keys.includes(key)) {
-        this._keys.push(key);
-      }
-    },
-    getItem(key) {
-      return this._data[key] || null;
-    },
-    removeItem(key) {
-      delete this._data[key];
-      const index = this._keys.indexOf(key);
-      if (index > -1) {
-        this._keys.splice(index, 1);
-      }
-    },
-    clear() {
-      this._data = {};
-      this._keys = [];
-    },
-    get length() {
-      return this._keys.length;
-    },
-    key(index) {
-      return this._keys[index] || null;
-    }
-  };
-}
-
 // 为渲染进程暴露安全的API
 contextBridge.exposeInMainWorld('electronAPI', {
   // 窗口控制
