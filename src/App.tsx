@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Modal, App as AntdApp } from 'antd';
-import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { DownloadOutlined } from '@ant-design/icons';
 import type { ThemeConfig } from 'antd';
 import ElectronTitleBar from './components/ElectronTitleBar';
@@ -544,8 +543,8 @@ function App() {
     return getOpenKeys(currentView);
   });
 
-  // 侧边栏收起状态管理
-  const [collapsed, setCollapsed] = useState<boolean>(false);
+  // 侧边栏始终展开，不再支持收起功能
+  const collapsed = false;
   const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
     // 从 localStorage 读取保存的主题设置
     const savedTheme = localStorage.getItem('app-theme') as ThemeType;
@@ -1102,7 +1101,7 @@ function App() {
       if (currentView === 'node-version') {
         return (
           <div style={{
-            marginLeft: collapsed ? '64px' : '200px',
+            marginLeft: '200px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1132,7 +1131,7 @@ function App() {
       if (currentView === 'npm-source') {
         return (
           <div style={{
-            marginLeft: collapsed ? '64px' : '200px',
+            marginLeft: '200px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1158,7 +1157,7 @@ function App() {
       if (currentView === 'package-managers') {
         return (
           <div style={{
-            marginLeft: collapsed ? '64px' : '200px',
+            marginLeft: '200px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1184,7 +1183,7 @@ function App() {
       if (currentView === 'claude-providers') {
         return (
           <div style={{
-            marginLeft: collapsed ? '64px' : '200px',
+            marginLeft: '200px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1210,7 +1209,7 @@ function App() {
       if (currentView === 'claude-code') {
         return (
           <div style={{
-            marginLeft: collapsed ? '64px' : '200px',
+            marginLeft: '200px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1250,7 +1249,7 @@ function App() {
 
       return (
         <div style={{
-          marginLeft: collapsed ? '64px' : '200px',
+          marginLeft: '200px',
           height: 'calc(100vh - 38px)',
           overflow: 'hidden',
         }}>
@@ -1552,10 +1551,8 @@ function App() {
   const renderSidebar = () => (
     <>
       <Sider
-        width={collapsed ? 64 : 200}
-        collapsedWidth={64}
-        collapsed={collapsed}
-        style={{
+        width={200}
+          style={{
           background: isDarkMode ? '#1f1f1f' : '#f8f9fa',
           borderRight: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
           height: 'calc(100vh - 38px)',
@@ -1696,61 +1693,7 @@ function App() {
         </div>
       </Sider>
 
-      {/* 边缘收起/展开按钮 - 顶部精致版本 */}
-      <div
-        style={{
-          position: 'fixed',
-          left: collapsed ? 64 : 200,
-          top: '50px',
-          zIndex: 1000,
-          transition: collapsed
-          ? 'left 0.15s cubic-bezier(0.42, 0, 1, 1)'  // 收起：先慢后快
-          : 'left 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94)',  // 展开：先快后慢
-          backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff',
-          border: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
-          borderRadius: '0 6px 6px 0',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '20px',
-          height: '20px',
-        }}
-        onClick={() => setCollapsed(!collapsed)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? '#404040' : '#f8f8f8';
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? '#2a2a2a' : '#ffffff';
-          e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
-        }}
-      >
-        <Tooltip
-          title={collapsed ? '展开菜单' : '收起菜单'}
-          placement="right"
-        >
-          {collapsed ? (
-            <MenuUnfoldOutlined
-              style={{
-                fontSize: '11px',
-                color: isDarkMode ? '#b0b0b0' : '#666666',
-                transition: 'all 0.2s ease'
-              }}
-            />
-          ) : (
-            <MenuFoldOutlined
-              style={{
-                fontSize: '11px',
-                color: isDarkMode ? '#b0b0b0' : '#666666',
-                transition: 'all 0.2s ease'
-              }}
-            />
-          )}
-        </Tooltip>
-      </div>
-    </>
+      </>
   );
 
   
@@ -1831,7 +1774,7 @@ function App() {
       </div>
 
       {/* 第一组：Homebrew 和 FNM */}
-        <Row style={{ justifyContent: 'space-between' }}>
+        <Row justify="space-between">
           {statusCards.slice(0, 2).map((card, index) => (
             <Col style={{ marginBottom: '20px'}} xs={24} sm={24} md={12} lg={12} xl={12} xxl={12} key={`group1-${index}`}>
               <Card
@@ -2012,9 +1955,9 @@ function App() {
         </Row>
 
       {/* 第二组：Node.js 和 NPM 源 */}
-        <Row  style={{ marginBottom: '20px', justifyContent: 'space-between' }}>
+        <Row justify="space-between">
           {statusCards.slice(2, 4).map((card, index) => (
-            <Col xs={24} sm={24} md={12} lg={12} xl={12} xxl={12} key={`group2-${index}`}>
+            <Col style={{ marginBottom: '20px'}} xs={24} sm={24} md={12} lg={12} xl={12} xxl={12} key={`group2-${index}`}>
               <Card
                 hoverable
                 style={{
@@ -2193,9 +2136,9 @@ function App() {
         </Row>
 
       {/* 第三组：AI 工具 */}
-        <Row  style={{ marginBottom: '20px', justifyContent: 'space-between' }}>
+        <Row justify="space-between">
           {statusCards.slice(4).map((card, index) => (
-            <Col xs={24} sm={24} md={12} lg={8} xl={8} xxl={8} key={`group3-${index}`}>
+            <Col style={{ marginBottom: '20px'}} xs={24} sm={24} md={12} lg={8} xl={8} xxl={8} key={`group3-${index}`}>
               <Card
                 hoverable
                 style={{

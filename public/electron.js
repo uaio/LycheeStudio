@@ -21,7 +21,7 @@ function createWindow() {
       enableRemoteModule: false,
       preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, 'assets/icon.png'), // 应用图标
+    // icon: path.join(__dirname, 'assets/icon.png'), // 应用图标 - 暂时注释掉
   });
 
   // 加载应用
@@ -154,7 +154,34 @@ const template = [
 ];
 
 const menu = Menu.buildFromTemplate(template);
-Menu.setApplicationMenu(menu);
+
+// 在macOS上设置菜单始终可见
+if (process.platform === 'darwin') {
+  Menu.setApplicationMenu(menu);
+  // 禁用自动隐藏菜单栏
+  app.setAboutPanelOptions({
+    applicationName: 'LycheeStudio',
+    applicationVersion: app.getVersion()
+  });
+} else {
+  Menu.setApplicationMenu(menu);
+}
+
+// 禁用菜单自动隐藏（适用于所有平台）
+app.on('browser-window-focus', () => {
+  if (process.platform === 'darwin') {
+    // macOS下确保菜单栏始终可见
+    Menu.setApplicationMenu(menu);
+  }
+});
+
+// 防止菜单被隐藏
+app.on('browser-window-blur', () => {
+  if (process.platform === 'darwin') {
+    // 即使窗口失去焦点也保持菜单可见
+    Menu.setApplicationMenu(menu);
+  }
+});
 
 // IPC 处理程序
 ipcMain.handle('get-app-version', () => {
