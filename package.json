@@ -38,7 +38,7 @@
     "electron-dev-auto": "concurrently \"npm start\" \"wait-on -t 30000 http://localhost:3000 && NODE_ENV=development npx electron .\"",
     "electron-dev-fixed": "concurrently \"npm start\" \"sleep 8 && NODE_ENV=development npx electron .\"",
     "kill": "bash scripts/kill-processes.sh",
-    "clean-start": "npm run kill && sleep 3 && npm run electron-dev-auto",
+    "clean-start": "npm run kill && sleep 3 && npm run electron-dev-fixed",
     "dist": "npm run build && electron-builder",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:win": "npm run build && electron-builder --win",
