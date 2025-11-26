@@ -1831,10 +1831,9 @@ function App() {
       </div>
 
       {/* 第一组：Homebrew 和 FNM */}
-      <div style={{ marginBottom: '20px' }}>
-        <Row gutter={[20, 20]}>
+        <Row style={{ justifyContent: 'space-between' }}>
           {statusCards.slice(0, 2).map((card, index) => (
-            <Col xs={24} sm={12} md={12} lg={12} xl={12} xxl={8} key={`group1-${index}`}>
+            <Col style={{ marginBottom: '20px'}} xs={24} sm={24} md={12} lg={12} xl={12} xxl={12} key={`group1-${index}`}>
               <Card
                 hoverable
                 style={{
@@ -2011,13 +2010,11 @@ function App() {
             </Col>
           ))}
         </Row>
-      </div>
 
       {/* 第二组：Node.js 和 NPM 源 */}
-      <div style={{ marginBottom: '20px' }}>
-        <Row gutter={[20, 20]}>
+        <Row  style={{ marginBottom: '20px', justifyContent: 'space-between' }}>
           {statusCards.slice(2, 4).map((card, index) => (
-            <Col xs={24} sm={12} md={12} lg={12} xl={12} xxl={8} key={`group2-${index}`}>
+            <Col xs={24} sm={24} md={12} lg={12} xl={12} xxl={12} key={`group2-${index}`}>
               <Card
                 hoverable
                 style={{
@@ -2194,13 +2191,11 @@ function App() {
             </Col>
           ))}
         </Row>
-      </div>
 
       {/* 第三组：AI 工具 */}
-      <div style={{ marginBottom: '20px' }}>
-        <Row gutter={[20, 20]}>
+        <Row  style={{ marginBottom: '20px', justifyContent: 'space-between' }}>
           {statusCards.slice(4).map((card, index) => (
-            <Col xs={24} sm={12} md={8} lg={8} xl={8} xxl={6} key={`group3-${index}`}>
+            <Col xs={24} sm={24} md={12} lg={8} xl={8} xxl={8} key={`group3-${index}`}>
               <Card
                 hoverable
                 style={{
@@ -2377,7 +2372,6 @@ function App() {
             </Col>
           ))}
         </Row>
-      </div>
       </div>
     </div>
   );

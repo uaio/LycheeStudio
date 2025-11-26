@@ -415,12 +415,6 @@ body {
   }
 }
 
-@media (max-width: 576px) {
-  .ant-card {
-    margin-bottom: 16px;
-  }
-}
-
 /* 动画效果 */
 @keyframes fadeIn {
   from {
@@ -1472,37 +1466,6 @@ body {
   max-width: none !important;
 }
 
-/* 简化的Row布局 - 使用flex: 1和gap */
-.sidebar-scroll-container .ant-row {
-  display: flex !important;
-  width: 100% !important;
-  flex-wrap: wrap !important;
-  margin: 0 !important;
-  gap: 20px !important; /* 卡片间距20px */
-}
-
-/* 所有Col使用flex: 1自动平分 */
-.sidebar-scroll-container .ant-col {
-  flex: 1 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-width: 280px !important; /* 设置最小宽度，防止过小 */
-}
-
-/* Homebrew和FNM这一排 - 强制2个不换行 */
-.sidebar-scroll-container .ant-row:has(.ant-col[key*="group1-"]) {
-  flex-wrap: nowrap !important; /* 不换行，强制2个平分 */
-}
-
-/* Node.js和NPM源这一排 - 强制2个不换行 */
-.sidebar-scroll-container .ant-row:has(.ant-col[key*="group2-"]) {
-  flex-wrap: nowrap !important; /* 不换行，强制2个平分 */
-}
-
-/* 大屏幕下AI工具保持3个一行 */
-@media (min-width: 1200px) {
-  .sidebar-scroll-container .ant-row:has(.ant-col[key*="group3-"]) {
-    flex-wrap: nowrap !important;
-  }
-}
+/* 移除强CSS覆盖，让Ant Design原生响应式系统工作 */
+/* 只保留基本的容器设置 */
 
