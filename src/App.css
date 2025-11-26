@@ -1350,80 +1350,159 @@ body {
   color: #f87171 !important;
 }
 
-/* 应用最小宽度限制 - Application minimum width constraints */
-#root,
-.ant-layout,
-body,
-html {
-  min-width: 1200px !important;
-  width: 100%;
-}
-
-/* 首页更大宽度适配 - Homepage larger width adaptation */
-.stats-overview {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
-  max-width: none !important;
-  width: 100%;
-}
-
-.packages-grid {
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
-  max-width: none !important;
-  width: 100%;
-  gap: 20px !important;
-}
-
-.registries-grid {
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
-  max-width: none !important;
-  width: 100%;
-  gap: 20px !important;
-}
-
-.status-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
-  max-width: none !important;
-  width: 100%;
-}
-
-/* 主内容区域最大宽度优化 - Main content area maximum width optimization */
+/* 移除内容区域的宽度限制 - 让内容完全自由适配屏幕 */
 .ant-layout-content {
-  max-width: none !important;
   width: 100% !important;
+  max-width: none !important;
+  min-width: unset !important;
+}
+
+.sidebar-scroll-container {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: unset !important;
+}
+
+/* 首页三排平分适配 - Homepage three rows equal distribution */
+/* 第一排：统计卡片 - 6个卡片平分 */
+.stats-overview {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  width: 100% !important;
+  max-width: none !important;
+  gap: 20px !important;
+}
+
+/* 第二排：开发环境状态 - 7个卡片平分 */
+.ant-card:not(.packages-grid):not(.registries-grid):not(.tool-card-modern) {
+  /* 单独处理第二排的卡片 */
+}
+
+/* 第三排：工具卡片 - 7个卡片平分 */
+.tool-card-modern {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+}
+
+/* 通用容器优化 */
+.packages-grid,
+.registries-grid,
+.status-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+  width: 100% !important;
+  max-width: none !important;
+  gap: 20px !important;
 }
 
 /* 工具卡片容器宽度优化 - Tool card container width optimization */
 .tool-section,
 .main-content {
-  max-width: none !important;
   width: 100% !important;
+  max-width: none !important;
+  min-width: unset !important;
 }
 
-/* 响应式大屏幕优化 - Large screen responsive optimization */
+/* 首页三排动态平分 - Dynamic equal distribution for three rows */
+@media (min-width: 1200px) {
+  /* 第一排：统计卡片 */
+  .stats-overview {
+    grid-template-columns: repeat(6, 1fr) !important;
+  }
+}
+
+@media (min-width: 1400px) {
+  .stats-overview {
+    grid-template-columns: repeat(6, minmax(220px, 1fr)) !important;
+  }
+}
+
 @media (min-width: 1600px) {
   .stats-overview {
-    grid-template-columns: repeat(4, 1fr) !important;
+    grid-template-columns: repeat(6, minmax(240px, 1fr)) !important;
   }
+}
 
-  .packages-grid {
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
-  }
-
-  .registries-grid {
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)) !important;
+@media (min-width: 1800px) {
+  .stats-overview {
+    grid-template-columns: repeat(6, minmax(260px, 1fr)) !important;
   }
 }
 
 @media (min-width: 2000px) {
   .stats-overview {
-    grid-template-columns: repeat(5, 1fr) !important;
-  }
-
-  .packages-grid {
-    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)) !important;
-  }
-
-  .registries-grid {
-    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)) !important;
+    grid-template-columns: repeat(6, minmax(280px, 1fr)) !important;
   }
 }
+
+@media (min-width: 2400px) {
+  .stats-overview {
+    grid-template-columns: repeat(6, minmax(300px, 1fr)) !important;
+  }
+}
+
+@media (min-width: 2800px) {
+  .stats-overview {
+    grid-template-columns: repeat(6, minmax(320px, 1fr)) !important;
+  }
+}
+
+@media (min-width: 3200px) {
+  .stats-overview {
+    grid-template-columns: repeat(6, minmax(340px, 1fr)) !important;
+  }
+}
+
+@media (min-width: 3840px) {
+  .stats-overview {
+    grid-template-columns: repeat(6, minmax(360px, 1fr)) !important;
+  }
+}
+
+/* 首页三排平分配置 - Homepage three rows equal distribution */
+
+/* 通用Row容器设置 */
+.sidebar-scroll-container .ant-row {
+  display: flex !important;
+  width: 100% !important;
+  flex-wrap: wrap !important;
+}
+
+
+/* 第一排：开发环境状态卡片（单个卡片）- 应该平分宽度 */
+.sidebar-scroll-container > div:nth-of-type(2) > .ant-card {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* 简化的Row布局 - 使用flex: 1和gap */
+.sidebar-scroll-container .ant-row {
+  display: flex !important;
+  width: 100% !important;
+  flex-wrap: wrap !important;
+  margin: 0 !important;
+  gap: 20px !important; /* 卡片间距20px */
+}
+
+/* 所有Col使用flex: 1自动平分 */
+.sidebar-scroll-container .ant-col {
+  flex: 1 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 280px !important; /* 设置最小宽度，防止过小 */
+}
+
+/* Homebrew和FNM这一排 - 强制2个不换行 */
+.sidebar-scroll-container .ant-row:has(.ant-col[key*="group1-"]) {
+  flex-wrap: nowrap !important; /* 不换行，强制2个平分 */
+}
+
+/* Node.js和NPM源这一排 - 强制2个不换行 */
+.sidebar-scroll-container .ant-row:has(.ant-col[key*="group2-"]) {
+  flex-wrap: nowrap !important; /* 不换行，强制2个平分 */
+}
+
+/* 大屏幕下AI工具保持3个一行 */
+@media (min-width: 1200px) {
+  .sidebar-scroll-container .ant-row:has(.ant-col[key*="group3-"]) {
+    flex-wrap: nowrap !important;
+  }
+}
+

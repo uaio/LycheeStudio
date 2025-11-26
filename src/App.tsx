@@ -1102,8 +1102,8 @@ function App() {
       if (currentView === 'node-version') {
         return (
           <div style={{
-            marginLeft: collapsed ? '80px' : '240px',
-            height: 'calc(100vh - 48px)',
+            marginLeft: collapsed ? '64px' : '200px',
+            height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
             <div
@@ -1132,8 +1132,8 @@ function App() {
       if (currentView === 'npm-source') {
         return (
           <div style={{
-            marginLeft: collapsed ? '80px' : '240px',
-            height: 'calc(100vh - 48px)',
+            marginLeft: collapsed ? '64px' : '200px',
+            height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
             <div
@@ -1158,8 +1158,8 @@ function App() {
       if (currentView === 'package-managers') {
         return (
           <div style={{
-            marginLeft: collapsed ? '80px' : '240px',
-            height: 'calc(100vh - 48px)',
+            marginLeft: collapsed ? '64px' : '200px',
+            height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
             <div
@@ -1184,8 +1184,8 @@ function App() {
       if (currentView === 'claude-providers') {
         return (
           <div style={{
-            marginLeft: collapsed ? '80px' : '240px',
-            height: 'calc(100vh - 48px)',
+            marginLeft: collapsed ? '64px' : '200px',
+            height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
             <div
@@ -1210,8 +1210,8 @@ function App() {
       if (currentView === 'claude-code') {
         return (
           <div style={{
-            marginLeft: collapsed ? '80px' : '240px',
-            height: 'calc(100vh - 48px)',
+            marginLeft: collapsed ? '64px' : '200px',
+            height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
             <div
@@ -1831,7 +1831,7 @@ function App() {
       </div>
 
       {/* 第一组：Homebrew 和 FNM */}
-      <div style={{ marginBottom: '32px' }}>
+      <div style={{ marginBottom: '20px' }}>
         <Row gutter={[20, 20]}>
           {statusCards.slice(0, 2).map((card, index) => (
             <Col xs={24} sm={12} md={12} lg={12} xl={12} xxl={8} key={`group1-${index}`}>
@@ -2014,7 +2014,7 @@ function App() {
       </div>
 
       {/* 第二组：Node.js 和 NPM 源 */}
-      <div style={{ marginBottom: '32px' }}>
+      <div style={{ marginBottom: '20px' }}>
         <Row gutter={[20, 20]}>
           {statusCards.slice(2, 4).map((card, index) => (
             <Col xs={24} sm={12} md={12} lg={12} xl={12} xxl={8} key={`group2-${index}`}>
@@ -2197,7 +2197,7 @@ function App() {
       </div>
 
       {/* 第三组：AI 工具 */}
-      <div style={{ marginBottom: '32px' }}>
+      <div style={{ marginBottom: '20px' }}>
         <Row gutter={[20, 20]}>
           {statusCards.slice(4).map((card, index) => (
             <Col xs={24} sm={12} md={8} lg={8} xl={8} xxl={6} key={`group3-${index}`}>

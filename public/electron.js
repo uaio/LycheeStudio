@@ -11,7 +11,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 800,
+    minWidth: 1000,
     minHeight: 600,
     titleBarStyle: 'hiddenInset', // 隐藏标题栏但保留红绿灯按钮
     show: false, // 先不显示，等加载完成后再显示
