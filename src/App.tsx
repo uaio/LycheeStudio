@@ -24,7 +24,22 @@ import {
   RefreshCw,
   Plus,
   Gift,
-  } from 'lucide-react';
+  Cpu,
+  GitBranch,
+  Database,
+  Cloud,
+  Wrench,
+  Layers,
+  Shield,
+  Coffee,
+  TerminalSquare,
+  Braces,
+  Hexagon,
+  Activity,
+  Globe,
+  Box,
+  Command,
+} from 'lucide-react';
 import './App.css';
 
 const { Text } = Typography;
@@ -230,8 +245,8 @@ const initialStatusCards = [
     version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
     description: 'macOS 包管理器',
-    icon: <Package size={18} />,
-    color: '#fb923c',
+    icon: <Coffee size={18} />,
+    color: '#FB8C00', // 橙棕色，符合 Homebrew 品牌色
     detail: 'macOS 包管理器，用于安装开发工具',
     installable: false, // 检测中状态不可安装
     installCommand: 'brew'
@@ -241,9 +256,9 @@ const initialStatusCards = [
     version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
     description: 'Fast Node Manager',
-    icon: <Package size={18} />,
-    color: '#f59e0b',
-    detail: 'Fast Node Manager',
+    icon: <GitBranch size={18} />, // 分支图标，代表版本管理
+    color: '#7C4DFF', // 紫色，代表版本管理
+    detail: 'Fast Node Manager - Node.js 版本管理',
     installable: false, // 检测中状态不可安装
     installCommand: 'fnm'
   },
@@ -254,8 +269,8 @@ const initialStatusCards = [
     version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
     description: 'JavaScript 运行环境',
-    icon: <Code size={18} />,
-    color: '#68a063',
+    icon: <Hexagon size={18} />, // 六边形，Node.js 标志性形状
+    color: '#5FA04E', // Node.js 绿色
     detail: 'JavaScript 运行环境',
     installable: false, // 检测中状态不可安装
     installCommand: 'node'
@@ -265,9 +280,9 @@ const initialStatusCards = [
     version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
     description: '包管理器源配置',
-    icon: <Package size={18} />,
-    color: '#cb3837',
-    detail: '包管理器源配置',
+    icon: <Database size={18} />, // 数据库图标，代表包仓库
+    color: '#CB3837', // NPM 红色
+    detail: 'NPM 包注册表源配置',
     installable: false, // 检测中状态不可安装
     installCommand: 'npm' // NPM 源检测和配置
   },
@@ -278,9 +293,9 @@ const initialStatusCards = [
     version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
     description: 'Anthropic AI 编程助手',
-    icon: <Bot size={18} />,
-    color: '#d97706',
-    detail: 'Anthropic AI 开发工具',
+    icon: <TerminalSquare size={18} />, // 终端图标，代表编程助手
+    color: '#D97706', // 橙色，符合 Anthropic 品牌
+    detail: 'Anthropic AI 编程助手',
     installable: false, // 检测中状态不可安装
     installCommand: 'claude-code'
   },
@@ -289,9 +304,9 @@ const initialStatusCards = [
     version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
     description: 'Google AI 代码助手',
-    icon: <CheckCircle size={18} />,
-    color: '#3b82f6',
-    detail: 'Google AI 编程助手',
+    icon: <Activity size={18} />, // 活动图标，代表 AI 智能活动
+    color: '#4285F4', // Google 蓝
+    detail: 'Google Gemini AI 编程助手',
     installable: false, // 检测中状态不可安装
     installCommand: 'gemini-cli'
   },
@@ -299,10 +314,10 @@ const initialStatusCards = [
     name: 'Codex',
     version: '检测中...',
     status: 'warning' as 'active' | 'warning' | 'error',
-    description: 'OpenAI代码助手',
-    icon: <Zap size={18} />,
-    color: '#059669',
-    detail: 'OpenAI Codex CLI',
+    description: 'OpenAI 代码助手',
+    icon: <Braces size={18} />, // 大括号，代表代码
+    color: '#10A37F', // OpenAI 绿色
+    detail: 'OpenAI Codex 代码生成工具',
     installable: false, // 检测中状态不可安装
     installCommand: 'codex'
   }
@@ -320,8 +335,8 @@ const mapToolsToStatusCards = (tools: any[], currentStatusCards = null) => {
       version: '检测中...',
       status: 'warning' as 'active' | 'warning' | 'error',
       description: 'macOS 包管理器',
-      icon: <Package size={18} />,
-      color: '#fb923c',
+      icon: <Coffee size={18} />,
+      color: '#FB8C00', // 橙棕色，符合 Homebrew 品牌色
       detail: 'macOS 包管理器，用于安装开发工具',
       installable: false, // 检测中状态不可安装
       installCommand: 'brew'
@@ -331,9 +346,9 @@ const mapToolsToStatusCards = (tools: any[], currentStatusCards = null) => {
       version: '检测中...',
       status: 'warning' as 'active' | 'warning' | 'error',
       description: 'Fast Node Manager',
-      icon: <Package size={18} />,
-      color: '#f59e0b',
-      detail: 'Fast Node Manager',
+      icon: <GitBranch size={18} />, // 分支图标，代表版本管理
+      color: '#7C4DFF', // 紫色，代表版本管理
+      detail: 'Fast Node Manager - Node.js 版本管理',
       installable: false, // 检测中状态不可安装
       installCommand: 'fnm'
     },
@@ -344,8 +359,8 @@ const mapToolsToStatusCards = (tools: any[], currentStatusCards = null) => {
       version: '检测中...',
       status: 'warning' as 'active' | 'warning' | 'error',
       description: 'JavaScript 运行环境',
-      icon: <Code size={18} />,
-      color: '#68a063',
+      icon: <Hexagon size={18} />, // 六边形，Node.js 标志性形状
+      color: '#5FA04E', // Node.js 绿色
       detail: 'JavaScript 运行环境',
       installable: false, // 检测中状态不可安装
       installCommand: 'node'
@@ -355,9 +370,9 @@ const mapToolsToStatusCards = (tools: any[], currentStatusCards = null) => {
       version: '检测中...',
       status: 'warning' as 'active' | 'warning' | 'error',
       description: '包管理器源配置',
-      icon: <Package size={18} />,
-      color: '#cb3837',
-      detail: '包管理器源配置',
+      icon: <Database size={18} />, // 数据库图标，代表包仓库
+      color: '#CB3837', // NPM 红色
+      detail: 'NPM 包注册表源配置',
       installable: false, // 检测中状态不可安装
       installCommand: 'npm'
     },
@@ -368,8 +383,8 @@ const mapToolsToStatusCards = (tools: any[], currentStatusCards = null) => {
       version: '检测中...',
       status: 'warning' as 'active' | 'warning' | 'error',
       description: 'Anthropic AI 编程助手',
-      icon: <Bot size={18} />,
-      color: '#d97706',
+      icon: <TerminalSquare size={18} />, // 终端图标，代表编程助手
+      color: '#D97706', // 橙色，符合 Anthropic 品牌
       detail: 'Anthropic AI 编程助手',
       installable: false, // 检测中状态不可安装
       installCommand: 'claude-code'
@@ -379,9 +394,9 @@ const mapToolsToStatusCards = (tools: any[], currentStatusCards = null) => {
       version: '检测中...',
       status: 'warning' as 'active' | 'warning' | 'error',
       description: 'Google Gemini AI 助手',
-      icon: <Bot size={18} />,
-      color: '#8b5cf6',
-      detail: 'Google Gemini AI 助手',
+      icon: <Activity size={18} />, // 活动图标，代表 AI 智能活动
+      color: '#4285F4', // Google 蓝
+      detail: 'Google Gemini AI 编程助手',
       installable: false, // 检测中状态不可安装
       installCommand: 'gemini-cli'
     },
@@ -390,9 +405,9 @@ const mapToolsToStatusCards = (tools: any[], currentStatusCards = null) => {
       version: '检测中...',
       status: 'warning' as 'active' | 'warning' | 'error',
       description: 'OpenAI Codex AI 代码助手',
-      icon: <Bot size={18} />,
-      color: '#06b6d4',
-      detail: 'OpenAI Codex AI 代码助手',
+      icon: <Braces size={18} />, // 大括号，代表代码
+      color: '#10A37F', // OpenAI 绿色
+      detail: 'OpenAI Codex 代码生成工具',
       installable: false, // 检测中状态不可安装
       installCommand: 'codex'
     }
@@ -1773,548 +1788,204 @@ function App() {
         </Card>
       </div>
 
-      {/* 第一组：Homebrew 和 FNM */}
-        <Row justify="space-between">
-          {statusCards.slice(0, 2).map((card, index) => (
-            <Col style={{ marginBottom: '20px'}} xs={24} sm={24} md={12} lg={12} xl={12} xxl={12} key={`group1-${index}`}>
-              <Card
-                hoverable
+      {/* 工具卡片列表 - 一行一个卡片 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {statusCards.map((card, index) => (
+          <Card
+            key={`tool-${index}`}
+            hoverable
+            style={{
+              transition: 'all 0.3s ease',
+              border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              background: isDarkMode ? '#2a2a2a' : '#ffffff',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+            styles={{
+              body: {
+                padding: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '20px',
+              }
+            }}
+            onClick={() => handleCardClick(card)}
+          >
+            {/* 左侧：图标区域 */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '56px',
+                height: '56px',
+                borderRadius: '12px',
+                background: `linear-gradient(135deg, ${card.color}15, ${card.color}25)`,
+                flexShrink: 0,
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <div
                 style={{
-                  height: '160px',
-                  transition: 'all 0.3s ease',
-                  border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  background: isDarkMode ? '#2a2a2a' : '#ffffff',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: `linear-gradient(135deg, ${card.color}10 0%, transparent 50%, ${card.color}05 100%)`,
+                  opacity: 0.8
+                }}
+              />
+              {React.cloneElement(card.icon, {
+                size: 24,
+                color: card.color,
+                style: {
                   position: 'relative',
-                  overflow: 'hidden',
-                }}
-                styles={{
-                  body: {
-                    padding: '24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
-                  }
-                }}
-                onClick={() => handleCardClick(card)}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <div
-                      style={{
-                        color: card.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '10px',
-                        background: `${card.color}15`,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {React.cloneElement(card.icon, { size: 20 })}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {/* 已安装状态 */}
-                      {card.status === 'active' && (
-                        <CheckCircle size={16} color="#52c41a" />
-                      )}
+                  zIndex: 1,
+                  filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
+                }
+              })}
+            </div>
 
-                      {/* 未安装但可安装状态 - 显示下载图标 */}
-                      {card.status === 'warning' && card.installable && (
-                        <Tooltip title="点击安装" placement="top">
-                          <DownloadOutlined
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInstallClick(e, card);
-                            }}
-                            style={{
-                              color: isDarkMode ? '#1890ff' : '#1890ff',
-                              fontSize: '16px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              opacity: installingTool === card.installCommand ? 0.6 : 1,
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = isDarkMode ? '#40a9ff' : '#096dd9';
-                              e.currentTarget.style.transform = 'scale(1.1)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#1890ff';
-                              e.currentTarget.style.transform = 'scale(1)';
-                            }}
-                          />
-                        </Tooltip>
-                      )}
-
-                      {/* 警告状态（不可安装） */}
-                      {card.status === 'warning' && !card.installable && (
-                        <AlertCircle size={16} color="#faad14" />
-                      )}
-
-                      {/* 错误状态 */}
-                      {card.status === 'error' && (
-                        <XCircle size={16} color="#f5222d" />
-                      )}
-
-                      {/* 右侧箭头（用于不可安装的非错误状态） */}
-                      {!card.installable && card.status !== 'error' && (
-                        <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      marginBottom: '6px',
-                      color: isDarkMode ? '#ffffff' : '#000000',
+            {/* 中间：工具信息 */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: 600,
+                marginBottom: '4px',
+                color: isDarkMode ? '#ffffff' : '#000000',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                {card.name}
+                {/* 刷新按钮 */}
+                {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源' ||
+                  card.name === 'Homebrew' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<RefreshCw size={14} />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (card.name === 'Node.js') {
+                        refreshNodeStatus();
+                      } else if (card.name === 'FNM') {
+                        refreshFnmStatus();
+                      } else if (card.name === 'NPM 源') {
+                        checkNpmRegistry();
+                      } else {
+                        refreshToolStatus(card.name);
+                      }
+                    }}
+                    style={{
+                      padding: '2px',
+                      height: '20px',
+                      minWidth: '20px',
+                      lineHeight: '20px',
+                      color: card.color,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      {card.name}
-                      {/* 刷新按钮 - 在可安装的工具卡片中显示 */}
-                      {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源' ||
-                        card.name === 'Homebrew' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') && (
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<RefreshCw size={14} />}
-                          onClick={(e) => {
-                            e.stopPropagation(); // 阻止事件冒泡到卡片点击事件
-                            if (card.name === 'Node.js') {
-                              refreshNodeStatus();
-                            } else if (card.name === 'FNM') {
-                              refreshFnmStatus();
-                            } else if (card.name === 'NPM 源') {
-                              checkNpmRegistry();
-                            } else {
-                              // 使用通用刷新函数处理其他工具
-                              refreshToolStatus(card.name);
-                            }
-                          }}
-                          style={{
-                            padding: '2px',
-                            height: '20px',
-                            minWidth: '20px',
-                            lineHeight: '20px',
-                            color: card.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            transition: 'all 0.2s ease'
-                          }}
-                          title={`刷新${card.name}状态`}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }}
-                        />
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '11px',
-                      color: card.color,
-                      fontWeight: 500
-                    }}>
-                      {card.name === 'NPM 源' ? (
-                        <Tooltip title={card.detail} placement="top">
-                          <span style={{ cursor: 'help' }}>
-                            {card.version}
-                          </span>
-                        </Tooltip>
-                      ) : (
-                        card.version
-                      )}
-                    </div>
-                    {card.detail && card.name !== 'NPM 源' && (
-                      <div style={{
-                        fontSize: '10px',
-                        color: isDarkMode ? '#a0a0a0' : '#666',
-                        marginTop: '4px'
-                      }}>
-                        {card.detail}
-                      </div>
-                    )}
-                  </div>
+                      justifyContent: 'center',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderRadius: '4px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    title={`刷新${card.name}状态`}
+                  />
+                )}
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: isDarkMode ? '#a0a0a0' : '#666',
+                marginBottom: '2px'
+              }}>
+                {card.description}
+              </div>
+              {card.detail && card.name !== 'NPM 源' && (
+                <div style={{
+                  fontSize: '12px',
+                  color: isDarkMode ? '#888' : '#999',
+                }}>
+                  {card.detail}
                 </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+              )}
+            </div>
 
-      {/* 第二组：Node.js 和 NPM 源 */}
-        <Row justify="space-between">
-          {statusCards.slice(2, 4).map((card, index) => (
-            <Col style={{ marginBottom: '20px'}} xs={24} sm={24} md={12} lg={12} xl={12} xxl={12} key={`group2-${index}`}>
-              <Card
-                hoverable
-                style={{
-                  height: '160px',
-                  transition: 'all 0.3s ease',
-                  border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  background: isDarkMode ? '#2a2a2a' : '#ffffff',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-                styles={{
-                  body: {
-                    padding: '24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
-                  }
-                }}
-                onClick={() => handleCardClick(card)}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <div
-                      style={{
-                        color: card.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '10px',
-                        background: `${card.color}15`,
-                        flexShrink: 0,
+            {/* 右侧：状态和操作 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              {/* 版本信息 */}
+              <div style={{ textAlign: 'right' }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: card.color,
+                  marginBottom: '2px'
+                }}>
+                  {card.name === 'NPM 源' ? (
+                    <Tooltip title={card.detail} placement="top">
+                      <span style={{ cursor: 'help' }}>
+                        {card.version}
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    card.version
+                  )}
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  color: isDarkMode ? '#888' : '#999',
+                }}>
+                  {card.status === 'active' ? '已安装' :
+                   card.status === 'warning' ? '待安装' : '错误'}
+                </div>
+              </div>
+
+              {/* 状态图标和操作按钮 */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {card.status === 'active' && (
+                  <CheckCircle size={20} color="#52c41a" />
+                )}
+
+                {card.status === 'warning' && card.installable && (
+                  <Tooltip title="点击安装" placement="top">
+                    <DownloadOutlined
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInstallClick(e, card);
                       }}
-                    >
-                      {React.cloneElement(card.icon, { size: 20 })}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {/* 已安装状态 */}
-                      {card.status === 'active' && (
-                        <CheckCircle size={16} color="#52c41a" />
-                      )}
-
-                      {/* 未安装但可安装状态 - 显示下载图标 */}
-                      {card.status === 'warning' && card.installable && (
-                        <Tooltip title="点击安装" placement="top">
-                          <DownloadOutlined
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInstallClick(e, card);
-                            }}
-                            style={{
-                              color: isDarkMode ? '#1890ff' : '#1890ff',
-                              fontSize: '16px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              opacity: installingTool === card.installCommand ? 0.6 : 1,
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = isDarkMode ? '#40a9ff' : '#096dd9';
-                              e.currentTarget.style.transform = 'scale(1.1)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#1890ff';
-                              e.currentTarget.style.transform = 'scale(1)';
-                            }}
-                          />
-                        </Tooltip>
-                      )}
-
-                      {/* 警告状态（不可安装） */}
-                      {card.status === 'warning' && !card.installable && (
-                        <AlertCircle size={16} color="#faad14" />
-                      )}
-
-                      {/* 错误状态 */}
-                      {card.status === 'error' && (
-                        <XCircle size={16} color="#f5222d" />
-                      )}
-
-                      {/* 右侧箭头（用于不可安装的非错误状态） */}
-                      {!card.installable && card.status !== 'error' && (
-                        <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      marginBottom: '6px',
-                      color: isDarkMode ? '#ffffff' : '#000000',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      {card.name}
-                      {/* 刷新按钮 - 在可安装的工具卡片中显示 */}
-                      {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源' ||
-                        card.name === 'Homebrew' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') && (
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<RefreshCw size={14} />}
-                          onClick={(e) => {
-                            e.stopPropagation(); // 阻止事件冒泡到卡片点击事件
-                            if (card.name === 'Node.js') {
-                              refreshNodeStatus();
-                            } else if (card.name === 'FNM') {
-                              refreshFnmStatus();
-                            } else if (card.name === 'NPM 源') {
-                              checkNpmRegistry();
-                            } else {
-                              // 使用通用刷新函数处理其他工具
-                              refreshToolStatus(card.name);
-                            }
-                          }}
-                          style={{
-                            padding: '2px',
-                            height: '20px',
-                            minWidth: '20px',
-                            lineHeight: '20px',
-                            color: card.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            transition: 'all 0.2s ease'
-                          }}
-                          title={`刷新${card.name}状态`}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }}
-                        />
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '11px',
-                      color: card.color,
-                      fontWeight: 500
-                    }}>
-                      {card.name === 'NPM 源' ? (
-                        <Tooltip title={card.detail} placement="top">
-                          <span style={{ cursor: 'help' }}>
-                            {card.version}
-                          </span>
-                        </Tooltip>
-                      ) : (
-                        card.version
-                      )}
-                    </div>
-                    {card.detail && card.name !== 'NPM 源' && (
-                      <div style={{
-                        fontSize: '10px',
-                        color: isDarkMode ? '#a0a0a0' : '#666',
-                        marginTop: '4px'
-                      }}>
-                        {card.detail}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-
-      {/* 第三组：AI 工具 */}
-        <Row justify="space-between">
-          {statusCards.slice(4).map((card, index) => (
-            <Col style={{ marginBottom: '20px'}} xs={24} sm={24} md={12} lg={8} xl={8} xxl={8} key={`group3-${index}`}>
-              <Card
-                hoverable
-                style={{
-                  height: '160px',
-                  transition: 'all 0.3s ease',
-                  border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  background: isDarkMode ? '#2a2a2a' : '#ffffff',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-                styles={{
-                  body: {
-                    padding: '24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
-                  }
-                }}
-                onClick={() => handleCardClick(card)}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <div
                       style={{
-                        color: card.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '10px',
-                        background: `${card.color}15`,
-                        flexShrink: 0,
+                        color: isDarkMode ? '#1890ff' : '#1890ff',
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        opacity: installingTool === card.installCommand ? 0.6 : 1,
                       }}
-                    >
-                      {React.cloneElement(card.icon, { size: 20 })}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {/* 已安装状态 */}
-                      {card.status === 'active' && (
-                        <CheckCircle size={16} color="#52c41a" />
-                      )}
+                    />
+                  </Tooltip>
+                )}
 
-                      {/* 未安装但可安装状态 - 显示下载图标 */}
-                      {card.status === 'warning' && card.installable && (
-                        <Tooltip title="点击安装" placement="top">
-                          <DownloadOutlined
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInstallClick(e, card);
-                            }}
-                            style={{
-                              color: isDarkMode ? '#1890ff' : '#1890ff',
-                              fontSize: '16px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              opacity: installingTool === card.installCommand ? 0.6 : 1,
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = isDarkMode ? '#40a9ff' : '#096dd9';
-                              e.currentTarget.style.transform = 'scale(1.1)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#1890ff';
-                              e.currentTarget.style.transform = 'scale(1)';
-                            }}
-                          />
-                        </Tooltip>
-                      )}
+                {card.status === 'warning' && !card.installable && (
+                  <AlertCircle size={20} color="#faad14" />
+                )}
 
-                      {/* 警告状态（不可安装） */}
-                      {card.status === 'warning' && !card.installable && (
-                        <AlertCircle size={16} color="#faad14" />
-                      )}
+                {card.status === 'error' && (
+                  <XCircle size={20} color="#f5222d" />
+                )}
 
-                      {/* 错误状态 */}
-                      {card.status === 'error' && (
-                        <XCircle size={16} color="#f5222d" />
-                      )}
-
-                      {/* 右侧箭头（用于不可安装的非错误状态） */}
-                      {!card.installable && card.status !== 'error' && (
-                        <ChevronRight size={14} color={isDarkMode ? '#888' : '#ccc'} style={{ marginLeft: '8px' }} />
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      marginBottom: '6px',
-                      color: isDarkMode ? '#ffffff' : '#000000',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      {card.name}
-                      {/* 刷新按钮 - 在可安装的工具卡片中显示 */}
-                      {(card.name === 'Node.js' || card.name === 'FNM' || card.name === 'NPM 源' ||
-                        card.name === 'Homebrew' || card.name === 'Claude Code' || card.name === 'Gemini CLI' || card.name === 'Codex') && (
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<RefreshCw size={14} />}
-                          onClick={(e) => {
-                            e.stopPropagation(); // 阻止事件冒泡到卡片点击事件
-                            if (card.name === 'Node.js') {
-                              refreshNodeStatus();
-                            } else if (card.name === 'FNM') {
-                              refreshFnmStatus();
-                            } else if (card.name === 'NPM 源') {
-                              checkNpmRegistry();
-                            } else {
-                              // 使用通用刷新函数处理其他工具
-                              refreshToolStatus(card.name);
-                            }
-                          }}
-                          style={{
-                            padding: '2px',
-                            height: '20px',
-                            minWidth: '20px',
-                            lineHeight: '20px',
-                            color: card.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            transition: 'all 0.2s ease'
-                          }}
-                          title={`刷新${card.name}状态`}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }}
-                        />
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '11px',
-                      color: card.color,
-                      fontWeight: 500
-                    }}>
-                      {card.name === 'NPM 源' ? (
-                        <Tooltip title={card.detail} placement="top">
-                          <span style={{ cursor: 'help' }}>
-                            {card.version}
-                          </span>
-                        </Tooltip>
-                      ) : (
-                        card.version
-                      )}
-                    </div>
-                    {card.detail && card.name !== 'NPM 源' && (
-                      <div style={{
-                        fontSize: '10px',
-                        color: isDarkMode ? '#a0a0a0' : '#666',
-                        marginTop: '4px'
-                      }}>
-                        {card.detail}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                {!card.installable && card.status !== 'error' && card.status !== 'warning' && (
+                  <ChevronRight size={16} color={isDarkMode ? '#888' : '#ccc'} />
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
       </div>
     </div>
   );
