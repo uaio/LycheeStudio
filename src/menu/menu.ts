@@ -1,7 +1,6 @@
 export async function setupMacOSMenu() {
   // 由于 Tauri 2.0 的菜单 API 可能不稳定，
   // 我们暂时使用全局事件监听来模拟菜单功能
-  console.log('macOS 菜单栏功能已启用（使用快捷键）');
 
   // 监听全局快捷键
   document.addEventListener('keydown', handleGlobalShortcuts);

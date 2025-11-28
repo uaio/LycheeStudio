@@ -40,7 +40,6 @@ import {
 } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
 const { TextArea } = Input;
 
 interface ClaudeSession {
@@ -341,6 +340,194 @@ const ClaudeCodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> 
     },
   ];
 
+  const tabItems = [
+    {
+      key: 'sessions',
+      label: (
+        <span>
+          <FileTextOutlined />
+          会话管理
+        </span>
+      ),
+      children: (
+        <Card
+          title="会话列表"
+          extra={
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setSessionModalVisible(true)}
+            >
+              新建会话
+            </Button>
+          }
+        >
+          <Table
+            dataSource={sessions}
+            columns={sessionColumns}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+            }}
+          />
+        </Card>
+      )
+    },
+    {
+      key: 'projects',
+      label: (
+        <span>
+          <CodeOutlined />
+          项目管理
+        </span>
+      ),
+      children: (
+        <Card
+          title="关联项目"
+          extra={
+            <Space>
+              <Button icon={<ReloadOutlined />}>刷新</Button>
+              <Button type="primary" icon={<PlusOutlined />}>
+                关联项目
+              </Button>
+            </Space>
+          }
+        >
+          <List
+            dataSource={projects}
+            renderItem={(project) => (
+              <List.Item
+                actions={[
+                  <Tooltip title="取消收藏">
+                    <Button type="text" size="small">
+                      {project.isFavorite ? '★' : '☆'}
+                    </Button>
+                  </Tooltip>,
+                  <Button type="text" size="small" icon={<EditOutlined />} />,
+                  <Button type="text" danger size="small" icon={<DeleteOutlined />} />,
+                ]}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <Avatar
+                      icon={<CodeOutlined />}
+                      style={{ backgroundColor: '#1890ff' }}
+                    />
+                  }
+                  title={
+                    <Space>
+                      <Text strong>{project.name}</Text>
+                      <Tag color="blue">{project.language}</Tag>
+                    </Space>
+                  }
+                  description={
+                    <Space direction="vertical" size="small">
+                      <Text type="secondary">{project.path}</Text>
+                      <Space>
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          会话数: {project.sessionCount}
+                        </Text>
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          最后修改: {project.lastModified}
+                        </Text>
+                      </Space>
+                    </Space>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        </Card>
+      )
+    },
+    {
+      key: 'api',
+      label: (
+        <span>
+          <ApiOutlined />
+          API配置
+        </span>
+      ),
+      children: (
+        <Card
+          title="API密钥管理"
+          extra={
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setApiKeyModalVisible(true)}
+            >
+              生成密钥
+            </Button>
+          }
+        >
+          <Alert
+            message="API密钥安全提示"
+            description="请妥善保管你的API密钥，不要分享给他人。建议定期轮换密钥以确保安全。"
+            type="warning"
+            showIcon
+            style={{ marginBottom: '16px' }}
+          />
+
+          <List
+            dataSource={apiKeys}
+            renderItem={(apiKey) => (
+              <List.Item
+                actions={[
+                  <Tag color={apiKey.isActive ? 'green' : 'red'}>
+                    {apiKey.isActive ? '活跃' : '禁用'}
+                  </Tag>,
+                  <Button type="text" size="small" icon={<EditOutlined />} />,
+                  <Button
+                    type="text"
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() => deleteAPIKey(apiKey.id)}
+                  />,
+                ]}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <Avatar
+                      icon={<KeyOutlined />}
+                      style={{ backgroundColor: '#faad14' }}
+                    />
+                  }
+                  title={
+                    <Space>
+                      <Text strong>{apiKey.name}</Text>
+                      <Text code>{apiKey.key}</Text>
+                    </Space>
+                  }
+                  description={
+                    <Space direction="vertical" size="small">
+                      <Space>
+                        <Text type="secondary">创建时间: {apiKey.createdAt}</Text>
+                        <Text type="secondary">使用次数: {apiKey.usageCount}</Text>
+                        <Text type="secondary">最后使用: {apiKey.lastUsed}</Text>
+                      </Space>
+                      <Space wrap>
+                        {apiKey.permissions.map(permission => (
+                          <Tag key={permission} size="small">
+                            {permission}
+                          </Tag>
+                        ))}
+                      </Space>
+                    </Space>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        </Card>
+      )
+    }
+  ];
+
   return (
     <div style={{
       marginLeft: collapsed ? '80px' : '200px',
@@ -412,193 +599,10 @@ const ClaudeCodeManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> 
           </Col>
         </Row>
 
-        <Tabs defaultActiveKey="sessions">
-          <TabPane
-            tab={
-              <span>
-                <FileTextOutlined />
-                会话管理
-              </span>
-            }
-            key="sessions"
-          >
-            <Card
-              title="会话列表"
-              extra={
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => setSessionModalVisible(true)}
-                >
-                  新建会话
-                </Button>
-              }
-            >
-              <Table
-                dataSource={sessions}
-                columns={sessionColumns}
-                rowKey="id"
-                loading={loading}
-                pagination={{
-                  pageSize: 10,
-                  showSizeChanger: true,
-                  showQuickJumper: true,
-                }}
-              />
-            </Card>
-          </TabPane>
-
-          <TabPane
-            tab={
-              <span>
-                <CodeOutlined />
-                项目管理
-              </span>
-            }
-            key="projects"
-          >
-            <Card
-              title="关联项目"
-              extra={
-                <Space>
-                  <Button icon={<ReloadOutlined />}>刷新</Button>
-                  <Button type="primary" icon={<PlusOutlined />}>
-                    关联项目
-                  </Button>
-                </Space>
-              }
-            >
-              <List
-                dataSource={projects}
-                renderItem={(project) => (
-                  <List.Item
-                    actions={[
-                      <Tooltip title="取消收藏">
-                        <Button type="text" size="small">
-                          {project.isFavorite ? '★' : '☆'}
-                        </Button>
-                      </Tooltip>,
-                      <Button type="text" size="small" icon={<EditOutlined />} />,
-                      <Button type="text" danger size="small" icon={<DeleteOutlined />} />,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={
-                        <Avatar
-                          icon={<CodeOutlined />}
-                          style={{ backgroundColor: '#1890ff' }}
-                        />
-                      }
-                      title={
-                        <Space>
-                          <Text strong>{project.name}</Text>
-                          <Tag color="blue">{project.language}</Tag>
-                        </Space>
-                      }
-                      description={
-                        <Space direction="vertical" size="small">
-                          <Text type="secondary">{project.path}</Text>
-                          <Space>
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                              会话数: {project.sessionCount}
-                            </Text>
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                              最后修改: {project.lastModified}
-                            </Text>
-                          </Space>
-                        </Space>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            </Card>
-          </TabPane>
-
-          <TabPane
-            tab={
-              <span>
-                <ApiOutlined />
-                API配置
-              </span>
-            }
-            key="api"
-          >
-            <Card
-              title="API密钥管理"
-              extra={
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => setApiKeyModalVisible(true)}
-                >
-                  生成密钥
-                </Button>
-              }
-            >
-              <Alert
-                message="API密钥安全提示"
-                description="请妥善保管你的API密钥，不要分享给他人。建议定期轮换密钥以确保安全。"
-                type="warning"
-                showIcon
-                style={{ marginBottom: '16px' }}
-              />
-
-              <List
-                dataSource={apiKeys}
-                renderItem={(apiKey) => (
-                  <List.Item
-                    actions={[
-                      <Tag color={apiKey.isActive ? 'green' : 'red'}>
-                        {apiKey.isActive ? '活跃' : '禁用'}
-                      </Tag>,
-                      <Button type="text" size="small" icon={<EditOutlined />} />,
-                      <Button
-                        type="text"
-                        danger
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        onClick={() => deleteAPIKey(apiKey.id)}
-                      />,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={
-                        <Avatar
-                          icon={<KeyOutlined />}
-                          style={{ backgroundColor: '#faad14' }}
-                        />
-                      }
-                      title={
-                        <Space>
-                          <Text strong>{apiKey.name}</Text>
-                          <Text code>{apiKey.key}</Text>
-                        </Space>
-                      }
-                      description={
-                        <Space direction="vertical" size="small">
-                          <Space>
-                            <Text type="secondary">创建时间: {apiKey.createdAt}</Text>
-                            <Text type="secondary">使用次数: {apiKey.usageCount}</Text>
-                            <Text type="secondary">最后使用: {apiKey.lastUsed}</Text>
-                          </Space>
-                          <Space wrap>
-                            {apiKey.permissions.map(permission => (
-                              <Tag key={permission} size="small">
-                                {permission}
-                              </Tag>
-                            ))}
-                          </Space>
-                        </Space>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            </Card>
-          </TabPane>
-        </Tabs>
-
+        <Tabs
+          defaultActiveKey="sessions"
+          items={tabItems}
+        />
         {/* 新建会话模态框 */}
         <Modal
           title="新建Claude会话"

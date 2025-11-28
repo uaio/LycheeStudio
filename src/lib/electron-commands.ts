@@ -156,7 +156,7 @@ export const safeExecute = async <T>(
   try {
     return await operation();
   } catch (error) {
-    console.warn('Operation failed, returning fallback:', error);
+    // 操作失败时返回fallback值
     return fallback;
   }
 };

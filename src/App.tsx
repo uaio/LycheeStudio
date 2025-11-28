@@ -994,6 +994,12 @@ function App() {
 
   // 处理卡片点击事件
   const handleCardClick = async (card: any) => {
+    // Claude Code 直接跳转到提供商管理页面
+    if (card.name === 'Claude Code') {
+      setCurrentView('claude-providers');
+      return;
+    }
+
     // Node.js 和 NPM 源的特殊处理（优先处理）
     if (card.name === 'Node.js' || card.name === 'NPM 源') {
       if (card.status === 'active') {
@@ -1024,6 +1030,9 @@ function App() {
             // Homebrew 不跳转，只显示状态
             break;
           case 'Claude Code':
+            // 跳转到Claude Code管理页面
+            setCurrentView('claude-providers');
+            break;
           case 'Gemini CLI':
           case 'Codex':
             // AI工具暂时不跳转，预留功能
@@ -1110,7 +1119,9 @@ function App() {
     // 处理不同的视图类型
     if (currentView === 'nodejs' || currentView === 'ai-tools' ||
         currentView === 'dev-recommend' || currentView === 'help' ||
-        currentView === 'node-version' || currentView === 'npm-source' || currentView === 'package-managers') {
+        currentView === 'node-version' || currentView === 'npm-source' || currentView === 'package-managers' ||
+        currentView === 'claude-providers' || currentView === 'claude-code' || currentView === 'claude-prompts' || currentView === 'claude-mcp' ||
+        currentView === 'platform-promotions' || currentView === 'my-invitations') {
 
       // 如果是 Node.js 相关的子页面，渲染对应组件
       if (currentView === 'node-version') {
@@ -1196,29 +1207,39 @@ function App() {
       }
 
       if (currentView === 'claude-providers') {
-        return (
-          <div style={{
-            marginLeft: '200px',
-            height: 'calc(100vh - 38px)',
-            overflow: 'hidden',
-          }}>
-            <div
-              className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
-              style={{
-                paddingTop: '48px',
-                paddingLeft: '48px',
-                paddingBottom: '48px',
-                paddingRight: '56px',
-                height: '100%',
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                marginRight: 0,
-              }}
-            >
-              <ClaudeProviderManager isDarkMode={isDarkMode} collapsed={collapsed} />
+        try {
+          return (
+            <div style={{
+              marginLeft: '200px',
+              height: 'calc(100vh - 38px)',
+              overflow: 'hidden',
+              backgroundColor: isDarkMode ? '#141414' : '#ffffff',
+            }}>
+              <div
+                className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+                style={{
+                  paddingTop: '48px',
+                  paddingLeft: '48px',
+                  paddingBottom: '48px',
+                  paddingRight: '56px',
+                  height: '100%',
+                  marginRight: 0,
+                  backgroundColor: isDarkMode ? '#141414' : '#ffffff',
+                  color: isDarkMode ? '#ffffff' : '#000000',
+                }}
+              >
+                  <ClaudeProviderManager isDarkMode={isDarkMode} collapsed={collapsed} />
+              </div>
             </div>
-          </div>
-        );
+          );
+        } catch (error) {
+          console.error('Error rendering claude-providers:', error);
+          return (
+            <div style={{ padding: '20px', backgroundColor: 'red', color: 'white' }}>
+              Error rendering claude-providers: {error.message}
+            </div>
+          );
+        }
       }
 
       if (currentView === 'claude-code') {

@@ -182,7 +182,7 @@ const AIConfig: React.FC = () => {
       const result = await invoke<string>('get_ai_models');
       return JSON.parse(result);
     } catch (error) {
-      console.warn('加载模型配置失败:', error);
+      // 配置文件不存在或格式错误时返回空数组
       return [];
     }
   };
@@ -192,7 +192,7 @@ const AIConfig: React.FC = () => {
       const result = await invoke<string>('get_prompt_templates');
       return JSON.parse(result);
     } catch (error) {
-      console.warn('加载Prompt模板失败:', error);
+      // 配置文件不存在或格式错误时返回空数组
       return [];
     }
   };
@@ -202,7 +202,7 @@ const AIConfig: React.FC = () => {
       const result = await invoke<string>('get_provider_configs');
       return JSON.parse(result);
     } catch (error) {
-      console.warn('加载提供商配置失败:', error);
+      // 配置文件不存在或格式错误时返回空对象
       return {};
     }
   };

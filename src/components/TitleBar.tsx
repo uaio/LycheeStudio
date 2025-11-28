@@ -25,8 +25,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
 }) => {
   const handleWindowControl = (action: 'minimize' | 'maximize' | 'close') => {
     // 这里会调用 Tauri API 来控制窗口
-    // 暂时用 console.log 模拟
-    console.log(`Window action: ${action}`);
+    // TODO: 实现窗口控制功能
   };
 
   return (
