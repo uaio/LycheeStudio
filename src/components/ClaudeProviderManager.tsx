@@ -5,15 +5,15 @@ import {
   Button,
   Input,
   Space,
-  Tag,
   Modal,
   Form,
   message,
-  Alert,
   Tooltip,
   Row,
   Col,
   Select,
+  InputNumber,
+  Divider,
 } from 'antd';
 import './ClaudeProviderManager.css';
 import {
@@ -21,13 +21,9 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
-  CheckOutlined,
-  CheckCircleFilled,
-  CheckCircleOutlined,
-  SafetyCertificateOutlined,
 } from '@ant-design/icons';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 interface APIProvider {
   id: string;
@@ -41,16 +37,37 @@ interface APIProvider {
   selected: boolean;
   status: 'connected' | 'disconnected' | 'error';
   template?: string;
+  // 新增字段
+  env: {
+    ANTHROPIC_AUTH_TOKEN: string;
+    ANTHROPIC_BASE_URL: string;
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: string;
+    ANTHROPIC_DEFAULT_SONNET_MODEL: string;
+    ANTHROPIC_DEFAULT_OPUS_MODEL: string;
+  };
+  apiSettings: {
+    timeout: number;
+    retryAttempts: number;
+    retryDelay: number;
+  };
 }
 
 interface ProviderTemplate {
   id: string;
   name: string;
-  apiUrl: string;
-  model: string;
-  maxTokens: number;
-  temperature: number;
   description: string;
+  env: {
+    ANTHROPIC_AUTH_TOKEN: string;
+    ANTHROPIC_BASE_URL: string;
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: string;
+    ANTHROPIC_DEFAULT_SONNET_MODEL: string;
+    ANTHROPIC_DEFAULT_OPUS_MODEL: string;
+  };
+  apiSettings: {
+    timeout: number;
+    retryAttempts: number;
+    retryDelay: number;
+  };
 }
 
 const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({
@@ -60,40 +77,208 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
   // 预置的 API 服务商模板
   const providerTemplates: ProviderTemplate[] = [
     {
-      id: 'claude-official',
-      name: 'Claude 官方 API',
-      apiUrl: 'https://api.anthropic.com',
-      model: 'claude-3-sonnet-20240229',
-      maxTokens: 4096,
-      temperature: 0.7,
-      description: 'Anthropic 官方 Claude API 服务'
+      id: 'zhipu-ai',
+      name: '智谱 AI',
+      description: '智谱AI提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://open.bigmodel.cn/api/anthropic',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'glm-4.5-air',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'glm-4.6',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'glm-4.6'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
     },
     {
-      id: 'claude-opus',
-      name: 'Claude 3 Opus',
-      apiUrl: 'https://api.anthropic.com',
-      model: 'claude-3-opus-20240229',
-      maxTokens: 4096,
-      temperature: 0.7,
-      description: 'Anthropic 最强大的 Claude 模型'
+      id: 'z-ai',
+      name: 'z.ai',
+      description: 'z.ai提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://api.z.ai/api/anthropic',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'glm-4.5-air',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'glm-4.6',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'glm-4.6'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
     },
     {
-      id: 'claude-haiku',
-      name: 'Claude 3 Haiku',
-      apiUrl: 'https://api.anthropic.com',
-      model: 'claude-3-haiku-20240307',
-      maxTokens: 4096,
-      temperature: 0.7,
-      description: '快速响应的 Claude 模型'
+      id: 'minimax-cn',
+      name: 'MiniMax 国内版',
+      description: 'MiniMax国内版Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://api.minimaxi.com/anthropic',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'MiniMax-M2',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'MiniMax-M2',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'MiniMax-M2'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
     },
     {
-      id: 'custom-proxy',
-      name: '自定义代理服务',
-      apiUrl: 'https://your-proxy.example.com/v1',
-      model: 'claude-3-sonnet-20240229',
-      maxTokens: 4096,
-      temperature: 0.7,
-      description: '通过代理服务访问 Claude API'
+      id: 'minimax-intl',
+      name: 'MiniMax 国际版',
+      description: 'MiniMax国际版Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://api.minimax.io/anthropic',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'MiniMax-M2',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'MiniMax-M2',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'MiniMax-M2'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    },
+    {
+      id: 'moonshot',
+      name: '月之暗面 (Moonshot)',
+      description: '月之暗面提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://api.moonshot.cn/anthropic',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'kimi-k2-turbo-preview',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'kimi-k2-turbo-preview',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'kimi-k2-turbo-preview'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    },
+    {
+      id: 'kuaishou',
+      name: '快手万擎',
+      description: '快手万擎提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://wanqing.streamlakeapi.com/api/gateway/v1/endpoints/xxx/claude-code-proxy',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'KAT-Coder',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'KAT-Coder',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'KAT-Coder'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    },
+    {
+      id: 'deepseek',
+      name: '深度求索 (DeepSeek)',
+      description: '深度求索提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://api.deepseek.com/anthropic',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'deepseek-chat',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'deepseek-chat',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'deepseek-chat'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    },
+    {
+      id: 'alibaba-bailian',
+      name: '阿里云百炼',
+      description: '阿里云百炼提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://dashscope.aliyuncs.com/apps/anthropic',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'qwen-flash',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'qwen-max',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'qwen-max'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    },
+    {
+      id: 'modelscope',
+      name: '魔搭 ModelScope',
+      description: '魔搭ModelScope提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://api-inference.modelscope.cn',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'Qwen/Qwen3-Coder-480B-A35B-Instruct',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'deepseek-ai/DeepSeek-R1-0528',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'Qwen/Qwen3-Coder-480B-A35B-Instruct'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    },
+    {
+      id: 'packycode',
+      name: 'PackyCode',
+      description: 'PackyCode提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://api.packycode.com',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: '',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: '',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: ''
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    },
+    {
+      id: 'anyrouter',
+      name: 'AnyRouter',
+      description: 'AnyRouter提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://anyrouter.top',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: '',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: '',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: ''
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    },
+    {
+      id: 'longcat',
+      name: 'LongCat',
+      description: 'LongCat提供的Claude兼容API服务',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: '',
+        ANTHROPIC_BASE_URL: 'https://api.longcat.chat/anthropic',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'LongCat-Flash-Chat',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'LongCat-Flash-Thinking',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'LongCat-Flash-Chat'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
     }
   ];
 
@@ -108,7 +293,19 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
       maxTokens: 4096,
       temperature: 0.7,
       selected: true,
-      status: 'connected'
+      status: 'connected',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: 'sk-ant-api03-***',
+        ANTHROPIC_BASE_URL: 'https://api.anthropic.com',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-3-haiku-20240307',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'claude-3-sonnet-20240229',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'claude-3-opus-20240229'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
     },
     {
       id: '2',
@@ -120,12 +317,23 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
       maxTokens: 4096,
       temperature: 0.7,
       selected: false,
-      status: 'disconnected'
+      status: 'disconnected',
+      env: {
+        ANTHROPIC_AUTH_TOKEN: 'custom-key-***',
+        ANTHROPIC_BASE_URL: 'https://my-proxy.example.com/v1',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-3-haiku-20240307',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'claude-3-sonnet-20240229',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'claude-3-opus-20240229'
+      },
+      apiSettings: {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
     },
   ]);
 
-  const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
   const [editingProvider, setEditingProvider] = useState<APIProvider | null>(null);
   const [form] = Form.useForm();
 
@@ -134,13 +342,10 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
   }, []);
 
   const loadProviders = async () => {
-    setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
       message.error('加载 API 服务商失败');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -176,29 +381,50 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
     if (template) {
       form.setFieldsValue({
         name: template.name,
-        apiUrl: template.apiUrl,
-        model: template.model,
-        maxTokens: template.maxTokens,
-        temperature: template.temperature,
+        apiUrl: template.env.ANTHROPIC_BASE_URL,
+        apiKey: template.env.ANTHROPIC_AUTH_TOKEN,
+        model: template.env.ANTHROPIC_DEFAULT_SONNET_MODEL,
+        env: template.env,
+        apiSettings: template.apiSettings,
+        maxTokens: 4096,
+        temperature: 0.7,
       });
     }
   };
 
   const handleSubmit = async (values: any) => {
     try {
+      // 确保有完整的env和apiSettings字段
+      const providerData = {
+        ...values,
+        env: {
+          ANTHROPIC_AUTH_TOKEN: values.env?.ANTHROPIC_AUTH_TOKEN || values.apiKey || '',
+          ANTHROPIC_BASE_URL: values.env?.ANTHROPIC_BASE_URL || values.apiUrl || '',
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: values.env?.ANTHROPIC_DEFAULT_HAIKU_MODEL || '',
+          ANTHROPIC_DEFAULT_SONNET_MODEL: values.env?.ANTHROPIC_DEFAULT_SONNET_MODEL || values.model || '',
+          ANTHROPIC_DEFAULT_OPUS_MODEL: values.env?.ANTHROPIC_DEFAULT_OPUS_MODEL || '',
+        },
+        apiSettings: {
+          timeout: values.apiSettings?.timeout || 3000000,
+          retryAttempts: values.apiSettings?.retryAttempts || 3,
+          retryDelay: values.apiSettings?.retryDelay || 1000,
+        },
+        type: values.name?.toLowerCase().includes('claude') ? 'official' : 'custom'
+      };
+
       if (editingProvider) {
         setProviders(prev => prev.map(provider =>
           provider.id === editingProvider.id
-            ? { ...provider, ...values }
+            ? { ...provider, ...providerData }
             : provider
         ));
         message.success('API 服务商更新成功');
       } else {
         const newProvider: APIProvider = {
           id: Date.now().toString(),
-          ...values,
           selected: false,
-          status: 'disconnected'
+          status: 'disconnected',
+          ...providerData
         };
         setProviders(prev => [...prev, newProvider]);
         message.success('API 服务商添加成功');
@@ -497,9 +723,21 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               name: '',
               apiUrl: '',
               apiKey: '',
-              model: 'claude-3-sonnet-20240229',
+              model: '',
               maxTokens: 4096,
               temperature: 0.7,
+              env: {
+                ANTHROPIC_AUTH_TOKEN: '',
+                ANTHROPIC_BASE_URL: '',
+                ANTHROPIC_DEFAULT_HAIKU_MODEL: '',
+                ANTHROPIC_DEFAULT_SONNET_MODEL: '',
+                ANTHROPIC_DEFAULT_OPUS_MODEL: '',
+              },
+              apiSettings: {
+                timeout: 3000000,
+                retryAttempts: 3,
+                retryDelay: 1000,
+              },
             }}
           >
             <Form.Item
@@ -526,6 +764,8 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               </Select>
             </Form.Item>
 
+            {/* 基本信息区域 */}
+            <Title level={5}>基本信息</Title>
             <Form.Item
               name="name"
               label="API 服务商名称"
@@ -555,14 +795,10 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
 
             <Form.Item
               name="model"
-              label="模型"
-              rules={[{ required: true, message: '请选择模型' }]}
+              label="当前使用模型"
+              rules={[{ required: true, message: '请输入模型名称' }]}
             >
-              <Select placeholder="选择模型" style={{ width: '100%' }}>
-                <Select.Option value="claude-3-opus-20240229">Claude 3 Opus</Select.Option>
-                <Select.Option value="claude-3-sonnet-20240229">Claude 3 Sonnet</Select.Option>
-                <Select.Option value="claude-3-haiku-20240307">Claude 3 Haiku</Select.Option>
-              </Select>
+              <Input placeholder="例如: claude-3-sonnet-20240229" />
             </Form.Item>
 
             <Row gutter={16}>
@@ -599,6 +835,113 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                     <Select.Option value={0.7}>0.7 (平衡)</Select.Option>
                     <Select.Option value={1.0}>1.0 (更自由)</Select.Option>
                   </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Divider />
+
+            {/* 环境变量配置区域 */}
+            <Title level={5}>环境变量配置</Title>
+
+            <Form.Item
+              name={['env', 'ANTHROPIC_AUTH_TOKEN']}
+              label="认证令牌 (ANTHROPIC_AUTH_TOKEN)"
+              tooltip="用于API认证的令牌"
+            >
+              <Input.Password placeholder="输入认证令牌" />
+            </Form.Item>
+
+            <Form.Item
+              name={['env', 'ANTHROPIC_BASE_URL']}
+              label="基础URL (ANTHROPIC_BASE_URL)"
+              rules={[{ required: true, message: '请输入基础URL' }]}
+              tooltip="API的基础URL地址"
+            >
+              <Input placeholder="https://api.anthropic.com" />
+            </Form.Item>
+
+            <Row gutter={16}>
+              <Col span={8}>
+                <Form.Item
+                  name={['env', 'ANTHROPIC_DEFAULT_HAIKU_MODEL']}
+                  label="Haiku模型"
+                  tooltip="快速响应的模型，适用于简单任务"
+                >
+                  <Input placeholder="例如: claude-3-haiku-20240307" />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name={['env', 'ANTHROPIC_DEFAULT_SONNET_MODEL']}
+                  label="Sonnet模型"
+                  tooltip="均衡性能的模型，适用于大多数任务"
+                >
+                  <Input placeholder="例如: claude-3-sonnet-20240229" />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name={['env', 'ANTHROPIC_DEFAULT_OPUS_MODEL']}
+                  label="Opus模型"
+                  tooltip="高性能模型，适用于复杂任务"
+                >
+                  <Input placeholder="例如: claude-3-opus-20240229" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Divider />
+
+            {/* API设置区域 */}
+            <Title level={5}>API 设置</Title>
+
+            <Row gutter={16}>
+              <Col span={8}>
+                <Form.Item
+                  name={['apiSettings', 'timeout']}
+                  label="超时时间 (毫秒)"
+                  rules={[{ required: true, message: '请输入超时时间' }]}
+                  tooltip="API请求的超时时间"
+                >
+                  <InputNumber
+                    min={1000}
+                    max={30000000}
+                    step={1000}
+                    style={{ width: '100%' }}
+                    placeholder="3000000"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name={['apiSettings', 'retryAttempts']}
+                  label="重试次数"
+                  rules={[{ required: true, message: '请输入重试次数' }]}
+                  tooltip="失败时的重试次数"
+                >
+                  <InputNumber
+                    min={0}
+                    max={10}
+                    style={{ width: '100%' }}
+                    placeholder="3"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name={['apiSettings', 'retryDelay']}
+                  label="重试延迟 (毫秒)"
+                  rules={[{ required: true, message: '请输入重试延迟' }]}
+                  tooltip="重试之间的延迟时间"
+                >
+                  <InputNumber
+                    min={100}
+                    max={10000}
+                    step={100}
+                    style={{ width: '100%' }}
+                    placeholder="1000"
+                  />
                 </Form.Item>
               </Col>
             </Row>
