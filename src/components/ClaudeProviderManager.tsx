@@ -7,7 +7,7 @@ import {
   Space,
   Modal,
   Form,
-  message,
+  App,
   Tooltip,
   Select,
   InputNumber,
@@ -19,10 +19,51 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
+  ExclamationOutlined,
+  MinusOutlined,
 } from '@ant-design/icons';
+import {
+  Brain,
+  Zap,
+  Cpu,
+  Globe,
+  Moon,
+  Video,
+  Search,
+  Cloud,
+  Database,
+  Package,
+  Router,
+  Cat,
+  Bot,
+  MessageSquare,
+  Sparkles,
+} from 'lucide-react';
 import { providerTemplates } from '../data/providerTemplates';
 
 const { Title, Text } = Typography;
+
+// 图标映射函数
+const getProviderIcon = (iconName: string) => {
+  const iconMap: { [key: string]: React.ComponentType<any> } = {
+    'Brain': Brain,
+    'Zap': Zap,
+    'Cpu': Cpu,
+    'Globe': Globe,
+    'Moon': Moon,
+    'Video': Video,
+    'Search': Search,
+    'Cloud': Cloud,
+    'Database': Database,
+    'Package': Package,
+    'Router': Router,
+    'Cat': Cat,
+    'Bot': Bot,
+    'MessageSquare': MessageSquare,
+    'Sparkles': Sparkles,
+  };
+  return iconMap[iconName] || Bot; // 默认使用Bot图标
+};
 
 interface APIProvider {
   id: string;
@@ -36,6 +77,7 @@ interface APIProvider {
   selected: boolean;
   status: 'connected' | 'disconnected' | 'error';
   template?: string;
+  icon?: string; // 图标字段
   // 新增字段
   env: {
     ANTHROPIC_AUTH_TOKEN: string;
@@ -55,60 +97,31 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
   isDarkMode,
   collapsed = false
 }) => {
+  const { message } = App.useApp();
 
   const [providers, setProviders] = useState<APIProvider[]>([
     {
       id: '1',
-      name: 'Claude API',
+      name: 'Claude 默认',
       type: 'official',
       apiUrl: 'https://api.anthropic.com',
-      apiKey: 'sk-ant-api03-***',
-      model: 'claude-3-sonnet-20240229',
+      apiKey: '',
+      model: '',
       maxTokens: 4096,
       temperature: 0.7,
       selected: true,
       status: 'connected',
-      env: {
-        ANTHROPIC_AUTH_TOKEN: 'sk-ant-api03-***',
-        ANTHROPIC_BASE_URL: 'https://api.anthropic.com',
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-3-haiku-20240307',
-        ANTHROPIC_DEFAULT_SONNET_MODEL: 'claude-3-sonnet-20240229',
-        ANTHROPIC_DEFAULT_OPUS_MODEL: 'claude-3-opus-20240229'
-      },
-      apiSettings: {
-        timeout: 3000000,
-        retryAttempts: 3,
-        retryDelay: 1000
-      }
-    },
-    {
-      id: '2',
-      name: '自定义代理',
-      type: 'custom',
-      apiUrl: 'https://my-proxy.example.com/v1',
-      apiKey: 'custom-key-***',
-      model: 'claude-3-sonnet-20240229',
-      maxTokens: 4096,
-      temperature: 0.7,
-      selected: false,
-      status: 'disconnected',
-      env: {
-        ANTHROPIC_AUTH_TOKEN: 'custom-key-***',
-        ANTHROPIC_BASE_URL: 'https://my-proxy.example.com/v1',
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-3-haiku-20240307',
-        ANTHROPIC_DEFAULT_SONNET_MODEL: 'claude-3-sonnet-20240229',
-        ANTHROPIC_DEFAULT_OPUS_MODEL: 'claude-3-opus-20240229'
-      },
-      apiSettings: {
-        timeout: 3000000,
-        retryAttempts: 3,
-        retryDelay: 1000
-      }
-    },
+      icon: 'Bot',
+      env: {},
+      apiSettings: {}
+    }
   ]);
 
     const [modalVisible, setModalVisible] = useState(false);
   const [editingProvider, setEditingProvider] = useState<APIProvider | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [providerToDelete, setProviderToDelete] = useState<string | null>(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -117,20 +130,175 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
 
   const loadProviders = async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 从localStorage加载用户设置的提供商
+      const savedProviders = localStorage.getItem('claude-providers');
+      let userProviders: APIProvider[] = [];
+
+      let selectedUserProvider: APIProvider | null = null;
+
+  if (savedProviders) {
+        const parsedProviders = JSON.parse(savedProviders);
+
+        // 检查是否有选中的提供商
+        const hasSelectedProvider = parsedProviders.some((p: APIProvider) => p.selected);
+
+        // 分离默认提供商和用户提供商
+        const defaultProviderFromStorage = parsedProviders.find((p: APIProvider) => p.id === '1');
+        userProviders = parsedProviders.filter((p: APIProvider) => p.id !== '1');
+
+        // 检查是否选中了默认提供商
+        const isDefaultSelected = defaultProviderFromStorage?.selected || false;
+        selectedUserProvider = hasSelectedProvider ? userProviders.find(p => p.selected) : null;
+      }
+
+      // 创建默认提供商
+      const defaultProvider: APIProvider = {
+        id: '1',
+        name: 'Claude 默认',
+        type: 'official',
+        apiUrl: 'https://api.anthropic.com',
+        apiKey: '',
+        model: '',
+        maxTokens: 4096,
+        temperature: 0.7,
+        selected: false, // 默认不选中，稍后根据实际情况设置
+        status: 'connected',
+        icon: 'Bot',
+        env: {},
+        apiSettings: {}
+      };
+
+      // 根据保存的状态设置选中状态
+      if (selectedUserProvider) {
+        // 如果有选中的用户提供商，确保它被选中
+        const providerIndex = userProviders.findIndex(p => p.id === selectedUserProvider.id);
+        if (providerIndex !== -1) {
+          userProviders[providerIndex].selected = true;
+        }
+        // 确保默认提供商未被选中
+        defaultProvider.selected = false;
+      } else {
+        // 如果没有选中的用户提供商，选中默认提供商
+        defaultProvider.selected = true;
+      }
+
+      // 合并默认提供商和用户创建的提供商
+      setProviders([defaultProvider, ...userProviders]);
     } catch (error) {
       message.error('加载 API 服务商失败');
     }
   };
 
+  const saveProviders = useCallback((updatedProviders: APIProvider[]) => {
+    try {
+      // 确保只有一个提供商被选中
+      const selectedCount = updatedProviders.filter(p => p.selected).length;
+      let providersToSave = updatedProviders;
+
+      if (selectedCount > 1) {
+        // 如果有多个被选中，只保留第一个选中的
+        let foundSelected = false;
+        providersToSave = updatedProviders.map(provider => {
+          if (provider.selected && !foundSelected) {
+            foundSelected = true;
+            return { ...provider, selected: true };
+          } else {
+            return { ...provider, selected: false };
+          }
+        });
+      } else if (selectedCount === 0) {
+        // 如果没有选中的，默认选中第一个
+        providersToSave = updatedProviders.map((provider, index) => ({
+          ...provider,
+          selected: index === 0
+        }));
+      }
+
+      // 只保存用户创建的提供商（过滤掉默认提供商）
+      const userProviders = providersToSave.filter(p => p.id !== '1');
+      localStorage.setItem('claude-providers', JSON.stringify(userProviders));
+
+      // 更新.claude/settings.json
+      const selectedProvider = providersToSave.find(p => p.selected);
+      if (selectedProvider) {
+        if (selectedProvider.id === '1') {
+          // 如果选中的是默认提供商，清空settings.json中的env和apiSettings
+          clearSettingsFile();
+        } else {
+          // 调用API更新settings.json
+          updateSettingsFile(selectedProvider);
+        }
+      }
+    } catch (error) {
+      console.error('保存提供商失败:', error);
+    }
+  }, []);
+
+  const updateSettingsFile = async (provider: APIProvider) => {
+    try {
+      // 使用Electron API来更新用户目录下的.claude/settings.json
+      if (window.electronAPI) {
+        const result = await window.electronAPI.writeUserSettings({
+          env: provider.env,
+          apiSettings: provider.apiSettings
+        });
+
+        if (result.success) {
+          console.log('设置保存成功:', result);
+        } else {
+          throw new Error(result.error);
+        }
+      } else {
+        // 如果在浏览器环境（非Electron），保存到localStorage
+        const settings = {
+          env: provider.env,
+          apiSettings: provider.apiSettings
+        };
+        localStorage.setItem('claude-settings', JSON.stringify(settings));
+      }
+    } catch (error) {
+      console.error('更新settings.json失败:', error);
+      message.error('保存设置失败');
+    }
+  };
+
+  const clearSettingsFile = async () => {
+    try {
+      // 使用Electron API来清空用户目录下.claude/settings.json中的env和apiSettings
+      if (window.electronAPI) {
+        const result = await window.electronAPI.writeUserSettings({
+          env: {},
+          apiSettings: {}
+        });
+
+        if (result.success) {
+          console.log('设置清空成功:', result);
+        } else {
+          throw new Error(result.error);
+        }
+      } else {
+        // 如果在浏览器环境（非Electron），清空localStorage
+        localStorage.setItem('claude-settings', JSON.stringify({
+          env: {},
+          apiSettings: {}
+        }));
+      }
+    } catch (error) {
+      console.error('清空settings.json失败:', error);
+      message.error('清空设置失败');
+    }
+  };
+
   const handleSelectProvider = useCallback((providerId: string) => {
-    setProviders(prev => prev.map(provider =>
+    const updatedProviders = providers.map(provider =>
       provider.id === providerId
         ? { ...provider, selected: true, status: 'connected' as const }
         : { ...provider, selected: false }
-    ));
+    );
+    setProviders(updatedProviders);
+    saveProviders(updatedProviders);
     message.success('已切换 API 服务商');
-  }, []);
+  }, [providers, saveProviders]);
 
   const handleEditProvider = (provider: APIProvider) => {
     setEditingProvider(provider);
@@ -139,18 +307,36 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
   };
 
   const handleDeleteProvider = (providerId: string) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: '确定要删除这个 API 服务商吗？此操作无法撤销。',
-      icon: <ExclamationCircleOutlined />,
-      onOk() {
-        setProviders(prev => prev.filter(p => p.id !== providerId));
-        message.success('API 服务商已删除');
-      },
-    });
+    // 检查要删除的提供商是否被选中
+    const providerToDelete = providers.find(p => p.id === providerId);
+
+    if (providerToDelete?.selected) {
+      message.warning('选中的 API 服务商不能删除，请先切换到其他提供商');
+      return;
+    }
+
+    setProviderToDelete(providerId);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (providerToDelete) {
+      const updatedProviders = providers.filter(p => p.id !== providerToDelete);
+      setProviders(updatedProviders);
+      saveProviders(updatedProviders);
+      message.success('API 服务商已删除');
+      setDeleteModalVisible(false);
+      setProviderToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalVisible(false);
+    setProviderToDelete(null);
   };
 
   const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplate(templateId);
     const template = providerTemplates.find(t => t.id === templateId);
     if (template) {
       form.setFieldsValue({
@@ -165,6 +351,16 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
     try {
       // 基于env字段生成其他必需字段
       const env = values.env || {};
+
+      // 获取当前选择的模板图标
+      let selectedIcon = 'Brain'; // 默认图标
+      if (selectedTemplate) {
+        const template = providerTemplates.find(t => t.id === selectedTemplate);
+        if (template) {
+          selectedIcon = template.icon;
+        }
+      }
+
       const providerData = {
         name: values.name,
         apiUrl: env.ANTHROPIC_BASE_URL || '',
@@ -172,6 +368,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
         model: env.ANTHROPIC_DEFAULT_SONNET_MODEL || env.ANTHROPIC_DEFAULT_HAIKU_MODEL || '',
         maxTokens: 4096,
         temperature: 0.7,
+        icon: selectedIcon,
         env: {
           ANTHROPIC_AUTH_TOKEN: env.ANTHROPIC_AUTH_TOKEN || '',
           ANTHROPIC_BASE_URL: env.ANTHROPIC_BASE_URL || '',
@@ -187,12 +384,15 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
         type: values.name?.toLowerCase().includes('claude') ? 'official' : 'custom'
       };
 
+      let updatedProviders: APIProvider[];
+
       if (editingProvider) {
-        setProviders(prev => prev.map(provider =>
+        updatedProviders = providers.map(provider =>
           provider.id === editingProvider.id
             ? { ...provider, ...providerData }
             : provider
-        ));
+        );
+        setProviders(updatedProviders);
         message.success('API 服务商更新成功');
       } else {
         const newProvider: APIProvider = {
@@ -201,9 +401,13 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
           status: 'disconnected',
           ...providerData
         };
-        setProviders(prev => [...prev, newProvider]);
+        updatedProviders = [...providers, newProvider];
+        setProviders(updatedProviders);
         message.success('API 服务商添加成功');
       }
+
+      // 保存到localStorage和更新settings.json
+      saveProviders(updatedProviders);
       setModalVisible(false);
       setEditingProvider(null);
       form.resetFields();
@@ -214,6 +418,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
 
   const handleAddNew = () => {
     setEditingProvider(null);
+    setSelectedTemplate(null);
     form.resetFields();
     setModalVisible(true);
   };
@@ -261,7 +466,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
             position: 'relative',
             overflow: 'hidden'
           }}
-          bodyStyle={{ padding: '24px' }}
+          styles={{ body: { padding: '24px' } }}
         >
           {/* 标题和添加按钮 */}
           <div style={{
@@ -358,17 +563,25 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                background: provider.type === 'official'
-                  ? 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)'
-                  : 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+                background: provider.selected
+                  ? 'rgba(255, 255, 255, 0.2)'
+                  : (provider.type === 'official'
+                    ? 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)'
+                    : 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)'),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '14px',
-                color: '#ffffff',
                 flexShrink: 0
               }}>
-                {provider.type === 'official' ? '🤖' : '🔧'}
+                {(() => {
+                  const IconComponent = getProviderIcon(provider.icon || 'Brain');
+                  return (
+                    <IconComponent
+                      size={18}
+                      color={provider.selected ? '#ffffff' : '#ffffff'}
+                    />
+                  );
+                })()}
               </div>
 
               {/* 中间信息 */}
@@ -389,7 +602,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                     ? 'rgba(255, 255, 255, 0.85)'
                     : (isDarkMode ? '#bfbfbf' : '#595959')
                 }}>
-                  {provider.model}
+                  {provider.id === '1' ? provider.apiUrl : (provider.env?.ANTHROPIC_BASE_URL || '未设置')}
                 </div>
               </div>
 
@@ -404,9 +617,11 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                   height: '20px',
                   borderRadius: '50%',
                   border: provider.selected
-                    ? '1px solid rgba(255, 255, 255, 0.6)'
+                    ? '1px solid rgba(255, 255, 255, 0.8)'
                     : (isDarkMode ? '1px solid #595959' : '1px solid #d9d9d9'),
-                  background: 'transparent',
+                  background: provider.selected
+                    ? 'rgba(255, 255, 255, 0.9)'
+                    : 'transparent',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -418,9 +633,10 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                       width: '12px',
                       height: '12px',
                       color: provider.selected
-                        ? 'rgba(255, 255, 255, 0.9)'
+                        ? '#1890ff'
                         : (isDarkMode ? '#a0a0a0' : '#666666'),
                       fontSize: '12px',
+                      fontWeight: 'bold',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -430,47 +646,78 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                   ) : null}
                 </div>
 
-                {/* 编辑按钮 */}
-                <Tooltip title="编辑">
-                  <Button
-                    type="text"
-                    icon={<EditOutlined />}
+                {/* 编辑按钮 - 只有非默认提供商才显示 */}
+                {provider.id !== '1' && (
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
                       handleEditProvider(provider);
                     }}
                     style={{
-                      fontSize: '12px',
-                      color: provider.selected
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      border: provider.selected
+                        ? '1px solid rgba(255, 255, 255, 0.8)'
+                        : (isDarkMode ? '1px solid #595959' : '1px solid #d9d9d9'),
+                      background: provider.selected
                         ? 'rgba(255, 255, 255, 0.9)'
-                        : (isDarkMode ? '#a0a0a0' : '#666666'),
-                      padding: '2px 6px',
-                      height: '24px',
-                      width: '24px'
+                        : (isDarkMode ? '#404040' : '#e0e0e0'),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
                     }}
-                  />
-                </Tooltip>
+                  >
+                    <ExclamationOutlined
+                      style={{
+                        fontSize: '12px',
+                        color: provider.selected
+                          ? '#1890ff'
+                          : (isDarkMode ? '#a0a0a0' : '#666666')
+                      }}
+                    />
+                  </div>
+                )}
 
-                {/* 删除按钮 */}
-                <Tooltip title="删除">
-                  <Button
-                    type="text"
-                    icon={<DeleteOutlined />}
+                {/* 删除按钮 - 只有非默认提供商才显示，且选中的提供商不能删除 */}
+                {provider.id !== '1' && (
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteProvider(provider.id);
+                      if (!provider.selected) {
+                        handleDeleteProvider(provider.id);
+                      }
                     }}
                     style={{
-                      fontSize: '12px',
-                      color: provider.selected
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      border: provider.selected
+                        ? '1px solid rgba(255, 255, 255, 0.8)'
+                        : (isDarkMode ? '1px solid #ff7875' : '1px solid #ff4d4f'),
+                      background: provider.selected
                         ? 'rgba(255, 255, 255, 0.9)'
-                        : (isDarkMode ? '#ff7875' : '#ff4d4f'),
-                      padding: '2px 6px',
-                      height: '24px',
-                      width: '24px'
+                        : (isDarkMode ? 'rgba(255, 120, 117, 0.4)' : 'rgba(255, 77, 79, 0.4)'),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: provider.selected ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s ease',
+                      opacity: provider.selected ? 0.6 : 1
                     }}
-                  />
-                </Tooltip>
+                  >
+                    <MinusOutlined
+                      style={{
+                        fontSize: '12px',
+                        color: provider.selected
+                          ? '#1890ff'
+                          : (isDarkMode ? '#ff7875' : '#ff4d4f')
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
             </div>
@@ -485,15 +732,18 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
           onCancel={() => {
             setModalVisible(false);
             setEditingProvider(null);
+            setSelectedTemplate(null);
             form.resetFields();
           }}
           footer={null}
           width={700}
           style={{ top: 20 }}
-          bodyStyle={{
-            maxHeight: 'calc(100vh - 120px)',
-            overflowY: 'auto',
-            padding: '20px 24px'
+          styles={{
+            body: {
+              maxHeight: 'calc(100vh - 120px)',
+              overflowY: 'auto',
+              padding: '20px 24px'
+            }
           }}
         >
           <div className="modal-content-scroll" style={{
@@ -531,19 +781,85 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                 allowClear
                 style={{ width: '100%' }}
               >
-                {providerTemplates.map(template => (
-                  <Select.Option key={template.id} value={template.id}>
-                    <div>
-                      <Text strong>{template.name}</Text>
-                      <br />
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
-                        {template.description}
-                      </Text>
-                    </div>
-                  </Select.Option>
-                ))}
+                {providerTemplates.map(template => {
+                  const IconComponent = getProviderIcon(template.icon);
+                  return (
+                    <Select.Option key={template.id} value={template.id}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <IconComponent size={16} />
+                        {template.name}
+                      </div>
+                    </Select.Option>
+                  );
+                })}
               </Select>
             </Form.Item>
+
+            {/* 选中的模板信息显示 */}
+            {selectedTemplate && (() => {
+              const template = providerTemplates.find(t => t.id === selectedTemplate);
+              return template ? (
+                <div style={{
+                  padding: '12px 16px',
+                  background: isDarkMode ? '#1f1f1f' : '#f6f8fa',
+                  borderRadius: '8px',
+                  border: `1px solid ${isDarkMode ? '#303030' : '#d9d9d9'}`,
+                  marginBottom: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <Text strong style={{ color: isDarkMode ? '#ffffff' : '#262626' }}>
+                      {template.name}
+                    </Text>
+                    <a
+                      href={template.docs}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: '12px',
+                        color: '#1890ff',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      开发文档
+                    </a>
+                    {template.apiDocs && (
+                      <>
+                        <Text style={{ color: isDarkMode ? '#8c8c8c' : '#666666' }}>|</Text>
+                        <a
+                          href={template.apiDocs}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: '12px',
+                            color: '#1890ff',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          API文档
+                        </a>
+                      </>
+                    )}
+                    {template.website && (
+                      <>
+                        <Text style={{ color: isDarkMode ? '#8c8c8c' : '#666666' }}>|</Text>
+                        <a
+                          href={template.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: '12px',
+                            color: '#1890ff',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          官网
+                        </a>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ) : null;
+            })()}
 
             {/* 平铺展示所有表单字段 */}
             {/* 基本信息 */}
@@ -563,6 +879,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
             <Form.Item
               name={['env', 'ANTHROPIC_AUTH_TOKEN']}
               label="认证令牌 (ANTHROPIC_AUTH_TOKEN)"
+              rules={[{ required: true, message: '请输入认证令牌' }]}
               tooltip="用于API认证的令牌"
             >
               <Input.Password placeholder="输入认证令牌" style={{ width: '100%' }} />
@@ -666,6 +983,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               <Button onClick={() => {
                 setModalVisible(false);
                 setEditingProvider(null);
+                setSelectedTemplate(null);
                 form.resetFields();
               }}>
                 取消
@@ -679,6 +997,20 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
             </Space>
           </div>
         </div>
+      </Modal>
+
+      {/* 删除确认模态框 */}
+      <Modal
+        title="确认删除"
+        open={deleteModalVisible}
+        onOk={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        okText="删除"
+        cancelText="取消"
+        okType="danger"
+        icon={<ExclamationCircleOutlined />}
+      >
+        <p>确定要删除这个 API 服务商吗？此操作无法撤销。</p>
       </Modal>
       </div>
     </div>

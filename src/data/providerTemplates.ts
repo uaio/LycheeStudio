@@ -10,6 +10,7 @@ export interface ProviderTemplate {
   name: string;
   description: string;
   category: 'official' | 'domestic' | 'international' | 'proxy';
+  icon: string;  // 图标组件名称
   env: {
     ANTHROPIC_AUTH_TOKEN: string;
     ANTHROPIC_BASE_URL: string;
@@ -24,7 +25,8 @@ export interface ProviderTemplate {
   };
   tags?: string[];
   website?: string;
-  docs?: string;
+  docs: string;  // 开发文档链接（必需）
+  apiDocs?: string;  // API文档链接
   status?: 'active' | 'deprecated' | 'experimental';
 }
 
@@ -33,32 +35,11 @@ export interface ProviderTemplate {
  */
 export const providerTemplates: ProviderTemplate[] = [
   {
-    id: 'claude-official',
-    name: 'Claude 官方 API',
-    description: 'Anthropic 官方 Claude API 服务',
-    category: 'official',
-    env: {
-      ANTHROPIC_AUTH_TOKEN: '',
-      ANTHROPIC_BASE_URL: 'https://api.anthropic.com',
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-3-haiku-20240307',
-      ANTHROPIC_DEFAULT_SONNET_MODEL: 'claude-3-sonnet-20240229',
-      ANTHROPIC_DEFAULT_OPUS_MODEL: 'claude-3-opus-20240229'
-    },
-    apiSettings: {
-      timeout: 3000000,
-      retryAttempts: 3,
-      retryDelay: 1000
-    },
-    tags: ['official', 'anthropic'],
-    website: 'https://www.anthropic.com',
-    docs: 'https://docs.anthropic.com',
-    status: 'active'
-  },
-  {
     id: 'zhipu-ai',
     name: '智谱 AI',
     description: '智谱AI提供的Claude兼容API服务',
     category: 'domestic',
+    icon: 'Brain',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://open.bigmodel.cn/api/anthropic',
@@ -73,6 +54,8 @@ export const providerTemplates: ProviderTemplate[] = [
     },
     tags: ['domestic', 'glm', 'zhipu'],
     website: 'https://www.zhipuai.cn',
+    docs: 'https://open.bigmodel.cn/dev/api',
+    apiDocs: 'https://open.bigmodel.cn/dev/api#glm4',
     status: 'active'
   },
   {
@@ -80,6 +63,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: 'z.ai',
     description: 'z.ai提供的Claude兼容API服务',
     category: 'domestic',
+    icon: 'Zap',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://api.z.ai/api/anthropic',
@@ -94,6 +78,7 @@ export const providerTemplates: ProviderTemplate[] = [
     },
     tags: ['domestic', 'glm'],
     website: 'https://z.ai',
+    docs: 'https://z.ai/docs',
     status: 'active'
   },
   {
@@ -101,6 +86,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: 'MiniMax 国内版',
     description: 'MiniMax国内版Claude兼容API服务',
     category: 'domestic',
+    icon: 'Cpu',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://api.minimaxi.com/anthropic',
@@ -122,6 +108,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: 'MiniMax 国际版',
     description: 'MiniMax国际版Claude兼容API服务',
     category: 'international',
+    icon: 'Globe',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://api.minimax.io/anthropic',
@@ -143,6 +130,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: '月之暗面 (Moonshot)',
     description: '月之暗面提供的Claude兼容API服务',
     category: 'domestic',
+    icon: 'Moon',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://api.moonshot.cn/anthropic',
@@ -164,6 +152,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: '快手万擎',
     description: '快手万擎提供的Claude兼容API服务',
     category: 'domestic',
+    icon: 'Video',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://wanqing.streamlakeapi.com/api/gateway/v1/endpoints/xxx/claude-code-proxy',
@@ -184,6 +173,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: '深度求索 (DeepSeek)',
     description: '深度求索提供的Claude兼容API服务',
     category: 'domestic',
+    icon: 'Search',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://api.deepseek.com/anthropic',
@@ -198,6 +188,8 @@ export const providerTemplates: ProviderTemplate[] = [
     },
     tags: ['domestic', 'deepseek'],
     website: 'https://www.deepseek.com',
+    docs: 'https://platform.deepseek.com/api-docs',
+    apiDocs: 'https://platform.deepseek.com/api-docs/zh-cn/',
     status: 'active'
   },
   {
@@ -205,6 +197,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: '阿里云百炼',
     description: '阿里云百炼提供的Claude兼容API服务',
     category: 'domestic',
+    icon: 'Cloud',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://dashscope.aliyuncs.com/apps/anthropic',
@@ -219,6 +212,8 @@ export const providerTemplates: ProviderTemplate[] = [
     },
     tags: ['domestic', 'qwen', 'alibaba'],
     website: 'https://bailian.console.aliyun.com',
+    docs: 'https://help.aliyun.com/zh/modelscope/practical-tutorial',
+    apiDocs: 'https://help.aliyun.com/zh/modelscope/developer-reference',
     status: 'active'
   },
   {
@@ -226,6 +221,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: '魔搭 ModelScope',
     description: '魔搭ModelScope提供的Claude兼容API服务',
     category: 'domestic',
+    icon: 'Database',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://api-inference.modelscope.cn',
@@ -247,6 +243,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: 'PackyCode',
     description: 'PackyCode提供的Claude兼容API服务',
     category: 'proxy',
+    icon: 'Package',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://api.packycode.com',
@@ -261,6 +258,7 @@ export const providerTemplates: ProviderTemplate[] = [
     },
     tags: ['proxy'],
     website: 'https://packycode.com',
+    docs: 'https://packycode.com/docs',
     status: 'active'
   },
   {
@@ -268,6 +266,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: 'AnyRouter',
     description: 'AnyRouter提供的Claude兼容API服务',
     category: 'proxy',
+    icon: 'Router',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://anyrouter.top',
@@ -282,6 +281,7 @@ export const providerTemplates: ProviderTemplate[] = [
     },
     tags: ['proxy'],
     website: 'https://anyrouter.top',
+    docs: 'https://anyrouter.top/docs',
     status: 'active'
   },
   {
@@ -289,6 +289,7 @@ export const providerTemplates: ProviderTemplate[] = [
     name: 'LongCat',
     description: 'LongCat提供的Claude兼容API服务',
     category: 'proxy',
+    icon: 'Cat',
     env: {
       ANTHROPIC_AUTH_TOKEN: '',
       ANTHROPIC_BASE_URL: 'https://api.longcat.chat/anthropic',
@@ -303,6 +304,7 @@ export const providerTemplates: ProviderTemplate[] = [
     },
     tags: ['proxy'],
     website: 'https://longcat.chat',
+    docs: 'https://longcat.chat/docs',
     status: 'active'
   }
 ];
