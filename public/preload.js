@@ -14,9 +14,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 平台信息
   platform: process.platform,
 
-  // 文件操作（如果需要的话，请实现对应的IPC处理器）
-  // openFile: () => ipcRenderer.invoke('dialog:openFile'),
-  // saveFile: () => ipcRenderer.invoke('dialog:saveFile'),
+  // 文件操作
+  openFile: () => ipcRenderer.invoke('dialog:openFile'),
+  saveFile: () => ipcRenderer.invoke('dialog:saveFile'),
+
+  // Claude设置文件操作
+  readUserSettings: () => ipcRenderer.invoke('settings:read'),
+  writeUserSettings: (settings) => ipcRenderer.invoke('settings:write', settings),
 
   // 外部链接操作
   openExternal: (url) => ipcRenderer.invoke('open-external', url),

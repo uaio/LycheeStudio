@@ -563,3 +563,94 @@ ipcMain.handle('execute-command', async (event, command) => {
     });
   });
 });
+
+// Claude设置文件操作
+const os = require('os');
+const fs = require('fs');
+
+// 获取用户系统目录下的 .claude/settings.json 文件路径
+function getUserSettingsPath() {
+  return require('path').join(os.homedir(), '.claude', 'settings.json');
+}
+
+// 确保目录存在
+function ensureDirectoryExists(filePath) {
+  const dir = require('path').dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+// 读取用户设置
+ipcMain.handle('settings:read', async () => {
+  try {
+    const settingsPath = getUserSettingsPath();
+
+    if (!fs.existsSync(settingsPath)) {
+      // 如果文件不存在，返回默认设置
+      return {
+        success: true,
+        settings: {
+          env: {},
+          apiSettings: {
+            timeout: 3000000,
+            retryAttempts: 3,
+            retryDelay: 1000
+          }
+        }
+      };
+    }
+
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    return {
+      success: true,
+      settings
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      settings: null
+    };
+  }
+});
+
+// 写入用户设置
+ipcMain.handle('settings:write', async (event, settingsData) => {
+  try {
+    const { env, apiSettings } = settingsData;
+    const settingsPath = getUserSettingsPath();
+
+    // 确保目录存在
+    ensureDirectoryExists(settingsPath);
+
+    let currentSettings = {};
+    if (fs.existsSync(settingsPath)) {
+      currentSettings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    }
+
+    // 更新env和apiSettings字段，保留其他字段
+    const updatedSettings = {
+      ...currentSettings,
+      env: env || {},
+      apiSettings: apiSettings || {
+        timeout: 3000000,
+        retryAttempts: 3,
+        retryDelay: 1000
+      }
+    };
+
+    fs.writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 2), 'utf8');
+
+    return {
+      success: true,
+      message: '设置保存成功',
+      settingsPath
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
