@@ -15,6 +15,7 @@ import {
   Col,
   Select,
 } from 'antd';
+import './ClaudeProviderManager.css';
 import {
   PlusOutlined,
   EditOutlined,
@@ -56,7 +57,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
   isDarkMode,
   collapsed = false
 }) => {
-  // 预置的供应商模板
+  // 预置的 API 服务商模板
   const providerTemplates: ProviderTemplate[] = [
     {
       id: 'claude-official',
@@ -137,7 +138,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
-      message.error('加载提供商失败');
+      message.error('加载 API 服务商失败');
     } finally {
       setLoading(false);
     }
@@ -149,7 +150,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
         ? { ...provider, selected: true, status: 'connected' as const }
         : { ...provider, selected: false }
     ));
-    message.success('已切换提供商');
+    message.success('已切换 API 服务商');
   }, []);
 
   const handleEditProvider = (provider: APIProvider) => {
@@ -161,11 +162,11 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
   const handleDeleteProvider = (providerId: string) => {
     Modal.confirm({
       title: '确认删除',
-      content: '确定要删除这个提供商吗？此操作无法撤销。',
+      content: '确定要删除这个 API 服务商吗？此操作无法撤销。',
       icon: <ExclamationCircleOutlined />,
       onOk() {
         setProviders(prev => prev.filter(p => p.id !== providerId));
-        message.success('提供商已删除');
+        message.success('API 服务商已删除');
       },
     });
   };
@@ -191,7 +192,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
             ? { ...provider, ...values }
             : provider
         ));
-        message.success('提供商更新成功');
+        message.success('API 服务商更新成功');
       } else {
         const newProvider: APIProvider = {
           id: Date.now().toString(),
@@ -200,7 +201,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
           status: 'disconnected'
         };
         setProviders(prev => [...prev, newProvider]);
-        message.success('提供商添加成功');
+        message.success('API 服务商添加成功');
       }
       setModalVisible(false);
       setEditingProvider(null);
@@ -218,6 +219,9 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
 
   
   
+  // 获取当前选中的 API 服务商
+  const selectedProvider = providers.find(p => p.selected);
+
   return (
     <div style={{
       marginLeft: collapsed ? '0px' : '0px',
@@ -239,76 +243,127 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
           minHeight: 0
         }}
       >
-        
-        
-        {/* 添加提供商按钮 */}
-        <div style={{ marginBottom: '24px' }}>
-          <Button
-            type="primary"
-            size="large"
-            icon={<PlusOutlined />}
-            onClick={handleAddNew}
-            style={{
-              height: '48px',
-              borderRadius: '12px',
-              fontSize: '16px',
-              fontWeight: 500,
-              boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)'
-            }}
-          >
-            添加新提供商
-          </Button>
-        </div>
+        {/* 当前使用模型的大卡片 */}
+        <Card
+          style={{
+            marginBottom: '24px',
+            borderRadius: '12px',
+            background: isDarkMode
+              ? '#2a2a2a'
+              : '#ffffff',
+            border: isDarkMode
+              ? '2px solid #404040'
+              : '2px solid #e0e0e0',
+            boxShadow: isDarkMode
+              ? '0 4px 16px rgba(0, 0, 0, 0.4)'
+              : '0 4px 16px rgba(0, 0, 0, 0.1)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+          bodyStyle={{ padding: '24px' }}
+        >
+          {/* 标题和添加按钮 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '24px'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              {/* 呼吸灯图标 */}
+              {selectedProvider && (
+                <div
+                  className="pulsing-dot"
+                  style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    background: '#52c41a',
+                    boxShadow: '0 0 12px rgba(82, 196, 26, 0.6)'
+                  }}
+                />
+              )}
 
-        {/* 提供商列表 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {providers.map(provider => (
+              <Title level={3} style={{
+                color: isDarkMode ? '#ffffff' : '#262626',
+                margin: 0,
+                fontSize: '20px',
+                fontWeight: 600
+              }}>
+                {selectedProvider?.name || 'API 服务商'}
+              </Title>
+            </div>
+
+            {/* 右上角添加按钮 */}
+            <Button
+              type="primary"
+              shape="circle"
+              icon={<PlusOutlined />}
+              onClick={handleAddNew}
+              style={{
+                fontSize: '12px',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            />
+          </div>
+
+          {/* 提供商列表 - 在大卡片内部 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {providers.map(provider => (
             <div
               key={provider.id}
               onClick={() => handleSelectProvider(provider.id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '16px 20px',
-                gap: '16px',
-                borderRadius: '12px',
+                padding: '12px 16px',
+                gap: '12px',
+                borderRadius: '8px',
                 background: provider.selected
-                  ? 'linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%)'
-                  : '#ffffff',
+                  ? isDarkMode ? '#1890ff' : '#1677ff'
+                  : isDarkMode ? '#262626' : '#ffffff',
                 border: provider.selected
                   ? '2px solid #1890ff'
-                  : '1px solid #e8e8e8',
+                  : isDarkMode ? '1px solid #404040' : '1px solid #d9d9d9',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.2s ease',
                 boxShadow: provider.selected
-                  ? '0 4px 16px rgba(24, 144, 255, 0.15)'
-                  : '0 2px 8px rgba(0, 0, 0, 0.06)',
+                  ? '0 4px 12px rgba(24, 144, 255, 0.3)'
+                  : isDarkMode ? '0 1px 3px rgba(0, 0, 0, 0.2)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
               }}
               onMouseEnter={(e) => {
                 if (!provider.selected) {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.background = isDarkMode ? '#303030' : '#f0f0f0';
+                  e.currentTarget.style.boxShadow = isDarkMode ? '0 2px 6px rgba(0, 0, 0, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.15)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!provider.selected) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.06)';
+                  e.currentTarget.style.background = isDarkMode ? '#262626' : '#ffffff';
+                  e.currentTarget.style.boxShadow = isDarkMode ? '0 1px 3px rgba(0, 0, 0, 0.2)' : '0 1px 3px rgba(0, 0, 0, 0.1)';
                 }
               }}
             >
               {/* 左侧图标 */}
               <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
                 background: provider.type === 'official'
                   ? 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)'
                   : 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '18px',
+                fontSize: '14px',
                 color: '#ffffff',
                 flexShrink: 0
               }}>
@@ -318,16 +373,20 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               {/* 中间信息 */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: '16px',
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: '#262626',
-                  marginBottom: '4px'
+                  color: provider.selected
+                    ? '#ffffff'
+                    : (isDarkMode ? '#ffffff' : '#1a1a1a'),
+                  marginBottom: '2px'
                 }}>
                   {provider.name}
                 </div>
                 <div style={{
-                  fontSize: '14px',
-                  color: '#8c8c8c'
+                  fontSize: '12px',
+                  color: provider.selected
+                    ? 'rgba(255, 255, 255, 0.85)'
+                    : (isDarkMode ? '#bfbfbf' : '#595959')
                 }}>
                   {provider.model}
                 </div>
@@ -335,15 +394,17 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
 
               {/* 右侧操作按钮 */}
               <div
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* 选中状态 */}
                 <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '6px',
-                  border: '1px solid #d9d9d9',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: provider.selected
+                    ? '1px solid rgba(255, 255, 255, 0.6)'
+                    : (isDarkMode ? '1px solid #595959' : '1px solid #d9d9d9'),
                   background: 'transparent',
                   display: 'flex',
                   alignItems: 'center',
@@ -352,7 +413,19 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                   transition: 'all 0.2s ease'
                 }}>
                   {provider.selected ? (
-                    <CheckCircleFilled style={{ color: '#52c41a', fontSize: '14px' }} />
+                    <div style={{
+                      width: '12px',
+                      height: '12px',
+                      color: provider.selected
+                        ? 'rgba(255, 255, 255, 0.9)'
+                        : (isDarkMode ? '#a0a0a0' : '#666666'),
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      ✓
+                    </div>
                   ) : null}
                 </div>
 
@@ -366,9 +439,13 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                       handleEditProvider(provider);
                     }}
                     style={{
-                      fontSize: '14px',
-                      color: '#666666',
-                      padding: '4px 8px'
+                      fontSize: '12px',
+                      color: provider.selected
+                        ? 'rgba(255, 255, 255, 0.9)'
+                        : (isDarkMode ? '#a0a0a0' : '#666666'),
+                      padding: '2px 6px',
+                      height: '24px',
+                      width: '24px'
                     }}
                   />
                 </Tooltip>
@@ -377,29 +454,32 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                 <Tooltip title="删除">
                   <Button
                     type="text"
-                    danger
                     icon={<DeleteOutlined />}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteProvider(provider.id);
                     }}
                     style={{
-                      fontSize: '14px',
-                      color: '#ff4d4f',
-                      padding: '4px 8px'
+                      fontSize: '12px',
+                      color: provider.selected
+                        ? 'rgba(255, 255, 255, 0.9)'
+                        : (isDarkMode ? '#ff7875' : '#ff4d4f'),
+                      padding: '2px 6px',
+                      height: '24px',
+                      width: '24px'
                     }}
                   />
                 </Tooltip>
               </div>
 
-              </div>
+            </div>
           ))}
-        </div>
+          </div>
+        </Card>
 
-    
-        {/* 添加/编辑提供商模态框 */}
+        {/* 添加/编辑 API 服务商模态框 */}
         <Modal
-          title={editingProvider ? "编辑提供商" : "添加提供商"}
+          title={editingProvider ? "编辑 API 服务商" : "添加 API 服务商"}
           open={modalVisible}
           onCancel={() => {
             setModalVisible(false);
@@ -423,11 +503,11 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
             }}
           >
             <Form.Item
-              label="供应商模板"
-              tooltip="选择预设的供应商模板，会自动填充相关配置"
+              label="API 服务商模板"
+              tooltip="选择预设的 API 服务商模板，会自动填充相关配置"
             >
               <Select
-                placeholder="选择供应商模板（可选）"
+                placeholder="选择 API 服务商模板（可选）"
                 onChange={handleTemplateChange}
                 allowClear
                 style={{ width: '100%' }}
@@ -448,10 +528,10 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
 
             <Form.Item
               name="name"
-              label="提供商名称"
-              rules={[{ required: true, message: '请输入提供商名称' }]}
+              label="API 服务商名称"
+              rules={[{ required: true, message: '请输入 API 服务商名称' }]}
             >
-              <Input placeholder="输入提供商名称" />
+              <Input placeholder="输入 API 服务商名称" />
             </Form.Item>
 
             <Form.Item
