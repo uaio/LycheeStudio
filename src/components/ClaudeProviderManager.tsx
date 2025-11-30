@@ -713,33 +713,40 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
             form.resetFields();
           }}
           footer={null}
-          width={650}
+          width={700}
+          style={{ top: 20 }}
+          bodyStyle={{
+            maxHeight: 'calc(100vh - 120px)',
+            overflowY: 'auto',
+            padding: '20px 24px'
+          }}
         >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            initialValues={{
-              name: '',
-              apiUrl: '',
-              apiKey: '',
-              model: '',
-              maxTokens: 4096,
-              temperature: 0.7,
-              env: {
-                ANTHROPIC_AUTH_TOKEN: '',
-                ANTHROPIC_BASE_URL: '',
-                ANTHROPIC_DEFAULT_HAIKU_MODEL: '',
-                ANTHROPIC_DEFAULT_SONNET_MODEL: '',
-                ANTHROPIC_DEFAULT_OPUS_MODEL: '',
-              },
-              apiSettings: {
-                timeout: 3000000,
-                retryAttempts: 3,
-                retryDelay: 1000,
-              },
-            }}
-          >
+          <div style={{ paddingBottom: '80px' }}>
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+              initialValues={{
+                name: '',
+                apiUrl: '',
+                apiKey: '',
+                model: '',
+                maxTokens: 4096,
+                temperature: 0.7,
+                env: {
+                  ANTHROPIC_AUTH_TOKEN: '',
+                  ANTHROPIC_BASE_URL: '',
+                  ANTHROPIC_DEFAULT_HAIKU_MODEL: '',
+                  ANTHROPIC_DEFAULT_SONNET_MODEL: '',
+                  ANTHROPIC_DEFAULT_OPUS_MODEL: '',
+                },
+                apiSettings: {
+                  timeout: 3000000,
+                  retryAttempts: 3,
+                  retryDelay: 1000,
+                },
+              }}
+            >
             <Form.Item
               label="API 服务商模板"
               tooltip="选择预设的 API 服务商模板，会自动填充相关配置"
@@ -946,22 +953,37 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               </Col>
             </Row>
 
-            <Form.Item>
-              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                <Button onClick={() => {
-                  setModalVisible(false);
-                  setEditingProvider(null);
-                  form.resetFields();
-                }}>
-                  取消
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  {editingProvider ? '更新' : '添加'}
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
+            </Form>
+
+          {/* 固定在底部的按钮 */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: isDarkMode ? '#2a2a2a' : 'white',
+            borderTop: isDarkMode ? '1px solid #404040' : '1px solid #f0f0f0',
+            padding: '16px 24px',
+            zIndex: 10
+          }}>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => {
+                setModalVisible(false);
+                setEditingProvider(null);
+                form.resetFields();
+              }}>
+                取消
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => form.submit()}
+              >
+                {editingProvider ? '更新' : '添加'}
+              </Button>
+            </Space>
+          </div>
+        </div>
+      </Modal>
       </div>
     </div>
   );
