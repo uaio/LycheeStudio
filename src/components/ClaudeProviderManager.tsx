@@ -9,8 +9,6 @@ import {
   Form,
   message,
   Tooltip,
-  Row,
-  Col,
   Select,
   InputNumber,
   Divider,
@@ -803,89 +801,77 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               <Input placeholder="https://api.anthropic.com" style={{ width: '100%' }} />
             </Form.Item>
 
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name={['env', 'ANTHROPIC_DEFAULT_HAIKU_MODEL']}
-                  label="Haiku模型"
-                  tooltip="快速响应的模型，适用于简单任务"
-                >
-                  <Input placeholder="例如: claude-3-haiku-20240307" style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={['env', 'ANTHROPIC_DEFAULT_SONNET_MODEL']}
-                  label="Sonnet模型"
-                  tooltip="均衡性能的模型，适用于大多数任务"
-                >
-                  <Input placeholder="例如: claude-3-sonnet-20240229" style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={['env', 'ANTHROPIC_DEFAULT_OPUS_MODEL']}
-                  label="Opus模型"
-                  tooltip="高性能模型，适用于复杂任务"
-                >
-                  <Input placeholder="例如: claude-3-opus-20240229" style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-            </Row>
+            <Form.Item
+              name={['env', 'ANTHROPIC_DEFAULT_HAIKU_MODEL']}
+              label="Haiku模型"
+              tooltip="快速响应的模型，适用于简单任务"
+            >
+              <Input placeholder="例如: claude-3-haiku-20240307" style={{ width: '100%' }} />
+            </Form.Item>
+
+            <Form.Item
+              name={['env', 'ANTHROPIC_DEFAULT_SONNET_MODEL']}
+              label="Sonnet模型"
+              tooltip="均衡性能的模型，适用于大多数任务"
+            >
+              <Input placeholder="例如: claude-3-sonnet-20240229" style={{ width: '100%' }} />
+            </Form.Item>
+
+            <Form.Item
+              name={['env', 'ANTHROPIC_DEFAULT_OPUS_MODEL']}
+              label="Opus模型"
+              tooltip="高性能模型，适用于复杂任务"
+            >
+              <Input placeholder="例如: claude-3-opus-20240229" style={{ width: '100%' }} />
+            </Form.Item>
 
             <Divider />
 
             {/* API设置 */}
             <Title level={5}>API 设置</Title>
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name={['apiSettings', 'timeout']}
-                  label="超时时间 (毫秒)"
-                  rules={[{ required: true, message: '请输入超时时间' }]}
-                  tooltip="API请求的超时时间"
-                >
-                  <InputNumber
-                    min={1000}
-                    max={30000000}
-                    step={1000}
-                    style={{ width: '100%' }}
-                    placeholder="3000000"
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={['apiSettings', 'retryAttempts']}
-                  label="重试次数"
-                  rules={[{ required: true, message: '请输入重试次数' }]}
-                  tooltip="失败时的重试次数"
-                >
-                  <InputNumber
-                    min={0}
-                    max={10}
-                    style={{ width: '100%' }}
-                    placeholder="3"
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={['apiSettings', 'retryDelay']}
-                  label="重试延迟 (毫秒)"
-                  rules={[{ required: true, message: '请输入重试延迟' }]}
-                  tooltip="重试之间的延迟时间"
-                >
-                  <InputNumber
-                    min={100}
-                    max={10000}
-                    step={100}
-                    style={{ width: '100%' }}
-                    placeholder="1000"
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+            <Form.Item
+              name={['apiSettings', 'timeout']}
+              label="超时时间 (毫秒)"
+              rules={[{ required: true, message: '请输入超时时间' }]}
+              tooltip="API请求的超时时间"
+            >
+              <InputNumber
+                min={1000}
+                max={30000000}
+                step={1000}
+                style={{ width: '100%' }}
+                placeholder="3000000"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name={['apiSettings', 'retryAttempts']}
+              label="重试次数"
+              rules={[{ required: true, message: '请输入重试次数' }]}
+              tooltip="失败时的重试次数"
+            >
+              <InputNumber
+                min={0}
+                max={10}
+                style={{ width: '100%' }}
+                placeholder="3"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name={['apiSettings', 'retryDelay']}
+              label="重试延迟 (毫秒)"
+              rules={[{ required: true, message: '请输入重试延迟' }]}
+              tooltip="重试之间的延迟时间"
+            >
+              <InputNumber
+                min={100}
+                max={10000}
+                step={100}
+                style={{ width: '100%' }}
+                placeholder="1000"
+              />
+            </Form.Item>
 
             </Form>
 
