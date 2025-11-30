@@ -13,7 +13,7 @@ import {
   Col,
   Select,
   InputNumber,
-  Divider,
+  Collapse,
 } from 'antd';
 import './ClaudeProviderManager.css';
 import {
@@ -721,7 +721,11 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
             padding: '20px 24px'
           }}
         >
-          <div style={{ paddingBottom: '80px' }}>
+          <div className="modal-content-scroll" style={{
+              maxHeight: 'calc(100vh - 200px)',
+              overflowY: 'auto',
+              paddingRight: '8px'
+            }}>
             <Form
               form={form}
               layout="vertical"
@@ -771,187 +775,203 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               </Select>
             </Form.Item>
 
-            {/* 基本信息区域 */}
-            <Title level={5}>基本信息</Title>
-            <Form.Item
-              name="name"
-              label="API 服务商名称"
-              rules={[{ required: true, message: '请输入 API 服务商名称' }]}
-            >
-              <Input placeholder="输入 API 服务商名称" />
-            </Form.Item>
+            {/* 使用折叠面板组织表单字段 */}
+            <Collapse
+              defaultActiveKey={['basic']}
+              items={[
+                {
+                  key: 'basic',
+                  label: '基本信息',
+                  children: (
+                    <div style={{ padding: '8px 0' }}>
+                      <Form.Item
+                        name="name"
+                        label="API 服务商名称"
+                        rules={[{ required: true, message: '请输入 API 服务商名称' }]}
+                      >
+                        <Input placeholder="输入 API 服务商名称" />
+                      </Form.Item>
 
-            <Form.Item
-              name="apiUrl"
-              label="API 地址"
-              rules={[
-                { required: true, message: '请输入API地址' },
-                { type: 'url', message: '请输入有效的URL' }
+                      <Form.Item
+                        name="apiUrl"
+                        label="API 地址"
+                        rules={[
+                          { required: true, message: '请输入API地址' },
+                          { type: 'url', message: '请输入有效的URL' }
+                        ]}
+                      >
+                        <Input placeholder="https://api.anthropic.com" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="apiKey"
+                        label="API 密钥"
+                        rules={[{ required: true, message: '请输入API密钥' }]}
+                      >
+                        <Input.Password placeholder="输入API密钥" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="model"
+                        label="当前使用模型"
+                        rules={[{ required: true, message: '请输入模型名称' }]}
+                      >
+                        <Input placeholder="例如: claude-3-sonnet-20240229" />
+                      </Form.Item>
+
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Form.Item
+                            name="maxTokens"
+                            label="最大令牌数"
+                            rules={[{ required: true, message: '请输入最大令牌数' }]}
+                          >
+                            <Select
+                              placeholder="选择最大令牌数"
+                              style={{ width: '100%' }}
+                            >
+                              <Select.Option value={1024}>1024</Select.Option>
+                              <Select.Option value={2048}>2048</Select.Option>
+                              <Select.Option value={4096}>4096</Select.Option>
+                              <Select.Option value={8192}>8192</Select.Option>
+                              <Select.Option value={100000}>100K</Select.Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item
+                            name="temperature"
+                            label="温度参数"
+                            rules={[{ required: true, message: '请输入温度值' }]}
+                          >
+                            <Select
+                              placeholder="选择温度"
+                              style={{ width: '100%' }}
+                            >
+                              <Select.Option value={0.1}>0.1 (更严格)</Select.Option>
+                              <Select.Option value={0.3}>0.3</Select.Option>
+                              <Select.Option value={0.7}>0.7 (平衡)</Select.Option>
+                              <Select.Option value={1.0}>1.0 (更自由)</Select.Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </div>
+                  )
+                },
+                {
+                  key: 'env',
+                  label: '环境变量配置',
+                  children: (
+                    <div style={{ padding: '8px 0' }}>
+                      <Form.Item
+                        name={['env', 'ANTHROPIC_AUTH_TOKEN']}
+                        label="认证令牌 (ANTHROPIC_AUTH_TOKEN)"
+                        tooltip="用于API认证的令牌"
+                      >
+                        <Input.Password placeholder="输入认证令牌" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name={['env', 'ANTHROPIC_BASE_URL']}
+                        label="基础URL (ANTHROPIC_BASE_URL)"
+                        rules={[{ required: true, message: '请输入基础URL' }]}
+                        tooltip="API的基础URL地址"
+                      >
+                        <Input placeholder="https://api.anthropic.com" />
+                      </Form.Item>
+
+                      <Row gutter={16}>
+                        <Col span={8}>
+                          <Form.Item
+                            name={['env', 'ANTHROPIC_DEFAULT_HAIKU_MODEL']}
+                            label="Haiku模型"
+                            tooltip="快速响应的模型，适用于简单任务"
+                          >
+                            <Input placeholder="例如: claude-3-haiku-20240307" />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            name={['env', 'ANTHROPIC_DEFAULT_SONNET_MODEL']}
+                            label="Sonnet模型"
+                            tooltip="均衡性能的模型，适用于大多数任务"
+                          >
+                            <Input placeholder="例如: claude-3-sonnet-20240229" />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            name={['env', 'ANTHROPIC_DEFAULT_OPUS_MODEL']}
+                            label="Opus模型"
+                            tooltip="高性能模型，适用于复杂任务"
+                          >
+                            <Input placeholder="例如: claude-3-opus-20240229" />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </div>
+                  )
+                },
+                {
+                  key: 'apiSettings',
+                  label: 'API 设置',
+                  children: (
+                    <div style={{ padding: '8px 0' }}>
+                      <Row gutter={16}>
+                        <Col span={8}>
+                          <Form.Item
+                            name={['apiSettings', 'timeout']}
+                            label="超时时间 (毫秒)"
+                            rules={[{ required: true, message: '请输入超时时间' }]}
+                            tooltip="API请求的超时时间"
+                          >
+                            <InputNumber
+                              min={1000}
+                              max={30000000}
+                              step={1000}
+                              style={{ width: '100%' }}
+                              placeholder="3000000"
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            name={['apiSettings', 'retryAttempts']}
+                            label="重试次数"
+                            rules={[{ required: true, message: '请输入重试次数' }]}
+                            tooltip="失败时的重试次数"
+                          >
+                            <InputNumber
+                              min={0}
+                              max={10}
+                              style={{ width: '100%' }}
+                              placeholder="3"
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            name={['apiSettings', 'retryDelay']}
+                            label="重试延迟 (毫秒)"
+                            rules={[{ required: true, message: '请输入重试延迟' }]}
+                            tooltip="重试之间的延迟时间"
+                          >
+                            <InputNumber
+                              min={100}
+                              max={10000}
+                              step={100}
+                              style={{ width: '100%' }}
+                              placeholder="1000"
+                            />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </div>
+                  )
+                }
               ]}
-            >
-              <Input placeholder="https://api.anthropic.com" />
-            </Form.Item>
-
-            <Form.Item
-              name="apiKey"
-              label="API 密钥"
-              rules={[{ required: true, message: '请输入API密钥' }]}
-            >
-              <Input.Password placeholder="输入API密钥" />
-            </Form.Item>
-
-            <Form.Item
-              name="model"
-              label="当前使用模型"
-              rules={[{ required: true, message: '请输入模型名称' }]}
-            >
-              <Input placeholder="例如: claude-3-sonnet-20240229" />
-            </Form.Item>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="maxTokens"
-                  label="最大令牌数"
-                  rules={[{ required: true, message: '请输入最大令牌数' }]}
-                >
-                  <Select
-                    placeholder="选择最大令牌数"
-                    style={{ width: '100%' }}
-                  >
-                    <Select.Option value={1024}>1024</Select.Option>
-                    <Select.Option value={2048}>2048</Select.Option>
-                    <Select.Option value={4096}>4096</Select.Option>
-                    <Select.Option value={8192}>8192</Select.Option>
-                    <Select.Option value={100000}>100K</Select.Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="temperature"
-                  label="温度参数"
-                  rules={[{ required: true, message: '请输入温度值' }]}
-                >
-                  <Select
-                    placeholder="选择温度"
-                    style={{ width: '100%' }}
-                  >
-                    <Select.Option value={0.1}>0.1 (更严格)</Select.Option>
-                    <Select.Option value={0.3}>0.3</Select.Option>
-                    <Select.Option value={0.7}>0.7 (平衡)</Select.Option>
-                    <Select.Option value={1.0}>1.0 (更自由)</Select.Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Divider />
-
-            {/* 环境变量配置区域 */}
-            <Title level={5}>环境变量配置</Title>
-
-            <Form.Item
-              name={['env', 'ANTHROPIC_AUTH_TOKEN']}
-              label="认证令牌 (ANTHROPIC_AUTH_TOKEN)"
-              tooltip="用于API认证的令牌"
-            >
-              <Input.Password placeholder="输入认证令牌" />
-            </Form.Item>
-
-            <Form.Item
-              name={['env', 'ANTHROPIC_BASE_URL']}
-              label="基础URL (ANTHROPIC_BASE_URL)"
-              rules={[{ required: true, message: '请输入基础URL' }]}
-              tooltip="API的基础URL地址"
-            >
-              <Input placeholder="https://api.anthropic.com" />
-            </Form.Item>
-
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name={['env', 'ANTHROPIC_DEFAULT_HAIKU_MODEL']}
-                  label="Haiku模型"
-                  tooltip="快速响应的模型，适用于简单任务"
-                >
-                  <Input placeholder="例如: claude-3-haiku-20240307" />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={['env', 'ANTHROPIC_DEFAULT_SONNET_MODEL']}
-                  label="Sonnet模型"
-                  tooltip="均衡性能的模型，适用于大多数任务"
-                >
-                  <Input placeholder="例如: claude-3-sonnet-20240229" />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={['env', 'ANTHROPIC_DEFAULT_OPUS_MODEL']}
-                  label="Opus模型"
-                  tooltip="高性能模型，适用于复杂任务"
-                >
-                  <Input placeholder="例如: claude-3-opus-20240229" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Divider />
-
-            {/* API设置区域 */}
-            <Title level={5}>API 设置</Title>
-
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name={['apiSettings', 'timeout']}
-                  label="超时时间 (毫秒)"
-                  rules={[{ required: true, message: '请输入超时时间' }]}
-                  tooltip="API请求的超时时间"
-                >
-                  <InputNumber
-                    min={1000}
-                    max={30000000}
-                    step={1000}
-                    style={{ width: '100%' }}
-                    placeholder="3000000"
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={['apiSettings', 'retryAttempts']}
-                  label="重试次数"
-                  rules={[{ required: true, message: '请输入重试次数' }]}
-                  tooltip="失败时的重试次数"
-                >
-                  <InputNumber
-                    min={0}
-                    max={10}
-                    style={{ width: '100%' }}
-                    placeholder="3"
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name={['apiSettings', 'retryDelay']}
-                  label="重试延迟 (毫秒)"
-                  rules={[{ required: true, message: '请输入重试延迟' }]}
-                  tooltip="重试之间的延迟时间"
-                >
-                  <InputNumber
-                    min={100}
-                    max={10000}
-                    step={100}
-                    style={{ width: '100%' }}
-                    placeholder="1000"
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+            />
 
             </Form>
 
