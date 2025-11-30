@@ -381,28 +381,29 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
     if (template) {
       form.setFieldsValue({
         name: template.name,
-        apiUrl: template.env.ANTHROPIC_BASE_URL,
-        apiKey: template.env.ANTHROPIC_AUTH_TOKEN,
-        model: template.env.ANTHROPIC_DEFAULT_SONNET_MODEL,
         env: template.env,
         apiSettings: template.apiSettings,
-        maxTokens: 4096,
-        temperature: 0.7,
       });
     }
   };
 
   const handleSubmit = async (values: any) => {
     try {
-      // 确保有完整的env和apiSettings字段
+      // 基于env字段生成其他必需字段
+      const env = values.env || {};
       const providerData = {
-        ...values,
+        name: values.name,
+        apiUrl: env.ANTHROPIC_BASE_URL || '',
+        apiKey: env.ANTHROPIC_AUTH_TOKEN || '',
+        model: env.ANTHROPIC_DEFAULT_SONNET_MODEL || env.ANTHROPIC_DEFAULT_HAIKU_MODEL || '',
+        maxTokens: 4096,
+        temperature: 0.7,
         env: {
-          ANTHROPIC_AUTH_TOKEN: values.env?.ANTHROPIC_AUTH_TOKEN || values.apiKey || '',
-          ANTHROPIC_BASE_URL: values.env?.ANTHROPIC_BASE_URL || values.apiUrl || '',
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: values.env?.ANTHROPIC_DEFAULT_HAIKU_MODEL || '',
-          ANTHROPIC_DEFAULT_SONNET_MODEL: values.env?.ANTHROPIC_DEFAULT_SONNET_MODEL || values.model || '',
-          ANTHROPIC_DEFAULT_OPUS_MODEL: values.env?.ANTHROPIC_DEFAULT_OPUS_MODEL || '',
+          ANTHROPIC_AUTH_TOKEN: env.ANTHROPIC_AUTH_TOKEN || '',
+          ANTHROPIC_BASE_URL: env.ANTHROPIC_BASE_URL || '',
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: env.ANTHROPIC_DEFAULT_HAIKU_MODEL || '',
+          ANTHROPIC_DEFAULT_SONNET_MODEL: env.ANTHROPIC_DEFAULT_SONNET_MODEL || '',
+          ANTHROPIC_DEFAULT_OPUS_MODEL: env.ANTHROPIC_DEFAULT_OPUS_MODEL || '',
         },
         apiSettings: {
           timeout: values.apiSettings?.timeout || 3000000,
@@ -732,11 +733,6 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               onFinish={handleSubmit}
               initialValues={{
                 name: '',
-                apiUrl: '',
-                apiKey: '',
-                model: '',
-                maxTokens: 4096,
-                temperature: 0.7,
                 env: {
                   ANTHROPIC_AUTH_TOKEN: '',
                   ANTHROPIC_BASE_URL: '',
@@ -791,71 +787,6 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                       >
                         <Input placeholder="输入 API 服务商名称" />
                       </Form.Item>
-
-                      <Form.Item
-                        name="apiUrl"
-                        label="API 地址"
-                        rules={[
-                          { required: true, message: '请输入API地址' },
-                          { type: 'url', message: '请输入有效的URL' }
-                        ]}
-                      >
-                        <Input placeholder="https://api.anthropic.com" />
-                      </Form.Item>
-
-                      <Form.Item
-                        name="apiKey"
-                        label="API 密钥"
-                        rules={[{ required: true, message: '请输入API密钥' }]}
-                      >
-                        <Input.Password placeholder="输入API密钥" />
-                      </Form.Item>
-
-                      <Form.Item
-                        name="model"
-                        label="当前使用模型"
-                        rules={[{ required: true, message: '请输入模型名称' }]}
-                      >
-                        <Input placeholder="例如: claude-3-sonnet-20240229" />
-                      </Form.Item>
-
-                      <Row gutter={16}>
-                        <Col span={12}>
-                          <Form.Item
-                            name="maxTokens"
-                            label="最大令牌数"
-                            rules={[{ required: true, message: '请输入最大令牌数' }]}
-                          >
-                            <Select
-                              placeholder="选择最大令牌数"
-                              style={{ width: '100%' }}
-                            >
-                              <Select.Option value={1024}>1024</Select.Option>
-                              <Select.Option value={2048}>2048</Select.Option>
-                              <Select.Option value={4096}>4096</Select.Option>
-                              <Select.Option value={8192}>8192</Select.Option>
-                              <Select.Option value={100000}>100K</Select.Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                          <Form.Item
-                            name="temperature"
-                            label="温度参数"
-                            rules={[{ required: true, message: '请输入温度值' }]}
-                          >
-                            <Select
-                              placeholder="选择温度"
-                              style={{ width: '100%' }}
-                            >
-                              <Select.Option value={0.1}>0.1 (更严格)</Select.Option>
-                              <Select.Option value={0.3}>0.3</Select.Option>
-                              <Select.Option value={0.7}>0.7 (平衡)</Select.Option>
-                              <Select.Option value={1.0}>1.0 (更自由)</Select.Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                      </Row>
                     </div>
                   )
                 },
