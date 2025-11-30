@@ -779,7 +779,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               label="API 服务商名称"
               rules={[{ required: true, message: '请输入 API 服务商名称' }]}
             >
-              <Input placeholder="输入 API 服务商名称" />
+              <Input placeholder="输入 API 服务商名称" style={{ width: '100%' }} />
             </Form.Item>
 
             <Divider />
@@ -791,7 +791,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               label="认证令牌 (ANTHROPIC_AUTH_TOKEN)"
               tooltip="用于API认证的令牌"
             >
-              <Input.Password placeholder="输入认证令牌" />
+              <Input.Password placeholder="输入认证令牌" style={{ width: '100%' }} />
             </Form.Item>
 
             <Form.Item
@@ -800,7 +800,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
               rules={[{ required: true, message: '请输入基础URL' }]}
               tooltip="API的基础URL地址"
             >
-              <Input placeholder="https://api.anthropic.com" />
+              <Input placeholder="https://api.anthropic.com" style={{ width: '100%' }} />
             </Form.Item>
 
             <Row gutter={16}>
@@ -810,7 +810,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                   label="Haiku模型"
                   tooltip="快速响应的模型，适用于简单任务"
                 >
-                  <Input placeholder="例如: claude-3-haiku-20240307" />
+                  <Input placeholder="例如: claude-3-haiku-20240307" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
               <Col span={8}>
@@ -819,7 +819,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                   label="Sonnet模型"
                   tooltip="均衡性能的模型，适用于大多数任务"
                 >
-                  <Input placeholder="例如: claude-3-sonnet-20240229" />
+                  <Input placeholder="例如: claude-3-sonnet-20240229" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
               <Col span={8}>
@@ -828,7 +828,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
                   label="Opus模型"
                   tooltip="高性能模型，适用于复杂任务"
                 >
-                  <Input placeholder="例如: claude-3-opus-20240229" />
+                  <Input placeholder="例如: claude-3-opus-20240229" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
