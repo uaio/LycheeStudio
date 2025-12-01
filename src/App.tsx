@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { safeStorage } from './utils/storage';
 import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Modal, App as AntdApp } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import type { ThemeConfig } from 'antd';
@@ -560,13 +561,17 @@ function App() {
 
   // 侧边栏始终展开，不再支持收起功能
   const collapsed = false;
-  const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
-    // 从 localStorage 读取保存的主题设置
-    const savedTheme = localStorage.getItem('app-theme') as ThemeType;
-    return savedTheme || 'system';
-  });
+  const [currentTheme, setCurrentTheme] = useState<ThemeType>('system');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [statusCards, setStatusCards] = useState(initialStatusCards);
+
+  // 加载保存的主题设置
+  useEffect(() => {
+    const savedTheme = safeStorage.getItem('app-theme') as ThemeType;
+    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+      setCurrentTheme(savedTheme);
+    }
+  }, []);
 
   // 统一监听所有状态变化，更新状态卡片
   useEffect(() => {
@@ -1083,7 +1088,7 @@ function App() {
     setCurrentTheme(theme);
 
     // 保存主题设置到 localStorage
-    localStorage.setItem('app-theme', theme);
+    safeStorage.setItem('app-theme', theme);
 
     // 应用主题到文档
     const root = document.documentElement;

@@ -40,6 +40,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { providerTemplates } from '../data/providerTemplates';
+import { safeStorage } from '../utils/storage';
 
 const { Title, Text } = Typography;
 
@@ -131,7 +132,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
   const loadProviders = async () => {
     try {
       // 从localStorage加载用户设置的提供商
-      const savedProviders = localStorage.getItem('claude-providers');
+      const savedProviders = safeStorage.getItem('claude-providers');
       let userProviders: APIProvider[] = [];
 
       let selectedUserProvider: APIProvider | null = null;
@@ -216,7 +217,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
 
       // 只保存用户创建的提供商（过滤掉默认提供商）
       const userProviders = providersToSave.filter(p => p.id !== '1');
-      localStorage.setItem('claude-providers', JSON.stringify(userProviders));
+      safeStorage.setItem('claude-providers', JSON.stringify(userProviders));
 
       // 更新.claude/settings.json
       const selectedProvider = providersToSave.find(p => p.selected);
@@ -254,7 +255,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
           env: provider.env,
           apiSettings: provider.apiSettings
         };
-        localStorage.setItem('claude-settings', JSON.stringify(settings));
+        safeStorage.setItem('claude-settings', JSON.stringify(settings));
       }
     } catch (error) {
       console.error('更新settings.json失败:', error);
@@ -278,7 +279,7 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
         }
       } else {
         // 如果在浏览器环境（非Electron），清空localStorage
-        localStorage.setItem('claude-settings', JSON.stringify({
+        safeStorage.setItem('claude-settings', JSON.stringify({
           env: {},
           apiSettings: {}
         }));

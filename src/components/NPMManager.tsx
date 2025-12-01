@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { safeStorage } from '../utils/storage';
 import {
   Card,
   Button,
@@ -134,7 +135,7 @@ const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ is
 
   const initializeRegistries = () => {
     // 从本地存储加载自定义源
-    const customRegistriesJson = localStorage.getItem('custom-npm-registries');
+    const customRegistriesJson = safeStorage.getItem('custom-npm-registries');
     const customRegistries = customRegistriesJson ? JSON.parse(customRegistriesJson) : [];
 
     const allRegistries = [
@@ -150,7 +151,7 @@ const NPMManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean }> = ({ is
 
   const saveCustomRegistries = (updatedRegistries: NpmRegistry[]) => {
     const customRegistries = updatedRegistries.filter(registry => registry.isCustom);
-    localStorage.setItem('custom-npm-registries', JSON.stringify(customRegistries));
+    safeStorage.setItem('custom-npm-registries', JSON.stringify(customRegistries));
   };
 
   const loadCurrentRegistry = async () => {

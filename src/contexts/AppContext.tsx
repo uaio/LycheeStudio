@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import type { Language, Theme, AppState, Translations } from '../types/i18n';
 import { zh } from '../locales/zh';
 import { en } from '../locales/en';
+import { safeStorage } from '../utils/storage';
 
 interface AppContextType {
   state: AppState;
@@ -37,8 +38,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Load saved preferences from localStorage
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    const savedTheme = localStorage.getItem('theme') as Theme;
+    const savedLanguage = safeStorage.getItem('language') as Language;
+    const savedTheme = safeStorage.getItem('theme') as Theme;
 
     if (savedLanguage && (savedLanguage === 'zh' || savedLanguage === 'en')) {
       setLanguage(savedLanguage);
@@ -88,7 +89,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       language,
       translations
     }));
-    localStorage.setItem('language', language);
+    safeStorage.setItem('language', language);
   };
 
   const setTheme = (theme: Theme) => {
@@ -96,7 +97,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       ...prev,
       theme
     }));
-    localStorage.setItem('theme', theme);
+    safeStorage.setItem('theme', theme);
   };
 
   const effectiveTheme = state.theme === 'system' ? state.systemTheme : state.theme;
