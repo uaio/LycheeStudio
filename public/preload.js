@@ -22,6 +22,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readUserSettings: () => ipcRenderer.invoke('settings:read'),
   writeUserSettings: (settings) => ipcRenderer.invoke('settings:write', settings),
 
+  // CLAUDE.md文件操作
+  claudeMd: {
+    read: () => ipcRenderer.invoke('claudeMd:read'),
+    write: (content) => ipcRenderer.invoke('claudeMd:write', content)
+  },
+
+  // prompts数据操作
+  promptsData: {
+    read: () => ipcRenderer.invoke('promptsData:read'),
+    write: (data) => ipcRenderer.invoke('promptsData:write', data)
+  },
+
   // 外部链接操作
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
 

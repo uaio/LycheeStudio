@@ -9,6 +9,7 @@ import NPMManager from './components/NPMManager';
 import PackageManager from './components/PackageManager';
 import ClaudeCodeManager from './components/ClaudeCodeManager';
 import ClaudeProviderManager from './components/ClaudeProviderManager';
+import ClaudePromptsManager from './components/ClaudePromptsManager';
 import { useInstallation } from './hooks/useInstallation';
 import {
   Bot,
@@ -1242,6 +1243,38 @@ function App() {
           return (
             <div style={{ padding: '20px', backgroundColor: 'red', color: 'white' }}>
               Error rendering claude-providers: {error.message}
+            </div>
+          );
+        }
+      }
+
+      if (currentView === 'claude-prompts') {
+        try {
+          return (
+            <div style={{
+              marginLeft: '200px',
+              height: 'calc(100vh - 38px)',
+              overflow: 'hidden',
+              backgroundColor: isDarkMode ? '#141414' : '#ffffff',
+            }}>
+              <div
+                className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
+                style={{
+                  height: '100%',
+                  marginRight: 0,
+                  backgroundColor: isDarkMode ? '#141414' : '#ffffff',
+                  color: isDarkMode ? '#ffffff' : '#000000',
+                }}
+              >
+                <ClaudePromptsManager isDarkMode={isDarkMode} collapsed={collapsed} />
+              </div>
+            </div>
+          );
+        } catch (error) {
+          console.error('Error rendering claude-prompts:', error);
+          return (
+            <div style={{ padding: '20px', backgroundColor: 'red', color: 'white' }}>
+              Error rendering claude-prompts: {error.message}
             </div>
           );
         }

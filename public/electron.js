@@ -654,3 +654,117 @@ ipcMain.handle('settings:write', async (event, settingsData) => {
     };
   }
 });
+
+// CLAUDE.md文件操作
+function getClaudeMdPath() {
+  return require('path').join(os.homedir(), '.claude', 'CLAUDE.md');
+}
+
+function getPromptsDataPath() {
+  return require('path').join(os.homedir(), '.claude', 'prompts-data.json');
+}
+
+// 读取CLAUDE.md文件
+ipcMain.handle('claudeMd:read', async () => {
+  try {
+    const claudeMdPath = getClaudeMdPath();
+
+    if (!fs.existsSync(claudeMdPath)) {
+      // 文件不存在时返回空内容，而不是错误
+      return {
+        success: true,
+        content: ''
+      };
+    }
+
+    const content = fs.readFileSync(claudeMdPath, 'utf8');
+    return {
+      success: true,
+      content
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 写入CLAUDE.md文件
+ipcMain.handle('claudeMd:write', async (event, content) => {
+  try {
+    const claudeMdPath = getClaudeMdPath();
+
+    // 复用现有的 ensureDirectoryExists 函数
+    ensureDirectoryExists(claudeMdPath);
+
+    fs.writeFileSync(claudeMdPath, content, 'utf8');
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 读取prompts数据文件
+ipcMain.handle('promptsData:read', async () => {
+  try {
+    const promptsDataPath = getPromptsDataPath();
+
+    if (!fs.existsSync(promptsDataPath)) {
+      // 文件不存在时返回默认数据结构
+      return {
+        success: true,
+        data: {
+          version: '1.0.0',
+          templates: [],
+          lastSyncTime: null
+        }
+      };
+    }
+
+    const data = JSON.parse(fs.readFileSync(promptsDataPath, 'utf8'));
+    return {
+      success: true,
+      data
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// 写入prompts数据文件
+ipcMain.handle('promptsData:write', async (event, data) => {
+  try {
+    const promptsDataPath = getPromptsDataPath();
+
+    // 复用现有的 ensureDirectoryExists 函数
+    ensureDirectoryExists(promptsDataPath);
+
+    // 确保数据结构完整
+    const writeData = {
+      version: data.version || '1.0.0',
+      templates: data.templates || [],
+      lastSyncTime: new Date().toISOString()
+    };
+
+    fs.writeFileSync(promptsDataPath, JSON.stringify(writeData, null, 2), 'utf8');
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});

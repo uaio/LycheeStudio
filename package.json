@@ -17,7 +17,6 @@
     "antd": "^5.29.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.5",
-    "electron": "^39.2.1",
     "electron-builder": "^26.0.12",
     "express": "^5.1.0",
     "lucide-react": "^0.554.0",
@@ -111,5 +110,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     }
+  },
+  "devDependencies": {
+    "electron": "^39.2.5"
   }
 }

@@ -20,6 +20,18 @@ export interface ElectronAPI {
   nativeTheme: {
     shouldUseDarkColors: () => Promise<boolean>;
   };
+
+  // CLAUDE.md文件操作（基于现有settings模式）
+  claudeMd: {
+    read: () => Promise<{ success: boolean; content?: string; error?: string }>;
+    write: (content: string) => Promise<{ success: boolean; error?: string }>;
+  };
+
+  // prompts数据操作（基于现有settings模式）
+  promptsData: {
+    read: () => Promise<{ success: boolean; data?: any; error?: string }>;
+    write: (data: any) => Promise<{ success: boolean; error?: string }>;
+  };
 }
 
 declare global {
