@@ -561,7 +561,7 @@ function App() {
   });
 
   // 侧边栏始终展开，不再支持收起功能
-  const collapsed = false;
+  const [collapsed, setCollapsed] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<ThemeType>('system');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [statusCards, setStatusCards] = useState(initialStatusCards);
@@ -1133,7 +1133,7 @@ function App() {
       if (currentView === 'node-version') {
         return (
           <div style={{
-            marginLeft: '200px',
+            marginLeft: '0px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1163,7 +1163,7 @@ function App() {
       if (currentView === 'npm-source') {
         return (
           <div style={{
-            marginLeft: '200px',
+            marginLeft: '0px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1189,7 +1189,7 @@ function App() {
       if (currentView === 'package-managers') {
         return (
           <div style={{
-            marginLeft: '200px',
+            marginLeft: '0px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1216,26 +1216,11 @@ function App() {
         try {
           return (
             <div style={{
-              marginLeft: '200px',
-              height: 'calc(100vh - 38px)',
+              height: 'calc(100vh - 48px)',
               overflow: 'hidden',
               backgroundColor: isDarkMode ? '#141414' : '#ffffff',
             }}>
-              <div
-                className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
-                style={{
-                  paddingTop: '48px',
-                  paddingLeft: '48px',
-                  paddingBottom: '48px',
-                  paddingRight: '56px',
-                  height: '100%',
-                  marginRight: 0,
-                  backgroundColor: isDarkMode ? '#141414' : '#ffffff',
-                  color: isDarkMode ? '#ffffff' : '#000000',
-                }}
-              >
-                  <ClaudeProviderManager isDarkMode={isDarkMode} collapsed={collapsed} />
-              </div>
+              <ClaudeProviderManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           );
         } catch (error) {
@@ -1252,22 +1237,11 @@ function App() {
         try {
           return (
             <div style={{
-              marginLeft: '200px',
-              height: 'calc(100vh - 38px)',
+              height: 'calc(100vh - 48px)',
               overflow: 'hidden',
               backgroundColor: isDarkMode ? '#141414' : '#ffffff',
             }}>
-              <div
-                className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
-                style={{
-                  height: '100%',
-                  marginRight: 0,
-                  backgroundColor: isDarkMode ? '#141414' : '#ffffff',
-                  color: isDarkMode ? '#ffffff' : '#000000',
-                }}
-              >
-                <ClaudePromptsManager isDarkMode={isDarkMode} collapsed={collapsed} />
-              </div>
+              <ClaudePromptsManager isDarkMode={isDarkMode} collapsed={collapsed} />
             </div>
           );
         } catch (error) {
@@ -1283,7 +1257,7 @@ function App() {
       if (currentView === 'claude-code') {
         return (
           <div style={{
-            marginLeft: '200px',
+            marginLeft: '0px',
             height: 'calc(100vh - 38px)',
             overflow: 'hidden',
           }}>
@@ -1323,7 +1297,7 @@ function App() {
 
       return (
         <div style={{
-          marginLeft: '200px',
+          marginLeft: '0px',
           height: 'calc(100vh - 38px)',
           overflow: 'hidden',
         }}>
@@ -1421,8 +1395,7 @@ function App() {
 
     return (
       <div style={{
-        marginLeft: collapsed ? '64px' : '200px',
-        height: 'calc(100vh - 38px)',
+        height: 'calc(100vh - 48px)',
         overflow: 'hidden',
       }}>
         <div
@@ -1523,8 +1496,7 @@ function App() {
   const renderMyInvitations = () => {
     return (
       <div style={{
-        marginLeft: collapsed ? '64px' : '200px',
-        height: 'calc(100vh - 38px)',
+        height: 'calc(100vh - 48px)',
         overflow: 'hidden',
       }}>
         <div
@@ -1623,21 +1595,22 @@ function App() {
 
   // 渲染侧边栏菜单
   const renderSidebar = () => (
-    <>
-      <Sider
-        width={200}
-          style={{
-          background: isDarkMode ? '#1f1f1f' : '#f8f9fa',
-          borderRight: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
-          height: 'calc(100vh - 38px)',
-          position: 'fixed',
-          left: 0,
-          top: 38,
-          transition: collapsed
-          ? 'width 0.15s cubic-bezier(0.42, 0, 1, 1)'  // 收起：先慢后快
-          : 'width 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94)',  // 展开：先快后慢
-        }}
-      >
+    <Sider
+      width={200}
+      collapsed={collapsed}
+      collapsedWidth={0}
+      collapsible
+      trigger={null}
+      onCollapse={setCollapsed}
+      style={{
+        background: isDarkMode ? '#1f1f1f' : '#f8f9fa',
+        borderRight: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
+
+        transition: collapsed
+        ? 'width 0.15s cubic-bezier(0.42, 0, 1, 1)'  // 收起：先慢后快
+        : 'width 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94)',  // 展开：先快后慢
+      }}
+    >
         <div
           className={`sidebar-scroll-container ${isDarkMode ? 'dark-mode' : ''}`}
           style={{
@@ -1652,6 +1625,23 @@ function App() {
             marginRight: 0,
           }}
         >
+          {/* 收缩按钮 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: collapsed ? 'center' : 'flex-end',
+            marginBottom: '16px',
+            paddingRight: collapsed ? '0' : '8px'
+          }}>
+            <Button
+              type="text"
+              icon={collapsed ? <Menu size={16} /> : <Menu size={16} />}
+              onClick={() => setCollapsed(!collapsed)}
+              style={{
+                color: isDarkMode ? '#ffffff' : '#000000',
+                fontSize: '16px'
+              }}
+            />
+          </div>
           <Menu
             mode="inline"
             selectedKeys={[currentView === 'home' ? 'home' : currentView]}
@@ -1705,7 +1695,7 @@ function App() {
                   },
                   {
                     key: 'claude-prompts',
-                    label: '全局提示词管理',
+                    label: '全局提示词',
                     onClick: () => setCurrentView('claude-prompts')
                   },
                   {
@@ -1766,14 +1756,11 @@ function App() {
           />
         </div>
       </Sider>
-
-      </>
   );
 
   
   const renderHome = () => (
     <div style={{
-      marginLeft: collapsed ? '64px' : '200px', // 为侧边栏留出空间
       height: 'calc(100vh - 48px)', // 固定高度，减去标题栏高度（已增加到48px）
       overflow: 'hidden', // 隐藏溢出
     }}>
@@ -2089,6 +2076,7 @@ function App() {
         </Header>
 
         {/* 主内容区域 */}
+        {renderSidebar()}
         <Content
           className={isDarkMode ? 'dark-mode' : ''}
           style={{
@@ -2098,25 +2086,13 @@ function App() {
           }}
         >
           {currentView === 'home' ? (
-            <>
-              {renderSidebar()}
-              {renderHome()}
-            </>
+            renderHome()
           ) : currentView === 'platform-promotions' ? (
-            <>
-              {renderSidebar()}
-              {renderPlatformPromotions()}
-            </>
+            renderPlatformPromotions()
           ) : currentView === 'my-invitations' ? (
-            <>
-              {renderSidebar()}
-              {renderMyInvitations()}
-            </>
+            renderMyInvitations()
           ) : (
-            <>
-              {renderSidebar()}
-              {renderToolDetail()}
-            </>
+            renderToolDetail()
           )}
         </Content>
       </Layout>

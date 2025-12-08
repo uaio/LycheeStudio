@@ -5,41 +5,40 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Layout,
-  Card,
-  Row,
-  Col,
   Button,
   Space,
   Typography,
-  message,
   Modal,
-  Divider,
   Alert,
-  Spin
+  Spin,
+  Tooltip,
+  App
 } from 'antd';
 import {
   Save,
   RefreshCw,
   FileText,
-  Database,
-  Info,
-  CheckCircle,
-  AlertCircle,
-  Plus
+  Plus,
+  Copy,
+  Download,
+  Upload
 } from 'lucide-react';
 import MarkdownEditor from './MarkdownEditor';
-import TemplateLibrary from './TemplateLibrary';
+import TemplateModal from './TemplateModal';
 import { ClaudePromptsManagerProps, PromptTemplate } from '../types/prompts';
 import { promptsStorage } from '../utils/promptsStorage';
 import { BUILTIN_TEMPLATES } from '../data/builtinTemplates';
 
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
+const { Content } = Layout;
+const { Text } = Typography;
 
 const ClaudePromptsManager: React.FC<ClaudePromptsManagerProps> = ({
   isDarkMode,
   collapsed = false
 }) => {
+  // 消息API
+  const { message } = App.useApp();
+
   // 状态管理
   const [currentContent, setCurrentContent] = useState<string>('');
   const [originalContent, setOriginalContent] = useState<string>('');
@@ -47,6 +46,7 @@ const ClaudePromptsManager: React.FC<ClaudePromptsManagerProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null);
+  const [templateLibraryVisible, setTemplateLibraryVisible] = useState<boolean>(false);
 
   // 初始化内置模板
   useEffect(() => {
@@ -67,33 +67,22 @@ const ClaudePromptsManager: React.FC<ClaudePromptsManagerProps> = ({
       setOriginalContent(claudeMdContent);
       setTemplates(allTemplates);
 
-      message.success('数据加载成功');
+      // 只在首次加载时显示成功消息
+      if (originalContent === '') {
+        message.success('数据加载成功');
+      }
     } catch (error) {
       console.error('加载数据失败:', error);
       message.error('加载数据失败，请重试');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [message, originalContent]);
 
   // 组件挂载时加载数据
   useEffect(() => {
     loadInitialData();
   }, [loadInitialData]);
-
-  // 监听新建模板事件
-  useEffect(() => {
-    const triggerAddTemplate = () => {
-      // 触发TemplateLibrary的新建模板功能
-      const event = new CustomEvent('triggerAddTemplate');
-      window.dispatchEvent(event);
-    };
-
-    window.addEventListener('addTemplate', triggerAddTemplate);
-    return () => {
-      window.removeEventListener('addTemplate', triggerAddTemplate);
-    };
-  }, []);
 
   // 刷新数据
   const handleRefresh = async () => {
@@ -101,10 +90,26 @@ const ClaudePromptsManager: React.FC<ClaudePromptsManagerProps> = ({
   };
 
   // 处理模板选择
-  const handleSelectTemplate = (template: PromptTemplate) => {
-    setSelectedTemplate(template);
-    setCurrentContent(template.content);
-    message.success(`已选择模板: ${template.name}`);
+  const handleSelectTemplate = (template: PromptTemplate, mode: 'overwrite' | 'append' = 'overwrite') => {
+    if (mode === 'overwrite') {
+      Modal.confirm({
+        title: '确认操作',
+        content: `选择"${template.name}"模板将覆盖当前内容，是否继续？`,
+        okText: '确认',
+        cancelText: '取消',
+        onOk: () => {
+          setCurrentContent(template.content);
+          setSelectedTemplate(template);
+          message.success(`已应用模板: ${template.name}`);
+        }
+      });
+    } else {
+      // 追加模式
+      const newContent = currentContent + '\n\n' + template.content;
+      setCurrentContent(newContent);
+      setSelectedTemplate(template);
+      message.success(`已追加模板: ${template.name}`);
+    }
   };
 
   // 处理内容变化
@@ -200,173 +205,183 @@ const ClaudePromptsManager: React.FC<ClaudePromptsManagerProps> = ({
   const hasUnsavedChanges = currentContent !== originalContent;
 
   return (
-    <Layout style={{ height: '100%', background: 'transparent' }}>
-      {/* 顶部工具栏 */}
-      <Header
-        style={{
-          height: 'auto',
-          padding: '16px 24px',
-          background: 'transparent',
-          borderBottom: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8'
-        }}
-      >
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Space>
-              <FileText size={24} color={isDarkMode ? '#ffffff' : '#000000'} />
-              <div>
-                <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
-                  全局提示词管理
-                </Title>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  管理Claude全局提示词模板
-                </Text>
-              </div>
-            </Space>
-          </Col>
+    <Layout style={{
+      height: '100%',
+      background: 'transparent',
+      width: '100%'
+    }}>
+      <div style={{
+        height: '100%',
+        margin: '16px',
+        background: isDarkMode ? '#1f1f1f' : '#ffffff',
+        borderRadius: '12px',
+        boxShadow: isDarkMode
+          ? '0 4px 16px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+          : '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        border: isDarkMode ? '1px solid #404040' : '1px solid #e0e0e0',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* 简化的顶部工具栏 */}
+        <div
+          style={{
+            padding: '12px 24px',
+            background: 'transparent',
+            borderBottom: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            height: 'auto',
+            minHeight: '48px'
+          }}
+        >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <FileText size={20} color={isDarkMode ? '#ffffff' : '#000000'} />
+          <Text strong style={{ color: isDarkMode ? '#ffffff' : '#000000', fontSize: '14px' }}>
+            CLAUDE.md
+          </Text>
+          {selectedTemplate && (
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              当前: {selectedTemplate.name}
+            </Text>
+          )}
+        </div>
 
-          <Col>
-            <Space>
-              {hasUnsavedChanges && (
-                <Alert
-                  message="有未保存的更改"
-                  type="warning"
-                  showIcon
-                  style={{ padding: '4px 8px', fontSize: '12px' }}
-                />
-              )}
-              <Button
-                icon={<RefreshCw size={16} />}
-                onClick={handleRefresh}
-                loading={loading}
-                size="small"
-              >
-                刷新
-              </Button>
-              <Button
-                type="primary"
-                icon={<Save size={16} />}
-                onClick={handleSave}
-                loading={saving}
-                disabled={!hasUnsavedChanges}
-                size="small"
-              >
-                保存到CLAUDE.md
-              </Button>
-            </Space>
-          </Col>
-        </Row>
-      </Header>
+        <Space size="small">
+          {hasUnsavedChanges && (
+            <Alert
+              message="未保存"
+              type="warning"
+              showIcon
+              style={{ padding: '2px 8px', fontSize: '12px', height: '28px', display: 'flex', alignItems: 'center' }}
+            />
+          )}
+          <Button
+            icon={<RefreshCw size={16} />}
+            onClick={handleRefresh}
+            loading={loading}
+            size="small"
+          >
+            刷新
+          </Button>
+          <Button
+            icon={<Plus size={16} />}
+            size="small"
+            onClick={() => setTemplateLibraryVisible(true)}
+          >
+            模板
+          </Button>
+          <Tooltip title="复制内容">
+            <Button
+              icon={<Copy size={16} />}
+              size="small"
+              onClick={() => {
+                navigator.clipboard.writeText(currentContent);
+                message.success('内容已复制到剪贴板');
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="导出文件">
+            <Button
+              icon={<Download size={16} />}
+              size="small"
+              onClick={() => {
+                const blob = new Blob([currentContent], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'CLAUDE.md';
+                a.click();
+                URL.revokeObjectURL(url);
+                message.success('文件导出成功');
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="导入文件">
+            <Button
+              icon={<Upload size={16} />}
+              size="small"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.md';
+                input.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      const content = e.target?.result as string;
+                      setCurrentContent(content);
+                      message.success('文件导入成功');
+                    };
+                    reader.readAsText(file);
+                  }
+                };
+                input.click();
+              }}
+            />
+          </Tooltip>
+          <Button
+            type="primary"
+            icon={<Save size={16} />}
+            onClick={handleSave}
+            loading={saving}
+            disabled={!hasUnsavedChanges}
+            size="small"
+          >
+            保存
+          </Button>
+        </Space>
+      </div>
 
-      <Content style={{ padding: '0', overflow: 'hidden' }}>
+      <Content style={{
+        padding: '0 0 32px 0',
+        overflow: 'hidden',
+        background: 'transparent'
+      }}>
         {loading ? (
           <div style={{
             display: 'flex',
+            flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            height: '100%'
+            height: 'calc(100% - 64px)',
+            gap: '16px'
           }}>
-            <Spin size="large" tip="加载中..." />
+            <Spin size="large" />
+            <span style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+              加载中...
+            </span>
           </div>
         ) : (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {/* 当前编辑区域 */}
-            <div style={{
-              flex: 1,
-              marginBottom: '16px',
-              border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
-              borderRadius: '8px',
-              background: isDarkMode ? '#1f1f1f' : '#ffffff',
-              overflow: 'hidden'
-            }}>
-              {/* 当前选中模板信息 */}
-              {selectedTemplate && (
-                <div style={{
-                  padding: '12px 16px',
-                  borderBottom: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
-                  background: isDarkMode ? '#2a2a2a' : '#f5f5f5'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <CheckCircle size={16} color="#52c41a" />
-                    <div>
-                      <Text strong style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
-                        {selectedTemplate.name}
-                      </Text>
-                      <div style={{ fontSize: '12px', color: '#8c8c8c', marginTop: '2px' }}>
-                        {selectedTemplate.description}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 编辑器 */}
-              <div style={{ height: selectedTemplate ? 'calc(100% - 60px)' : '100%' }}>
-                <MarkdownEditor
-                  value={currentContent}
-                  onChange={handleContentChange}
-                  isDarkMode={isDarkMode}
-                  placeholder="请选择模板或直接编辑内容..."
-                  height="100%"
-                />
-              </div>
-            </div>
-
-            {/* 模板列表区域 */}
-            <div style={{
-              height: '300px',
-              border: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
-              borderRadius: '8px',
-              background: isDarkMode ? '#1f1f1f' : '#ffffff',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                padding: '12px 16px',
-                borderBottom: isDarkMode ? '1px solid #424242' : '1px solid #e8e8e8',
-                background: isDarkMode ? '#2a2a2a' : '#fafafa',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <Space>
-                  <Database size={16} />
-                  <Text strong style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
-                    模板列表
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: '12px' }}>
-                    (内置: {BUILTIN_TEMPLATES.length}, 自定义: {templates.length - BUILTIN_TEMPLATES.length})
-                  </Text>
-                </Space>
-                <Button
-                  type="primary"
-                  icon={<Plus size={16} />}
-                  onClick={() => {
-                    // 触发添加模板的模态框
-                    const event = new CustomEvent('addTemplate');
-                    window.dispatchEvent(event);
-                  }}
-                  size="small"
-                >
-                  新建模板
-                </Button>
-              </div>
-
-              <div style={{ height: 'calc(100% - 53px)', overflow: 'auto' }}>
-                <TemplateLibrary
-                  templates={templates}
-                  onSelectTemplate={handleSelectTemplate}
-                  onAddTemplate={handleAddTemplate}
-                  onEditTemplate={handleEditTemplate}
-                  onDeleteTemplate={handleDeleteTemplate}
-                  isDarkMode={isDarkMode}
-                  loading={loading}
-                  simplified={true}
-                />
-              </div>
-            </div>
+          <div style={{
+            height: 'calc(100% - 64px)',
+            overflow: 'hidden'
+          }}>
+            <MarkdownEditor
+              value={currentContent}
+              onChange={handleContentChange}
+              isDarkMode={isDarkMode}
+              placeholder="在此编辑 Claude 全局提示词..."
+              height="100%"
+            />
           </div>
         )}
       </Content>
+      </div>
+
+      {/* 模板管理模态框 */}
+      <TemplateModal
+        visible={templateLibraryVisible}
+        onClose={() => setTemplateLibraryVisible(false)}
+        templates={templates}
+        onAddTemplate={handleAddTemplate}
+        onEditTemplate={handleEditTemplate}
+        onDeleteTemplate={handleDeleteTemplate}
+        onSelectTemplate={handleSelectTemplate}
+        isDarkMode={isDarkMode}
+      />
     </Layout>
   );
 };

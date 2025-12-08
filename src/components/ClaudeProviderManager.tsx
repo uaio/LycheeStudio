@@ -440,10 +440,10 @@ const ClaudeProviderManager: React.FC<{ isDarkMode: boolean; collapsed?: boolean
       <div
         className="sidebar-scroll-container"
         style={{
-          paddingTop: '32px',
-          paddingLeft: collapsed ? '24px' : '24px',
-          paddingRight: collapsed ? '24px' : '32px',
-          paddingBottom: '32px',
+          paddingTop: '48px',
+          paddingLeft: '48px',
+          paddingRight: '56px',
+          paddingBottom: '48px',
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
