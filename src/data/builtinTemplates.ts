@@ -369,5 +369,404 @@ export const BUILTIN_TEMPLATES: PromptTemplate[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     isBuiltin: true
+  },
+  {
+    id: 'sop_requirements_analysis',
+    name: '需求分析SOP',
+    description: '标准化的软件开发需求分析流程，确保需求收集、分析、验证的完整性',
+    content: `# 软件需求分析标准操作程序 (SOP)
+
+## 1. 需求收集阶段
+
+### 1.1 初步沟通
+- 目标: 了解项目背景和基本需求
+- 参与人员: 产品经理、业务分析师、客户代表
+- 关键活动:
+  - 召开项目启动会议
+  - 收集业务文档和资料
+  - 了解项目范围和约束条件
+  - 识别关键利益相关者
+
+### 1.2 详细调研
+- 目标: 深入理解业务流程和用户需求
+- 关键活动:
+  - 用户访谈和问卷调查
+  - 业务流程观察和记录
+  - 竞品分析和市场调研
+  - 技术可行性评估
+
+## 2. 需求分析阶段
+
+### 2.1 需求分类
+- 功能需求: 系统应该具备的具体功能
+- 非功能需求: 性能、安全、可用性等质量属性
+- 约束需求: 技术栈、法规、预算等限制条件
+- 接口需求: 系统间交互和数据交换要求
+
+### 2.2 需求优先级排序
+使用MoSCoW方法：
+- Must have: 必须实现的核心需求
+- Should have: 重要的但非必需的需求
+- Could have: 有了更好的需求
+- Won't have: 本次不考虑的需求
+
+### 2.3 需求建模
+- 用例图: 描述用户与系统的交互
+- 活动图: 展示业务流程和工作流
+- 状态图: 表示对象状态变化
+- 数据流图: 展示数据在系统中的流动
+
+## 3. 需求文档编写
+
+### 3.1 软件需求规格说明书 (SRS)
+项目概述
+- 项目背景和目标
+- 项目范围说明
+- 术语和定义
+
+总体描述
+- 产品功能概述
+- 用户特征
+- 运行环境
+- 设计和实现约束
+
+具体需求
+- 功能需求详述
+- 非功能需求详述
+- 接口需求详述
+- 数据需求详述
+
+### 3.2 用户故事格式
+作为一个 [角色]
+我希望 [功能描述]
+以便 [价值/收益]
+
+验收标准：
+- 给定 [前置条件]
+- 当 [操作执行]
+- 那么 [预期结果]
+
+## 4. 需求验证阶段
+
+### 4.1 需求评审
+- 评审类型:
+  - 正式评审（会议形式）
+  - 走查（逐步检查）
+  - 检查（清单验证）
+- 评审内容:
+  - 需求的完整性
+  - 需求的一致性
+  - 需求的可测试性
+  - 需求的可行性
+
+### 4.2 原型验证
+- 低保真原型: 纸质原型或线框图
+- 高保真原型: 可交互的界面原型
+- 用户测试: 真实用户使用验证
+
+## 5. 需求管理
+
+### 5.1 需求跟踪
+- 需求跟踪矩阵: 建立需求与设计、代码、测试的关联
+- 变更控制: 需求变更的申请、评估、审批流程
+- 版本管理: 需求文档的版本控制和历史记录
+
+### 5.2 风险识别
+- 需求风险: 需求不明确、频繁变更
+- 技术风险: 技术难度、技术选型
+- 资源风险: 人力、时间、预算限制
+- 业务风险: 市场变化、竞争压力
+
+## 6. 质量保证
+
+### 6.1 质量检查清单
+- [ ] 需求是否完整明确
+- [ ] 是否与业务目标一致
+- [ ] 是否可测试验证
+- [ ] 是否有明确的验收标准
+- [ ] 是否考虑了异常情况
+- [ ] 是否符合相关法规标准
+
+### 6.2 度量指标
+- 需求稳定性指数
+- 需求变更率
+- 需求覆盖率
+- 缺陷密度
+- 用户满意度
+
+## 7. 工具和模板
+
+### 7.1 推荐工具
+- 需求管理: JIRA, Confluence, Azure DevOps
+- 原型设计: Axure, Figma, Sketch
+- 文档协作: Notion, SharePoint, Google Docs
+- 流程图: Visio, Lucidchart, Draw.io
+
+### 7.2 输出文档
+- [ ] 项目启动会议纪要
+- [ ] 利益相关者分析表
+- [ ] 用户访谈记录
+- [ ] 业务流程文档
+- [ ] 软件需求规格说明书
+- [ ] 原型设计稿
+- [ ] 需求评审报告
+- [ ] 需求跟踪矩阵
+
+## 项目信息
+- 项目名称：{{project_name}}
+- 项目经理：{{project_manager}}
+- 业务分析师：{{business_analyst}}
+- 开始日期：{{start_date}}
+- 预计完成：{{estimated_completion}}`,
+    category: 'development',
+    tags: ['需求分析', 'SOP', '软件开发', '需求管理'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isBuiltin: true
+  },
+  {
+    id: 'sop_system_design',
+    name: '系统设计SOP',
+    description: '完整的系统架构设计标准流程，包括架构设计、接口设计、数据库设计等',
+    content: `# 系统设计标准操作程序 (SOP)
+
+## 1. 设计准备阶段
+
+### 1.1 需求理解
+- 输入文档:
+  - 软件需求规格说明书 (SRS)
+  - 用户故事和验收标准
+  - 非功能性需求文档
+  - 技术约束条件
+
+### 1.2 技术调研
+- 技术栈选型:
+  - 前端框架选择 (React, Vue, Angular等)
+  - 后端技术栈 (Java, Python, Node.js等)
+  - 数据库选择 (MySQL, PostgreSQL, MongoDB等)
+  - 中间件选择 (Redis, Kafka, RabbitMQ等)
+
+### 1.3 架构模式选择
+- 单体架构: 适合小型应用
+- 微服务架构: 适合大型分布式系统
+- 服务化架构: 介于单体和微服务之间
+- 无服务架构: 适合事件驱动型应用
+
+## 2. 架构设计阶段
+
+### 2.1 系统分层架构
+表现层 (Presentation)
+- Web应用 / 移动端 / 桌面应用
+
+应用层 (Application)
+- 业务逻辑 / 工作流 / 服务编排
+
+领域层 (Domain)
+- 实体模型 / 业务规则 / 领域服务
+
+基础设施层 (Infrastructure)
+- 数据访问 / 外部服务 / 技术服务
+
+### 2.2 微服务拆分原则
+- 单一职责原则: 每个服务专注一个业务领域
+- 自治性: 服务独立开发、部署、扩展
+- 业务能力: 围绕业务能力而非技术层次拆分
+- 数据隔离: 每个服务拥有独立的数据存储
+
+### 2.3 关键设计决策
+1. 通信机制:
+   - 同步调用: REST API, gRPC
+   - 异步消息: 事件驱动, 消息队列
+
+2. 数据一致性:
+   - 强一致性: 分布式事务, 2PC
+   - 最终一致性: 事件溯源, CQRS, Saga模式
+
+3. 缓存策略:
+   - 缓存穿透: 布隆过滤器
+   - 缓存击穿: 互斥锁, 永不过期
+   - 缓存雪崩: 随机过期时间
+
+## 3. 详细设计阶段
+
+### 3.1 接口设计
+#### REST API设计规范
+用户管理API
+/users:
+  get:    # 获取用户列表
+  post:   # 创建用户
+/users/{id}:
+  get:    # 获取用户详情
+  put:    # 更新用户信息
+  delete: # 删除用户
+
+响应格式标准
+{
+  "code": 200,           # 状态码
+  "message": "success",  # 提示信息
+  "data": {},            # 响应数据
+  "timestamp": 1234567890 # 时间戳
+}
+
+#### 数据库设计规范
+表命名规范: 业务模块_具体表名 (user_profile)
+字段命名规范: 使用下划线分隔 (created_at)
+索引命名规范: idx_表名_字段名 (idx_user_email)
+
+CREATE TABLE user_profile (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX idx_user_email (email),
+    INDEX idx_user_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+### 3.2 安全设计
+#### 认证授权机制
+JWT Token结构
+{
+  "header": {
+    "alg": "HS256",
+    "typ": "JWT"
+  },
+  "payload": {
+    "user_id": "12345",
+    "username": "john_doe",
+    "roles": ["user", "admin"],
+    "exp": 1640995200,
+    "iat": 1640908800
+  }
+}
+
+#### 数据加密策略
+- 传输加密: HTTPS/TLS 1.3
+- 存储加密: AES-256 for sensitive data
+- 密码存储: bcrypt with salt
+- API签名: HMAC-SHA256
+
+### 3.3 性能优化设计
+#### 数据库优化
+查询优化示例
+EXPLAIN SELECT * FROM orders
+WHERE user_id = 123
+AND created_at >= '2023-01-01'
+ORDER BY created_at DESC
+LIMIT 10;
+
+索引优化
+CREATE INDEX idx_orders_user_date
+ON orders (user_id, created_at DESC);
+
+#### 缓存策略设计
+多级缓存架构
+L1 Cache (本地缓存): Guava Cache
+├── 容量: 1000 entries
+├── 过期: 5分钟
+└── 淘汰策略: LRU
+
+L2 Cache (分布式缓存): Redis
+├── 集群模式: Redis Cluster
+├── 持久化: RDB + AOF
+└── 高可用: Sentinel + Master-Slave
+
+## 4. 设计文档编写
+
+### 4.1 架构设计文档
+系统架构设计文档
+
+## 1. 架构概述
+### 1.1 系统目标
+### 1.2 架构原则
+### 1.3 技术选型
+
+## 2. 系统架构
+### 2.1 整体架构图
+### 2.2 核心组件说明
+### 2.3 部署架构
+### 2.4 数据流向
+
+## 3. 详细设计
+### 3.1 模块设计
+### 3.2 接口设计
+### 3.3 数据库设计
+### 3.4 安全设计
+
+## 4. 非功能性设计
+### 4.1 性能设计
+### 4.2 可用性设计
+### 4.3 扩展性设计
+### 4.4 运维设计
+
+### 4.2 API文档
+API接口文档
+
+接口基础信息
+- Base URL: https://api.example.com/v1
+- 认证方式: Bearer Token
+- 数据格式: JSON
+
+用户管理接口
+
+获取用户列表
+请求: GET /users
+参数:
+- page: 页码 (default: 1)
+- size: 每页数量 (default: 20)
+响应: 用户列表数据
+
+创建用户
+请求: POST /users
+请求体: 用户信息
+响应: 创建结果
+
+## 5. 设计评审阶段
+
+### 5.1 评审检查项
+- [ ] 功能性: 是否满足所有功能需求
+- [ ] 性能: 是否满足性能指标要求
+- [ ] 安全性: 是否有完善的安全措施
+- [ ] 可维护性: 代码结构是否清晰
+- [ ] 可扩展性: 是否支持未来扩展
+- [ ] 可用性: 是否有容错和恢复机制
+
+### 5.2 评审流程
+1. 设计人员讲解: 架构师介绍设计方案
+2. 技术评审: 技术专家评估技术可行性
+3. 业务评审: 产品经理确认业务符合性
+4. 运维评审: 运维团队评估部署可行性
+5. 安全评审: 安全团队检查安全风险
+
+## 6. 设计工具和模板
+
+### 6.1 设计工具
+- 架构图: Draw.io, Lucidchart, Visio
+- UML图: PlantUML, StarUML, Enterprise Architect
+- API设计: Swagger/OpenAPI, Postman
+- 数据库设计: MySQL Workbench, Navicat, ER/Studio
+
+### 6.2 设计模板
+- [ ] 架构设计说明书
+- [ ] 接口设计文档
+- [ ] 数据库设计文档
+- [ ] 安全设计方案
+- [ ] 部署架构图
+- [ ] 数据流图
+- [ ] 状态机图
+- [ ] 时序图
+
+## 项目信息
+- 系统名称：{{system_name}}
+- 架构师：{{architect_name}}
+- 技术栈：{{tech_stack}}
+- 设计开始：{{design_start_date}}
+- 预计完成：{{design_completion_date}}`,
+    category: 'development',
+    tags: ['系统设计', '架构设计', 'SOP', '技术设计'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isBuiltin: true
   }
 ];

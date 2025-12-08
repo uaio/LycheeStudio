@@ -25,7 +25,9 @@ import {
   Trash2,
   Filter,
   FileText,
-  CornerUpLeft
+  CornerUpLeft,
+  Eye,
+  Copy
 } from 'lucide-react';
 import { PromptTemplate } from '../types/prompts';
 
@@ -35,10 +37,33 @@ const { Text } = Typography;
 
 // 类别映射
 const categoryMap = {
-  development: { name: '开发', color: '#1890ff' },
-  analysis: { name: '分析', color: '#722ed1' },
+  general: { name: '通用', color: '#1890ff' },
+  development: { name: '开发', color: '#52c41a' },
+  education: { name: '教育', color: '#722ed1' },
+  writing: { name: '写作', color: '#fa8c16' },
+  data: { name: '数据', color: '#13c2c2' },
+  management: { name: '管理', color: '#eb2f96' },
+  content: { name: '内容', color: '#f5222d' },
+  language: { name: '语言', color: '#a0d911' },
+  research: { name: '研究', color: '#2f54eb' },
+  business: { name: '商业', color: '#fa541c' },
   creative: { name: '创意', color: '#fa8c16' },
-  productivity: { name: '效率', color: '#52c41a' }
+  health: { name: '健康', color: '#52c41a' },
+  technical: { name: '技术', color: '#1890ff' },
+  presentation: { name: '演示', color: '#722ed1' },
+  ai: { name: 'AI', color: '#13c2c2' },
+  legal: { name: '法律', color: '#eb2f96' },
+  design: { name: '设计', color: '#f5222d' },
+  marketing: { name: '营销', color: '#a0d911' },
+  product: { name: '产品', color: '#2f54eb' },
+  security: { name: '安全', color: '#fa541c' },
+  finance: { name: '金融', color: '#52c41a' },
+  hr: { name: '人力', color: '#1890ff' },
+  sustainability: { name: '可持续', color: '#722ed1' },
+  agile: { name: '敏捷', color: '#13c2c2' },
+  entertainment: { name: '娱乐', color: '#eb2f96' },
+  analysis: { name: '分析', color: '#fa8c16' },
+  productivity: { name: '效率', color: '#f5222d' }
 };
 
 interface TemplateModalProps {
@@ -67,6 +92,8 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
   const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
   const [isAddMode, setIsAddMode] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [previewTemplate, setPreviewTemplate] = useState<PromptTemplate | null>(null);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   // 处理新建模板
   const handleAdd = () => {
@@ -120,6 +147,29 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
     setIsAddMode(false);
     setEditingTemplate(null);
     form.resetFields();
+  };
+
+  // 处理预览模板
+  const handlePreview = (template: PromptTemplate) => {
+    setPreviewTemplate(template);
+    setPreviewVisible(true);
+  };
+
+  // 关闭预览
+  const handleClosePreview = () => {
+    setPreviewVisible(false);
+    setPreviewTemplate(null);
+  };
+
+  // 处理复制模板内容到剪贴板
+  const handleCopyToClipboard = async (template: PromptTemplate) => {
+    try {
+      await navigator.clipboard.writeText(template.content);
+      message.success('模板内容已复制到剪贴板');
+    } catch (error) {
+      console.error('复制失败:', error);
+      message.error('复制失败，请手动复制');
+    }
   };
 
   // 过滤模板
@@ -192,13 +242,12 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
                 name="category"
                 label="分类"
                 rules={[{ required: true, message: '请选择分类' }]}
-                initialValue="development"
+                initialValue="general"
               >
                 <Select>
-                  <Option value="development">开发</Option>
-                  <Option value="analysis">分析</Option>
-                  <Option value="creative">创意</Option>
-                  <Option value="productivity">效率</Option>
+                  {Object.entries(categoryMap).map(([key, value]) => (
+                    <Option key={key} value={key}>{value.name}</Option>
+                  ))}
                 </Select>
               </Form.Item>
 
@@ -308,6 +357,24 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
                         )}
                       </div>
                       <Space>
+                        <Tooltip title="预览模板内容">
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<Eye size={14} />}
+                            onClick={() => handlePreview(template)}
+                            style={{ color: isDarkMode ? '#1890ff' : '#0969da' }}
+                          />
+                        </Tooltip>
+                        <Tooltip title="复制模板内容到剪贴板">
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<Copy size={14} />}
+                            onClick={() => handleCopyToClipboard(template)}
+                            style={{ color: isDarkMode ? '#52c41a' : '#52a970' }}
+                          />
+                        </Tooltip>
                         <Tooltip title="覆盖模式（替换当前内容）">
                           <Button
                             type="text"
@@ -362,6 +429,111 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
           </div>
         )}
       </div>
+
+      {/* 预览模态框 */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Eye size={18} />
+            <span>模板预览 - {previewTemplate?.name}</span>
+          </div>
+        }
+        open={previewVisible}
+        onCancel={handleClosePreview}
+        footer={[
+          <Button key="close" onClick={handleClosePreview}>
+            关闭
+          </Button>,
+          <Button
+            key="copy"
+            icon={<Copy size={14} />}
+            onClick={() => {
+              if (previewTemplate) {
+                handleCopyToClipboard(previewTemplate);
+              }
+            }}
+            style={{ color: isDarkMode ? '#52c41a' : '#52a970' }}
+          >
+            复制内容
+          </Button>,
+          <Button
+            key="overwrite"
+            type="primary"
+            onClick={() => {
+              if (previewTemplate) {
+                onSelectTemplate(previewTemplate, 'overwrite');
+                handleClosePreview();
+              }
+            }}
+          >
+            使用模板
+          </Button>
+        ]}
+        width={800}
+        destroyOnClose
+        styles={{
+          body: {
+            padding: '20px',
+            maxHeight: '60vh',
+            overflowY: 'auto'
+          }
+        }}
+      >
+        {previewTemplate && (
+          <div>
+            {/* 模板信息 */}
+            <div style={{
+              marginBottom: 20,
+              padding: '16px',
+              background: isDarkMode ? '#2a2a2a' : '#f5f5f5',
+              borderRadius: '8px',
+              border: isDarkMode ? '1px solid #424242' : '1px solid #e0e0e0'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <Text strong style={{ fontSize: 16 }}>{previewTemplate.name}</Text>
+                {previewTemplate.isBuiltin && (
+                  <Tag color="blue">内置</Tag>
+                )}
+                <Tag color={categoryMap[previewTemplate.category as keyof typeof categoryMap]?.color}>
+                  {categoryMap[previewTemplate.category as keyof typeof categoryMap]?.name}
+                </Tag>
+              </div>
+
+              <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                {previewTemplate.description}
+              </Text>
+
+              {previewTemplate.tags && previewTemplate.tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {previewTemplate.tags.map(tag => (
+                    <Tag key={tag} size="small">{tag}</Tag>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 模板内容预览 */}
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 12 }}>模板内容：</Text>
+              <div style={{
+                padding: '16px',
+                background: isDarkMode ? '#1f1f1f' : '#fafafa',
+                borderRadius: '8px',
+                border: isDarkMode ? '1px solid #424242' : '1px solid #e0e0e0',
+                fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+                fontSize: '13px',
+                lineHeight: '1.6',
+                whiteSpace: 'pre-wrap',
+                color: isDarkMode ? '#ffffff' : '#000000',
+                maxHeight: '400px',
+                overflowY: 'auto'
+              }}>
+                {previewTemplate.content}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </Modal>
   );
 };
