@@ -827,109 +827,105 @@ const MCPManager: React.FC<MCPManagerProps> = ({ isDarkMode }) => {
                 dataSource={recommendedServers}
                 renderItem={(server) => (
                   <List.Item>
-                    <Card
-                      hoverable
-                      style={{
-                        background: isDarkMode ? '#1f1f1f' : '#ffffff',
-                        borderColor: isDarkMode ? '#424242' : '#e8e8e8',
-                        borderRadius: '12px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      bodyStyle={{ padding: '20px' }}
-                      actions={[
-                        <Tooltip key="install" title="一键安装">
-                          <Button
-                            type="primary"
-                            size="small"
-                            icon={<Download size={14} />}
-                            onClick={() => installRecommendedServer(server)}
-                            style={{ borderRadius: '6px' }}
-                          >
-                            安装
-                          </Button>
-                        </Tooltip>,
-                        <Tooltip key="npm" title={server.name}>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<ExternalLink size={14} />}
-                            onClick={() => window.open(server.links?.npm || `https://www.npmjs.com/package/${server.name}`, '_blank')}
-                          />
-                        </Tooltip>
-                      ]}
-                    >
-                      <div style={{ marginBottom: '16px' }}>
+                    <div style={{
+                      width: '100%',
+                      padding: '16px',
+                      background: isDarkMode ? '#1f1f1f' : '#ffffff',
+                      borderRadius: '8px',
+                      border: `1px solid ${isDarkMode ? '#424242' : '#e8e8e8'}`,
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginBottom: '12px'
+                      }}>
                         <div style={{
+                          fontSize: '32px',
+                          width: '48px',
+                          height: '48px',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '12px',
-                          marginBottom: '12px'
+                          justifyContent: 'center',
+                          background: isDarkMode ? '#2a2a2a' : '#f8f9fa',
+                          borderRadius: '12px'
                         }}>
-                          <div style={{
-                            fontSize: '32px',
-                            width: '48px',
-                            height: '48px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: isDarkMode ? '#2a2a2a' : '#f8f9fa',
-                            borderRadius: '12px'
-                          }}>
-                            {server.icon}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <Text strong style={{
-                              fontSize: '16px',
-                              color: isDarkMode ? '#ffffff' : '#000000',
-                              display: 'block',
-                              marginBottom: '4px'
-                            }}>
-                              {server.displayName}
-                            </Text>
-                            <Text type="secondary" style={{
-                              fontSize: '12px',
-                              color: isDarkMode ? '#999' : '#666'
-                            }}>
-                              {server.useCase}
-                            </Text>
-                          </div>
+                          {server.icon}
                         </div>
-
-                        <Paragraph
-                          ellipsis={{ rows: 2 }}
-                          style={{
-                            fontSize: '13px',
-                            margin: '12px 0',
-                            color: isDarkMode ? '#b0b0b0' : '#666',
-                            lineHeight: '1.5'
-                          }}
-                        >
-                          {server.description}
-                        </Paragraph>
-
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          marginTop: '12px'
-                        }}>
-                          <Tag
-                            color={server.popularity === 'high' ? 'green' : server.popularity === 'medium' ? 'blue' : 'default'}
-                            style={{ fontSize: '11px', borderRadius: '4px' }}
-                          >
-                            {server.popularity === 'high' ? '热门' : server.popularity === 'medium' ? '推荐' : '可选'}
-                          </Tag>
-                          <Text code style={{
-                            fontSize: '11px',
-                            background: isDarkMode ? '#2a2a2a' : '#f1f3f4',
-                            padding: '2px 6px',
-                            borderRadius: '4px'
+                        <div style={{ flex: 1 }}>
+                          <Text strong style={{
+                            fontSize: '16px',
+                            color: isDarkMode ? '#ffffff' : '#000000',
+                            display: 'block',
+                            marginBottom: '4px'
                           }}>
-                            {server.category}
+                            {server.displayName}
+                          </Text>
+                          <Text type="secondary" style={{
+                            fontSize: '12px',
+                            color: isDarkMode ? '#999' : '#666'
+                          }}>
+                            {server.useCase}
                           </Text>
                         </div>
+                        <Space>
+                          <Tooltip title="一键安装">
+                            <Button
+                              type="primary"
+                              size="small"
+                              icon={<Download size={14} />}
+                              onClick={() => installRecommendedServer(server)}
+                              style={{ borderRadius: '6px' }}
+                            >
+                              安装
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title={server.name}>
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<ExternalLink size={14} />}
+                              onClick={() => window.open(server.links?.npm || `https://www.npmjs.com/package/${server.name}`, '_blank')}
+                            />
+                          </Tooltip>
+                        </Space>
                       </div>
-                    </Card>
+
+                      <Paragraph
+                        ellipsis={{ rows: 2 }}
+                        style={{
+                          fontSize: '13px',
+                          margin: '12px 0',
+                          color: isDarkMode ? '#b0b0b0' : '#666',
+                          lineHeight: '1.5'
+                        }}
+                      >
+                        {server.description}
+                      </Paragraph>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '12px'
+                      }}>
+                        <Tag
+                          color={server.popularity === 'high' ? 'green' : server.popularity === 'medium' ? 'blue' : 'default'}
+                          style={{ fontSize: '11px', borderRadius: '4px' }}
+                        >
+                          {server.popularity === 'high' ? '热门' : server.popularity === 'medium' ? '推荐' : '可选'}
+                        </Tag>
+                        <Text code style={{
+                          fontSize: '11px',
+                          background: isDarkMode ? '#2a2a2a' : '#f1f3f4',
+                          padding: '2px 6px',
+                          borderRadius: '4px'
+                        }}>
+                          {server.category}
+                        </Text>
+                      </div>
+                    </div>
                   </List.Item>
                 )}
               />
