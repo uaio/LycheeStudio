@@ -12,6 +12,7 @@ import PackageManager from './components/PackageManager';
 import ClaudeCodeManager from './components/ClaudeCodeManager';
 import ClaudeProviderManager from './components/ClaudeProviderManager';
 import ClaudePromptsManager from './components/ClaudePromptsManager';
+import MCPManager from './components/MCPManager';
 import { useInstallation } from './hooks/useInstallation';
 import {
   Bot,
@@ -1251,6 +1252,27 @@ function App() {
           return (
             <div style={{ padding: '20px', backgroundColor: 'red', color: 'white' }}>
               Error rendering claude-prompts: {error.message}
+            </div>
+          );
+        }
+      }
+
+      if (currentView === 'claude-mcp') {
+        try {
+          return (
+            <div style={{
+              height: 'calc(100vh - 48px)',
+              overflow: 'hidden',
+              backgroundColor: isDarkMode ? '#141414' : '#ffffff',
+            }}>
+              <MCPManager isDarkMode={isDarkMode} />
+            </div>
+          );
+        } catch (error) {
+          console.error('Error rendering claude-mcp:', error);
+          return (
+            <div style={{ padding: '20px', backgroundColor: 'red', color: 'white' }}>
+              Error rendering claude-mcp: {error.message}
             </div>
           );
         }
