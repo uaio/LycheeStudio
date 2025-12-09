@@ -606,71 +606,20 @@ const MCPManager: React.FC<MCPManagerProps> = ({ isDarkMode }) => {
         display: 'flex',
         flexDirection: 'column'
       }}>
-        {/* 顶部标题栏 */}
-        <div style={{
-          padding: '16px 24px',
-          borderBottom: isDarkMode ? '1px solid #404040' : '1px solid #e0e0e0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <Title level={4} style={{ margin: 0, color: isDarkMode ? '#ffffff' : '#000000' }}>
-            MCP 管理器
-          </Title>
-          <Space>
-            <Button
-              icon={<RefreshCw size={16} />}
-              onClick={refreshServiceStatus}
-              loading={loading}
-            >
-              刷新状态
-            </Button>
-            <Button
-              icon={<RefreshCw size={16} />}
-              onClick={loadRecommendedMCPServers}
-              loading={recommendedLoading}
-            >
-              刷新推荐
-            </Button>
-            <Button
-              icon={<Settings size={16} />}
-              onClick={() => setConfigEditorVisible(true)}
-            >
-              高级设置
-            </Button>
-            <Button
-              onClick={testDirectAPI}
-            >
-              测试 API
-            </Button>
-          </Space>
-        </div>
-
         <Content style={{
           padding: '24px',
           overflow: 'auto',
           flex: 1
         }}>
           {/* MCP 配置管理区域 */}
-          <div style={{
-            background: isDarkMode ? '#2a2a2a' : '#ffffff',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '24px',
-            border: `1px solid ${isDarkMode ? '#404040' : '#e0e0e0'}`
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '16px'
-            }}>
+          <Card
+            title={
               <Space>
                 <Settings size={20} />
-                <Text strong style={{ color: isDarkMode ? '#ffffff' : '#000000', fontSize: '16px' }}>
-                  MCP 配置中心
-                </Text>
+                <span>MCP 配置中心</span>
               </Space>
+            }
+            extra={
               <Space>
                 <Button size="small" icon={<FolderOpen size={14} />} onClick={handleOpenConfigFolder}>
                   配置文件夹
@@ -679,7 +628,13 @@ const MCPManager: React.FC<MCPManagerProps> = ({ isDarkMode }) => {
                   编辑配置
                 </Button>
               </Space>
-            </div>
+            }
+            style={{
+              marginBottom: 24,
+              background: isDarkMode ? '#2a2a2a' : '#ffffff',
+              borderColor: isDarkMode ? '#404040' : '#e0e0e0'
+            }}
+          >
             <div style={{
               padding: '12px 16px',
               background: isDarkMode ? '#1f1f1f' : '#f8f9fa',
@@ -712,30 +667,23 @@ const MCPManager: React.FC<MCPManagerProps> = ({ isDarkMode }) => {
                 </Text>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* 已安装的 MCP 服务 */}
-          <div style={{
-            background: isDarkMode ? '#2a2a2a' : '#ffffff',
-            borderRadius: '12px',
-            border: `1px solid ${isDarkMode ? '#404040' : '#e0e0e0'}`,
-            padding: '20px',
-            marginBottom: '24px'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '16px'
-            }}>
+          <Card
+            title={
               <Space>
                 <Package size={20} />
-                <Text strong style={{ color: isDarkMode ? '#ffffff' : '#000000', fontSize: '16px' }}>
-                  已安装的服务
-                </Text>
+                <span>已安装的服务</span>
                 <Badge count={installedServers.length} style={{ backgroundColor: '#1890ff' }} />
               </Space>
-            </div>
+            }
+            style={{
+              marginBottom: 24,
+              background: isDarkMode ? '#2a2a2a' : '#ffffff',
+              borderColor: isDarkMode ? '#404040' : '#e0e0e0'
+            }}
+          >
             {installedServers.length === 0 ? (
               <Empty
                 description="暂无已安装的 MCP 服务，请在下方推荐中选择安装"
@@ -852,26 +800,19 @@ const MCPManager: React.FC<MCPManagerProps> = ({ isDarkMode }) => {
           </div>
 
         {/* 推荐的 MCP 服务 */}
-          <div style={{
-            background: isDarkMode ? '#2a2a2a' : '#ffffff',
-            borderRadius: '12px',
-            border: `1px solid ${isDarkMode ? '#404040' : '#e0e0e0'}`,
-            padding: '20px'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '16px'
-            }}>
+          <Card
+            title={
               <Space>
                 <Star size={20} />
-                <Text strong style={{ color: isDarkMode ? '#ffffff' : '#000000', fontSize: '16px' }}>
-                  推荐的热门服务
-                </Text>
+                <span>推荐的热门服务</span>
                 <Badge count={recommendedServers.length} style={{ backgroundColor: '#52c41a' }} />
               </Space>
-            </div>
+            }
+            style={{
+              background: isDarkMode ? '#2a2a2a' : '#ffffff',
+              borderColor: isDarkMode ? '#404040' : '#e0e0e0'
+            }}
+          >
             <Spin spinning={recommendedLoading}>
               <List
                 grid={{
