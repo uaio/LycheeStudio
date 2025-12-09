@@ -595,22 +595,10 @@ const MCPManager: React.FC<MCPManagerProps> = ({ isDarkMode }) => {
     }}>
       <div style={{
         height: '100%',
-        margin: '16px',
-        background: isDarkMode ? '#1f1f1f' : '#ffffff',
-        borderRadius: '12px',
-        boxShadow: isDarkMode
-          ? '0 4px 16px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-          : '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        border: isDarkMode ? '1px solid #404040' : '1px solid #e0e0e0',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
+        padding: '16px',
+        overflow: 'auto'
       }}>
-        <Content style={{
-          padding: '24px',
-          overflow: 'auto',
-          flex: 1
-        }}>
+        <Content>
           {/* MCP 配置管理区域 */}
           <Card
             title={
