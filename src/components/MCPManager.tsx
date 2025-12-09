@@ -797,7 +797,7 @@ const MCPManager: React.FC<MCPManagerProps> = ({ isDarkMode }) => {
                 )}
               />
             )}
-          </div>
+          </Card>
 
         {/* 推荐的 MCP 服务 */}
           <Card
@@ -934,7 +934,7 @@ const MCPManager: React.FC<MCPManagerProps> = ({ isDarkMode }) => {
                 )}
               />
             </Spin>
-          </div>
+          </Card>
         </Content>
       </div>
 
