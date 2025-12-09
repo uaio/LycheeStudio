@@ -3,7 +3,7 @@
  */
 
 import { safeStorage } from './storage';
-import { PromptTemplate, PromptsData } from '../types/prompts';
+import { PromptTemplate } from '../types/prompts';
 
 // 内置模板数据将在后面导入
 let BUILTIN_TEMPLATES: PromptTemplate[] = [];
@@ -102,6 +102,31 @@ export const promptsStorage = {
 
     // 返回空内容作为默认值
     return '';
+  },
+
+  /**
+   * 检查CLAUDE.md文件是否存在
+   */
+  checkClaudeMdExists: async (): Promise<{success: boolean, exists: boolean, error?: string}> => {
+    if (window.electronAPI && window.electronAPI.claudeMd && window.electronAPI.claudeMd.exists) {
+      try {
+        const result = await window.electronAPI.claudeMd.exists();
+        return result;
+      } catch (error) {
+        console.error('检查CLAUDE.md文件失败:', error);
+        return {
+          success: false,
+          exists: false,
+          error: error instanceof Error ? error.message : '检查失败'
+        };
+      }
+    }
+
+    // API不可用时默认认为文件不存在
+    return {
+      success: true,
+      exists: false
+    };
   },
 
   /**

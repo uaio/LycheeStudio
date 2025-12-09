@@ -25,6 +25,7 @@ export interface ElectronAPI {
   claudeMd: {
     read: () => Promise<{ success: boolean; content?: string; error?: string }>;
     write: (content: string) => Promise<{ success: boolean; error?: string }>;
+    exists: () => Promise<{ success: boolean; exists: boolean; error?: string }>;
   };
 
   // prompts数据操作（基于现有settings模式）

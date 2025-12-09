@@ -711,6 +711,24 @@ ipcMain.handle('claudeMd:write', async (event, content) => {
   }
 });
 
+// 检查CLAUDE.md文件是否存在
+ipcMain.handle('claudeMd:exists', async () => {
+  try {
+    const claudeMdPath = getClaudeMdPath();
+
+    return {
+      success: true,
+      exists: fs.existsSync(claudeMdPath)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      exists: false,
+      error: error.message
+    };
+  }
+});
+
 // 读取prompts数据文件
 ipcMain.handle('promptsData:read', async () => {
   try {

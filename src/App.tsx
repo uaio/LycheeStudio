@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { safeStorage } from './utils/storage';
+// 抑制特定的 Ant Design 警告
+import './utils/suppressWarnings';
 import { ConfigProvider, Layout, Card, Row, Col, Typography, theme, Menu, Button, Tooltip, Modal, App as AntdApp } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import type { ThemeConfig } from 'antd';

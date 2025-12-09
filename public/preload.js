@@ -25,7 +25,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // CLAUDE.md文件操作
   claudeMd: {
     read: () => ipcRenderer.invoke('claudeMd:read'),
-    write: (content) => ipcRenderer.invoke('claudeMd:write', content)
+    write: (content) => ipcRenderer.invoke('claudeMd:write', content),
+    exists: () => ipcRenderer.invoke('claudeMd:exists')
   },
 
   // prompts数据操作
