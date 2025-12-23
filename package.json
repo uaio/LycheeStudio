@@ -1,117 +1,32 @@
 {
-  "name": "lychee-studio",
-  "version": "1.0.0",
-  "description": "LycheeStudio - AI 工具管理器 - Electron 版本",
-  "main": "public/electron.js",
-  "homepage": "./",
+  "name": "ai-tools-manager",
+  "version": "2.0.0",
+  "description": "AI 工具管理器 - Monorepo 版本",
   "private": true,
-  "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.126",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "antd": "^5.29.0",
-    "concurrently": "^9.2.1",
-    "cors": "^2.8.5",
-    "electron-builder": "^26.0.12",
-    "express": "^5.1.0",
-    "lucide-react": "^0.554.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
-    "wait-on": "^9.0.3",
-    "web-vitals": "^2.1.4"
-  },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "electron": "electron .",
-    "electron-pack": "electron-builder",
-    "preelectron-pack": "npm run build",
-    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && NODE_ENV=development electron .\"",
-    "electron-dev-auto": "concurrently \"npm start\" \"wait-on -t 30000 http://localhost:3000 && NODE_ENV=development npx electron .\"",
-    "electron-dev-fixed": "concurrently \"npm start\" \"sleep 8 && NODE_ENV=development npx electron .\"",
-    "kill": "bash scripts/kill-processes.sh",
-    "clean-start": "npm run kill && sleep 3 && npm run electron-dev-fixed",
-    "dist": "npm run build && electron-builder",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:win": "npm run build && electron-builder --win",
-    "dist:linux": "npm run build && electron-builder --linux"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "build": {
-    "appId": "com.lycheestudio.app",
-    "productName": "LycheeStudio",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "build/**/*",
-      "public/electron.js",
-      "public/preload.js"
-    ],
-    "mac": {
-      "category": "public.app-category.productivity",
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ]
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
-    },
-    "linux": {
-      "target": [
-        {
-          "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
+    "dev": "pnpm --filter './packages/*' dev",
+    "build": "pnpm --filter './packages/*' build",
+    "lint": "pnpm --filter './packages/*' lint",
+    "test": "pnpm --filter './packages/*' test",
+    "clean": "pnpm --filter './packages/*' clean && rm -rf node_modules",
+    "electron:dev": "pnpm --filter app-electron dev",
+    "electron:build": "pnpm --filter app-electron build",
+    "electron:dist": "pnpm --filter app-electron dist",
+    "vscode:dev": "pnpm --filter app-vscode dev",
+    "vscode:build": "pnpm --filter app-vscode build",
+    "web:dev": "pnpm --filter app-web dev",
+    "web:build": "pnpm --filter app-web build"
   },
   "devDependencies": {
-    "electron": "^39.2.5"
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "prettier": "^3.1.0",
+    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
   }
 }
