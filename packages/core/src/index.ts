@@ -8,6 +8,7 @@
 export * from './types/index.js';
 export * from './types/claude.js';
 export * from './types/node.js';
+export * from './types/page.js';
 
 // 导出适配器接口
 export * from './adapters/interface.js';
@@ -18,6 +19,10 @@ export { NodeManager } from './services/node-manager.js';
 export { ClaudeConfigManager } from './services/claude-config.js';
 export { PromptsManager } from './services/prompts-manager.js';
 export { MCPManager } from './services/mcp-manager.js';
+export { PageRegistry, getPageRegistry } from './services/page-registry.js';
+
+// 导出内置页面定义
+export * from './pages/builtin-pages.js';
 
 // 导出工具函数
 export * from './utils/version-parser.js';
