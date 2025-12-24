@@ -9,6 +9,7 @@ import { BUILTIN_PAGES } from '@ai-tools/core';
 import { DashboardViewProvider } from './views/DashboardViewProvider';
 import { NodeVersionViewProvider } from './views/NodeVersionViewProvider';
 import { ClaudeConfigViewProvider } from './views/ClaudeConfigViewProvider';
+import { FNMManagerViewProvider } from './views/FNMManagerViewProvider';
 
 let adapter: VSCodeAdapter | null = null;
 
@@ -31,6 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
   const dashboardProvider = new DashboardViewProvider(context.extensionUri, adapter);
   const nodeVersionProvider = new NodeVersionViewProvider(context.extensionUri, adapter);
   const claudeConfigProvider = new ClaudeConfigViewProvider(context.extensionUri, adapter);
+  const fnmManagerProvider = new FNMManagerViewProvider(context.extensionUri, adapter);
 
   // 注册视图
   context.subscriptions.push(
@@ -54,12 +56,20 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
 
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      'aiToolsFNM',
+      fnmManagerProvider
+    )
+  );
+
   // 注册命令
   context.subscriptions.push(
     vscode.commands.registerCommand('aiTools.refreshStatus', () => {
       dashboardProvider.refresh();
       nodeVersionProvider.refresh();
       claudeConfigProvider.refresh();
+      fnmManagerProvider.refresh();
     })
   );
 

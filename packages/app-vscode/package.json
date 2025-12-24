@@ -62,6 +62,10 @@
           "name": "Node 版本"
         },
         {
+          "id": "aiToolsFNM",
+          "name": "FNM 管理"
+        },
+        {
           "id": "aiToolsClaude",
           "name": "Claude 配置"
         }

@@ -159,8 +159,8 @@ export const PLATFORM_CONFIGS: Record<PlatformType, PlatformPageConfig> = {
   // VSCode 项目级配置
   vscode: {
     platform: 'vscode',
-    // VSCode 禁用一些全局工具安装功能
-    disabledPages: ['fnm_manager', 'tool_installation'],
+    // 只禁用工具安装页面
+    disabledPages: ['tool_installation'],
   },
 
   // Web 版本 - 显示所有页面，不支持的功能显示指引

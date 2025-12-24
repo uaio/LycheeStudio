@@ -18,7 +18,7 @@ export class ClaudeConfigViewProvider implements vscode.WebviewViewProvider {
     this.adapter = adapter;
   }
 
-  public resolve(
+  public resolveWebviewView(
     webviewView: vscode.WebviewView,
     context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
