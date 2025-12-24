@@ -1,18 +1,17 @@
 /**
- * 首页 - 功能说明和平台对比
+ * 首页
  */
 
-import { Card, Row, Col, Alert, Space, Typography, Tag, Button } from 'antd';
+import { Card, Row, Col, Alert, Space, Typography, Button, Tag } from 'antd';
 import {
   Check,
-  X,
-  Hexagon,
-  Bot,
-  FileText,
-  Server,
-  AlertTriangle,
   Download,
   ExternalLink,
+  Github,
+  Monitor,
+  Code,
+  Globe,
+  BookOpen,
 } from 'lucide-react';
 import type { PlatformAdapter } from '@ai-tools/core';
 
@@ -23,145 +22,189 @@ interface Props {
 }
 
 export default function HomePage({ adapter }: Props) {
-  const features = [
+  const platforms = [
     {
-      category: 'Node 版本管理',
-      items: [
-        { name: '查看已安装版本', desktop: true, vscode: true, web: false },
-        { name: '安装新版本', desktop: true, vscode: true, web: false },
-        { name: '切换 Node 版本', desktop: true, vscode: true, web: false },
-        { name: '项目级版本配置', desktop: true, vscode: true, web: false },
-      ],
-      icon: <Hexagon size={20} />,
+      name: '桌面应用',
+      icon: <Monitor size={24} />,
+      description: '完整功能，支持所有系统命令',
+      features: ['Node 版本管理', 'FNM 管理', 'Claude 配置', 'MCP 服务', '工具安装'],
+      color: 'purple',
+      action: '下载桌面应用',
     },
     {
-      category: 'Claude 配置',
-      items: [
-        { name: '模型配置', desktop: true, vscode: true, web: true },
-        { name: 'Provider 设置', desktop: true, vscode: true, web: true },
-        { name: 'CLAUDE.md 编辑', desktop: true, vscode: true, web: true },
-        { name: '提示词模板', desktop: true, vscode: true, web: true },
-      ],
-      icon: <Bot size={20} />,
+      name: 'VSCode 扩展',
+      icon: <Code size={24} />,
+      description: '项目级配置，集成到开发环境',
+      features: ['项目 Node 版本', 'Claude 配置快捷访问', '终端集成'],
+      color: 'blue',
+      action: '安装扩展',
     },
     {
-      category: 'MCP 服务',
-      items: [
-        { name: '服务管理', desktop: true, vscode: true, web: true },
-        { name: '推荐服务', desktop: true, vscode: true, web: true },
-      ],
-      icon: <Server size={20} />,
-    },
-    {
-      category: '系统工具',
-      items: [
-        { name: '工具状态检查', desktop: true, vscode: true, web: false },
-        { name: '工具安装', desktop: true, vscode: false, web: false },
-      ],
-      icon: <FileText size={20} />,
+      name: 'Web 版本',
+      icon: <Globe size={24} />,
+      description: '在线访问，查看配置和指引',
+      features: ['配置预览', '安装指引', '功能文档'],
+      color: 'green',
+      action: '当前页面',
     },
   ];
 
   return (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
-      <Alert
-        message="Web 版本功能说明"
-        description={
-          <Space direction="vertical" size="small">
-            <div>
-              由于浏览器安全限制，Web 版本无法执行系统命令。以下功能需要使用桌面版或
-              VSCode 扩展。
-            </div>
-            <Button
-              type="primary"
-              size="small"
-              icon={<Download size={14} />}
-              href="https://github.com/your-repo/releases"
-              target="_blank"
-            >
-              下载桌面应用
-            </Button>
-          </Space>
-        }
-        type="warning"
-        showIcon
-        icon={<AlertTriangle size={16} />}
-      />
-
-      <Title level={3}>功能对比</Title>
-
-      {features.map((feature) => (
-        <Card
-          key={feature.category}
-          title={
-            <Space>
-              {feature.icon}
-              <span>{feature.category}</span>
-            </Space>
-          }
-          style={{ marginBottom: 16 }}
-        >
-          <Row gutter={[16, 16]}>
-            {feature.items.map((item) => (
-              <Col xs={24} sm={12} md={12} key={item.name}>
-                <div
-                  style={{
-                    padding: 12,
-                    border: '1px solid #f0f0f0',
-                    borderRadius: 8,
-                    background: '#fafafa',
-                  }}
-                >
-                  <div style={{ marginBottom: 8, fontWeight: 500 }}>{item.name}</div>
-                  <Space size="middle">
-                    <Space size={4}>
-                      <Text type="secondary">桌面版:</Text>
-                      {item.desktop ? (
-                        <Check size={16} style={{ color: '#52c41a' }} />
-                      ) : (
-                        <X size={16} style={{ color: '#d9d9d9' }} />
-                      )}
-                    </Space>
-                    <Space size={4}>
-                      <Text type="secondary">VSCode:</Text>
-                      {item.vscode ? (
-                        <Check size={16} style={{ color: '#52c41a' }} />
-                      ) : (
-                        <X size={16} style={{ color: '#d9d9d9' }} />
-                      )}
-                    </Space>
-                    <Space size={4}>
-                      <Text type="secondary">Web:</Text>
-                      {item.web ? (
-                        <Check size={16} style={{ color: '#52c41a' }} />
-                      ) : (
-                        <X size={16} style={{ color: '#ff4d4f' }} />
-                      )}
-                    </Space>
-                  </Space>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </Card>
-      ))}
-
-      <Card title="可用功能">
+      <Card>
+        <Title level={2}>欢迎使用 AI Tools Manager</Title>
         <Paragraph>
-          Web 版本提供以下配置管理功能，所有更改都会保存到浏览器本地存储：
+          AI 工具管理器帮助你管理开发环境中的 AI 工具，包括 Node.js 版本管理、
+          Claude Code 配置、MCP 服务等。
         </Paragraph>
-        <ul>
-          <li>Claude 模型参数配置</li>
-          <li>Claude Prompt 模板管理</li>
-          <li>MCP 服务配置预览</li>
-        </ul>
-        <Alert
-          message="提示"
-          description="配置仅用于预览和参考，实际使用需要通过桌面应用写入配置文件"
-          type="info"
-          showIcon
-          style={{ marginTop: 16 }}
-        />
+      </Card>
+
+      <Title level={4}>选择你的平台</Title>
+      <Row gutter={[16, 16]}>
+        {platforms.map((platform) => (
+          <Col xs={24} sm={8} key={platform.name}>
+            <Card
+              hoverable
+              style={{ height: '100%', borderColor: platform.color === 'green' ? '#52c41a' : undefined }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ color: platform.color === 'purple' ? '#7c4dff' : platform.color === 'blue' ? '#1890ff' : '#52c41a' }}>
+                    {platform.icon}
+                  </div>
+                  <Title level={5} style={{ margin: 0 }}>
+                    {platform.name}
+                  </Title>
+                </div>
+
+                <Paragraph style={{ marginBottom: 8, fontSize: 13 }}>
+                  {platform.description}
+                </Paragraph>
+
+                <div style={{ marginBottom: 12 }}>
+                  {platform.features.map(feature => (
+                    <Tag key={feature} color={platform.color === 'green' ? 'default' : platform.color}>
+                      {feature}
+                    </Tag>
+                  ))}
+                </div>
+
+                {platform.action !== '当前页面' && (
+                  <Button
+                    type={platform.color === 'purple' ? 'primary' : 'default'}
+                    size="small"
+                    icon={platform.color === 'purple' ? <Download size={14} /> : <ExternalLink size={14} />}
+                    href={platform.color === 'purple' ? 'https://github.com/your-repo/releases' : 'https://marketplace.visualstudio.com/items?itemName=your-publisher.ai-tools-manager'}
+                    target="_blank"
+                  >
+                    {platform.action}
+                  </Button>
+                )}
+              </Space>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
+      <Card title="快速开始">
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          <div>
+            <Text strong>1. 下载桌面应用</Text>
+            <Paragraph style={{ marginBottom: 0 }}>
+              获取完整功能，包括 Node 版本管理和工具安装
+            </Paragraph>
+          </div>
+          <div>
+            <Text strong>2. 安装 VSCode 扩展（可选）</Text>
+            <Paragraph style={{ marginBottom: 0 }}>
+              在开发环境中直接管理项目配置
+            </Paragraph>
+          </div>
+          <div>
+            <Text strong>3. 查看功能指引</Text>
+            <Paragraph style={{ marginBottom: 0 }}>
+              通过左侧菜单访问各个功能的详细说明
+            </Paragraph>
+          </div>
+        </Space>
+      </Card>
+
+      <Card title="核心功能">
+        <Row gutter={[16, 16]}>
+          <Col xs={12} sm={6}>
+            <Card size="small" hoverable>
+              <Space direction="vertical" size="small">
+                <Hexagon size={24} style={{ color: '#7c4dff' }} />
+                <Text strong>Node 管理</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  安装、切换 Node 版本
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card size="small" hoverable>
+              <Space direction="vertical" size="small">
+                <Bot size={24} style={{ color: '#1890ff' }} />
+                <Text strong>Claude 配置</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  模型、Provider 配置
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card size="small" hoverable>
+              <Space direction="vertical" size="small">
+                <FileText size={24} style={{ color: '#52c41a' }} />
+                <Text strong>Prompt 管理</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  CLAUDE.md 模板
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card size="small" hoverable>
+              <Space direction="vertical" size="small">
+                <Server size={24} style={{ color: '#fa8c16' }} />
+                <Text strong>MCP 服务</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  服务配置管理
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
+      </Card>
+
+      <Card title="相关资源">
+        <Space split={<span style={{ color: '#d9d9d9' }}>|</span>}>
+          <Button
+            type="link"
+            icon={<Github size={16} />}
+            href="https://github.com/your-repo"
+            target="_blank"
+          >
+            GitHub 仓库
+          </Button>
+          <Button
+            type="link"
+            icon={<BookOpen size={16} />}
+            href="https://docs.anthropic.com"
+            target="_blank"
+          >
+            Claude 文档
+          </Button>
+          <Button
+            type="link"
+            icon={<ExternalLink size={16} />}
+            href="https://fnm.vercel.app"
+            target="_blank"
+          >
+            FNM 文档
+          </Button>
+        </Space>
       </Card>
     </Space>
   );

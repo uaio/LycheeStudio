@@ -163,15 +163,9 @@ export const PLATFORM_CONFIGS: Record<PlatformType, PlatformPageConfig> = {
     disabledPages: ['fnm_manager', 'tool_installation'],
   },
 
-  // Web 功能阉割版
+  // Web 版本 - 显示所有页面，不支持的功能显示指引
   web: {
     platform: 'web',
-    // Web 禁用需要系统命令的页面
-    disabledPages: [
-      'node_manager',
-      'fnm_manager',
-      'system_status',
-      'tool_installation',
-    ],
+    // 所有页面都启用（显示指引版本）
   },
 };

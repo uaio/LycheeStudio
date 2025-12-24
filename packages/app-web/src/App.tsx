@@ -14,6 +14,8 @@ import {
   Info,
   Github,
   ExternalLink,
+  Activity,
+  Download,
 } from 'lucide-react';
 import { AppProvider, usePages, PLATFORM_CONFIGS } from '@ai-tools/ui';
 import { WebAdapter } from '@ai-tools/adapter-web';
@@ -24,6 +26,9 @@ import HomePage from './pages/HomePage';
 import ClaudeModelPage from './pages/ClaudeModelPage';
 import ClaudePromptsPage from './pages/ClaudePromptsPage';
 import MCPManagerPage from './pages/MCPManagerPage';
+import NodeManagerGuidePage from './pages/guide/NodeManagerGuidePage';
+import FNMManagerGuidePage from './pages/guide/FNMManagerGuidePage';
+import SystemStatusGuidePage from './pages/guide/SystemStatusGuidePage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const { Content, Footer, Sider } = Layout;
@@ -102,6 +107,18 @@ function AppContent() {
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="/home" element={<HomePage adapter={adapter} />} />
               <Route
+                path="/node_manager"
+                element={<NodeManagerGuidePage adapter={adapter} />}
+              />
+              <Route
+                path="/fnm_manager"
+                element={<FNMManagerGuidePage adapter={adapter} />}
+              />
+              <Route
+                path="/system_status"
+                element={<SystemStatusGuidePage adapter={adapter} />}
+              />
+              <Route
                 path="/claude_model"
                 element={<ClaudeModelPage adapter={adapter} />}
               />
@@ -122,7 +139,7 @@ function AppContent() {
       <Footer style={{ textAlign: 'center' }}>
         <Space direction="vertical" size="small">
           <div>
-            AI Tools Manager Web 版本 - 功能阉割版
+            AI Tools Manager - Web 版本（功能指引）
           </div>
           <Space>
             <Button
@@ -137,8 +154,8 @@ function AppContent() {
             <Button
               type="link"
               size="small"
-              icon={<ExternalLink size={14} />}
-              href="https://github.com/your-repo#desktop-app"
+              icon={<Download size={14} />}
+              href="https://github.com/your-repo/releases"
               target="_blank"
             >
               下载桌面应用
@@ -156,6 +173,9 @@ function getMenuIcon(pageId: string): React.ReactNode {
   const iconProps = { size: 18 };
 
   const iconMap: Record<string, React.ReactNode> = {
+    node_manager: <Hexagon {...iconProps} />,
+    fnm_manager: <Download {...iconProps} />,
+    system_status: <Activity {...iconProps} />,
     claude_model: <Bot {...iconProps} />,
     claude_provider: <Settings {...iconProps} />,
     claude_prompts: <FileText {...iconProps} />,
