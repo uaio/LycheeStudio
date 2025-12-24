@@ -1,0 +1,96 @@
+{
+  "name": "ai-tools-manager",
+  "displayName": "AI Tools Manager",
+  "description": "AI 工具管理器 - 项目级 Node 版本和 Claude 配置",
+  "version": "2.0.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aiTools.openNodeManager",
+        "title": "Node 版本管理",
+        "category": "AI Tools"
+      },
+      {
+        "command": "aiTools.openClaudeConfig",
+        "title": "Claude 配置",
+        "category": "AI Tools"
+      },
+      {
+        "command": "aiTools.openPromptsManager",
+        "title": "提示词管理",
+        "category": "AI Tools"
+      },
+      {
+        "command": "aiTools.setProjectNodeVersion",
+        "title": "设置项目 Node 版本",
+        "category": "AI Tools"
+      },
+      {
+        "command": "aiTools.refreshStatus",
+        "title": "刷新状态",
+        "category": "AI Tools",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aiToolsContainer",
+          "title": "AI Tools",
+          "icon": "$(server-environment)"
+        }
+      ]
+    },
+    "views": {
+      "aiToolsContainer": [
+        {
+          "id": "aiToolsDashboard",
+          "name": "仪表盘"
+        },
+        {
+          "id": "aiToolsNode",
+          "name": "Node 版本"
+        },
+        {
+          "id": "aiToolsClaude",
+          "name": "Claude 配置"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "aiTools.refreshStatus",
+          "when": "view == aiToolsDashboard",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:dev": "tsc -watch",
+    "vscode:build": "tsc",
+    "vscode:package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "@ai-tools/core": "workspace:*",
+    "@ai-tools/adapter-vscode": "workspace:*",
+    "@ai-tools/ui": "workspace:*"
+  }
+}
