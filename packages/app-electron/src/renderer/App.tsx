@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, ConfigProvider } from 'antd';
 import {
   Hexagon,
   Bot,
@@ -65,7 +65,7 @@ function AppContent() {
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
-        width={240}
+        width={260}
         theme="dark"
         style={{
           overflow: 'auto',
@@ -74,12 +74,26 @@ function AppContent() {
           left: 0,
           top: 0,
           bottom: 0,
+          background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)',
         }}
       >
-        <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <h2 style={{ color: '#fff', margin: 0, fontSize: collapsed ? 16 : 20 }}>
-            {collapsed ? 'AI' : 'AI Tools'}
-          </h2>
+        <div style={{
+          height: 64,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          padding: collapsed ? 0 : '0 20px',
+          borderBottom: '1px solid rgba(124, 77, 255, 0.2)',
+        }}>
+          {!collapsed && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Hexagon size={24} style={{ color: '#7c4dff' }} />
+              <h2 style={{ color: '#fff', margin: 0, fontSize: 18, fontWeight: 600 }}>
+                AI Tools
+              </h2>
+            </div>
+          )}
+          {collapsed && <Hexagon size={20} style={{ color: '#7c4dff' }} />}
         </div>
         <Menu
           theme="dark"
@@ -87,15 +101,22 @@ function AppContent() {
           selectedKeys={[currentPage]}
           items={menuItems}
           onClick={({ key }) => setCurrentPage(key)}
+          style={{ background: 'transparent', borderRight: 0 }}
         />
       </Sider>
-      <Layout style={{ marginLeft: collapsed ? 80 : 240 }}>
-        <Header style={{ background: '#1e1e1e', padding: '0 24px', display: 'flex', alignItems: 'center' }}>
-          <h1 style={{ color: '#fff', margin: 0, fontSize: 18 }}>
+      <Layout style={{ marginLeft: collapsed ? 80 : 260 }}>
+        <Header style={{
+          background: '#1a1a2e',
+          padding: '0 24px',
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: '1px solid rgba(124, 77, 255, 0.2)',
+        }}>
+          <h1 style={{ color: '#fff', margin: 0, fontSize: 18, fontWeight: 500 }}>
             {pages.find(p => p.id === currentPage)?.name || 'AI Tools Manager'}
           </h1>
         </Header>
-        <Content style={{ overflow: 'auto', background: '#141414' }}>
+        <Content style={{ overflow: 'auto', background: '#0f0f1a' }}>
           <div style={{ padding: 24 }}>
             <PageRouter pageId={currentPage} adapter={adapter} />
           </div>
@@ -126,9 +147,30 @@ function getMenuIcon(pageId: string): React.ReactNode {
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#7c4dff', // 紫色主色调
+          borderRadius: 8,
+          fontSize: 14,
+        },
+        algorithm: [
+          // 使用暗色算法
+          // theme.darkAlgorithm,
+        ],
+        components: {
+          Menu: {
+            darkItemBg: '#1a1a2e',
+            darkItemSelectedBg: '#7c4dff',
+            darkItemHoverBg: '#2d2d4a',
+          },
+        },
+      }}
+    >
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ConfigProvider>
   );
 }
 

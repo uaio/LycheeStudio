@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Layout, Menu, Button, Space, Alert, BackTop } from 'antd';
+import { Layout, Menu, Button, Space, Alert, BackTop, ConfigProvider, theme } from 'antd';
 import {
   Hexagon,
   Bot,
@@ -83,19 +83,37 @@ function AppContent() {
           collapsible
           collapsed={collapsed}
           onCollapse={setCollapsed}
-          width={240}
+          width={260}
           style={{
-            background: '#fff',
+            background: '#f8fdf8',
             overflow: 'auto',
             height: 'calc(100vh - 64px)',
             position: 'sticky',
             top: 64,
+            borderRight: '1px solid #e8e8e8',
           }}
         >
+          <div style={{
+            padding: '20px 16px',
+            borderBottom: '1px solid #e8e8e8',
+            background: '#f0f9f0',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              color: '#52c41a',
+              fontWeight: 600,
+              fontSize: 16,
+            }}>
+              <Hexagon size={22} />
+              <span>AI Tools</span>
+            </div>
+          </div>
           <Menu
             mode="inline"
             selectedKeys={[currentPage]}
-            style={{ height: '100%', borderRight: 0 }}
+            style={{ height: '100%', borderRight: 0, background: 'transparent' }}
             items={menuItems}
             onClick={({ key }) => setCurrentPage(key)}
           />
@@ -136,10 +154,14 @@ function AppContent() {
         </Layout>
       </Layout>
 
-      <Footer style={{ textAlign: 'center' }}>
+      <Footer style={{
+        textAlign: 'center',
+        background: '#f0f9f0',
+        borderTop: '1px solid #d9f7be',
+      }}>
         <Space direction="vertical" size="small">
-          <div>
-            AI Tools Manager - Web 版本（功能指引）
+          <div style={{ color: '#52c41a', fontWeight: 500 }}>
+            🌿 AI Tools Manager - Web 版本（功能指引）
           </div>
           <Space>
             <Button
@@ -189,9 +211,29 @@ function getMenuIcon(pageId: string): React.ReactNode {
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#52c41a', // 绿色主色调
+          borderRadius: 8,
+          fontSize: 14,
+        },
+        components: {
+          Layout: {
+            headerBg: '#ffffff',
+            siderBg: '#f5f5f5',
+          },
+          Menu: {
+            itemSelectedBg: '#e6f7ff',
+            itemSelectedColor: '#52c41a',
+          },
+        },
+      }}
+    >
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ConfigProvider>
   );
 }
 
