@@ -5,11 +5,9 @@
 import { Layout, Space, Button, Typography } from 'antd';
 import { Hexagon, Github, Download } from 'lucide-react';
 
-const { Header } = Layout;
-
-export default function Header() {
+export default function WebHeader() {
   return (
-    <Header
+    <Layout.Header
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -20,7 +18,7 @@ export default function Header() {
       }}
     >
       <Space>
-        <Hexagon size={24} style={{ color: '#7c4dff' }} />
+        <Hexagon size={24} style={{ color: '#52c41a' }} />
         <Typography.Title level={4} style={{ margin: 0 }}>
           AI Tools Manager
         </Typography.Title>
@@ -47,6 +45,6 @@ export default function Header() {
           下载桌面版
         </Button>
       </Space>
-    </Header>
+    </Layout.Header>
   );
 }
